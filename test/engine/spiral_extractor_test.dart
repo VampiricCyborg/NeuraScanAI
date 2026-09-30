@@ -233,6 +233,74 @@ void main() {
     });
   });
 
+  group('a trace that starts part-way round the spiral', () {
+    // A phone only starts reporting a drag after the touch slop (about 18 px), so the first
+    // recorded point is already out from the centre and often more than half a turn round.
+    // The turn used to be taken from atan2 alone, which cannot tell a point 3.5 rad round the
+    // first turn from one -2.8 rad round the zeroth, so every later sample was compared with
+    // the guide a full turn out and a perfect trace scored as a poor one. The old fixtures all
+    // started before half a turn and never saw it.
+
+    for (final start in [0.05, 0.15, 0.25, 0.35, 0.5, 0.7]) {
+      test(
+        'starting ${(start * 100).round()} % along still reads as accurate',
+        () {
+          final result = extractSpiralFeatures(
+            trace: traceGuide(startFraction: start, offset: 2.0),
+            guide: guide,
+          );
+          expect(
+            result.rmse,
+            closeTo(2.0, 0.6),
+            reason: 'start ${(start * 100).round()} %',
+          );
+        },
+      );
+    }
+
+    test('coverage is judged from where the trace actually is', () {
+      // Starting 35 % along and finishing at the end covers the last 65 % of the guide.
+      final result = extractSpiralFeatures(
+        trace: traceGuide(startFraction: 0.35, offset: 2.0),
+        guide: guide,
+      );
+      expect(result.coverage, closeTo(0.65, 0.08));
+    });
+
+    test('the first point on a later turn is placed on the right turn', () {
+      // Direction alone cannot say which turn. Radius does.
+      const theta = 4.5 * math.pi; // Two and a quarter turns round.
+      final point = guide.pointAt(theta);
+      final first = TracePoint(x: point.x, y: point.y, timestampMs: 0);
+      expect(guide.initialAngle(first), closeTo(theta, 0.05));
+    });
+
+    test('a first point near the centre keeps the raw angle', () {
+      final first = TracePoint(
+        x: guide.centre.x - 3,
+        y: guide.centre.y - 1,
+        timestampMs: 0,
+      );
+      final expected = math.atan2(-1.0, -3.0);
+      expect(guide.initialAngle(first), closeTo(expected, 1e-6));
+    });
+
+    test(
+      'each start position gives the same accuracy as starting at the top',
+      () {
+        final fromStart = extractSpiralFeatures(
+          trace: traceGuide(startFraction: 0.0, offset: 3.0),
+          guide: guide,
+        );
+        final fromMiddle = extractSpiralFeatures(
+          trace: traceGuide(startFraction: 0.4, offset: 3.0),
+          guide: guide,
+        );
+        expect(fromMiddle.rmse, closeTo(fromStart.rmse, 0.6));
+      },
+    );
+  });
+
   group('coverage', () {
     test('a trace along the whole guide covers nearly all of it', () {
       // The fixture starts 15 % along, so the innermost bins are never visited.
@@ -255,14 +323,18 @@ void main() {
       expect(result.coverage, closeTo(0.5, 0.08));
     });
 
-    test('scribbling far from the guide covers nothing', () {
-      // Coverage is judged over the guide, not over the trace, so a dense scribble
-      // in one place cannot pass the gate.
+    test('scribbling far from the guide covers little of it', () {
+      // Coverage is judged over the guide, not over the trace, so a dense scribble in one
+      // place cannot pass the gate.
+      //
+      // Not "nothing": 90 dp out is almost exactly one of the guide's later turns (turn
+      // spacing here is 50), so the extractor matches the trace to that turn and the last
+      // stretch of it does line up. What matters is that it is nowhere near the 70 % gate.
       final result = extractSpiralFeatures(
         trace: traceGuide(offset: 90.0),
         guide: guide,
       );
-      expect(result.coverage, lessThan(0.1));
+      expect(result.coverage, lessThan(0.3));
     });
 
     test('a trace below the gate is reported as such', () {
@@ -275,6 +347,99 @@ void main() {
         guide: guide,
       );
       expect(result.coverage, lessThan(0.70));
+    });
+
+    group('a trace that strays from the line does not pass the gate', () {
+      // Found on a real phone: with a fixed 24 dp tolerance, tracing well off the line
+      // still reached the 70 % gate every time, because 24 dp is about half the gap between
+      // turns. The tolerance is now a quarter of the turn spacing (12.5 dp for this guide).
+
+      test('an honest hand error of a few dp still passes', () {
+        // Around 6 dp is ordinary, per the report's simulation parameters.
+        final result = extractSpiralFeatures(
+          trace: traceGuide(
+            startFraction: 0.0,
+            wobbleHz: 1.0,
+            wobbleAmplitude: 6.0,
+          ),
+          guide: guide,
+        );
+        expect(result.coverage, greaterThan(0.9));
+      });
+
+      test('a constant stray of a fifth of the turn spacing still passes', () {
+        final result = extractSpiralFeatures(
+          trace: traceGuide(
+            startFraction: 0.0,
+            offset: guide.turnSpacing * 0.2,
+          ),
+          guide: guide,
+        );
+        expect(result.coverage, greaterThan(0.9));
+      });
+
+      test('a constant stray of 40 % of the spacing does not', () {
+        // 20 dp here: inside the old 24 dp tolerance, outside the new one.
+        final result = extractSpiralFeatures(
+          trace: traceGuide(
+            startFraction: 0.0,
+            offset: guide.turnSpacing * 0.4,
+          ),
+          guide: guide,
+        );
+        expect(result.coverage, lessThan(0.2));
+      });
+
+      test('a plain circle is not mistaken for the spiral', () {
+        // Three laps of a circle half way out. It crosses the guide once per lap at most.
+        final radius = guide.maxRadius / 2;
+        final circle = [
+          for (var i = 0; i < 600; i++)
+            TracePoint(
+              x: guide.centre.x + radius * math.cos(i / 600 * 6 * math.pi),
+              y: guide.centre.y + radius * math.sin(i / 600 * 6 * math.pi),
+              timestampMs: i * 10,
+            ),
+        ];
+        final result = extractSpiralFeatures(trace: circle, guide: guide);
+        expect(result.coverage, lessThan(0.4));
+      });
+
+      test('a spiral drawn much too large does not pass', () {
+        final large = [
+          for (var i = 0; i < 600; i++)
+            () {
+              final theta = i / 599 * guide.turns * 2 * math.pi;
+              final r = guide.radiusAt(theta) * 1.5;
+              return TracePoint(
+                x: guide.centre.x + r * math.cos(theta),
+                y: guide.centre.y + r * math.sin(theta),
+                timestampMs: i * 10,
+              );
+            }(),
+        ];
+        final result = extractSpiralFeatures(trace: large, guide: guide);
+        expect(result.coverage, lessThan(0.5));
+      });
+
+      test('the tolerance scales with the turn spacing, not the screen', () {
+        // The same relative stray must give the same verdict on a bigger canvas.
+        const big = GuideSpiral(centre: (x: 400.0, y: 400.0), maxRadius: 300.0);
+        final points = [
+          for (var i = 0; i < 600; i++)
+            () {
+              final theta = i / 599 * big.turns * 2 * math.pi;
+              final r = big.radiusAt(theta) + big.turnSpacing * 0.4;
+              return TracePoint(
+                x: big.centre.x + r * math.cos(theta),
+                y: big.centre.y + r * math.sin(theta),
+                timestampMs: i * 10,
+              );
+            }(),
+        ];
+        final result = extractSpiralFeatures(trace: points, guide: big);
+        expect(result.coverage, lessThan(0.2));
+      });
     });
   });
 

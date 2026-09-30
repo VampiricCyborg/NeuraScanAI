@@ -173,12 +173,20 @@ final deviationSeriesProvider = Provider<List<({DateTime at, double ewma})>>((
   ref,
 ) {
   final sessions = ref.watch(sessionsProvider).value ?? const [];
-  return ref.watch(repositoryProvider).deviationSeries(sessions);
+  final baseline = ref.watch(engineProvider).value?.baseline;
+  // With a baseline, the sessions that built it are included, so trends appear as soon
+  // as the baseline is set rather than after one more session.
+  return ref
+      .watch(repositoryProvider)
+      .deviationSeries(sessions, baseline: baseline);
 });
 
 /// The per-domain history for the trend charts.
 final domainSeriesProvider =
     Provider<Map<Domain, List<({DateTime at, double score})>>>((ref) {
       final sessions = ref.watch(sessionsProvider).value ?? const [];
-      return ref.watch(repositoryProvider).domainSeries(sessions);
+      final baseline = ref.watch(engineProvider).value?.baseline;
+      return ref
+          .watch(repositoryProvider)
+          .domainSeries(sessions, baseline: baseline);
     });

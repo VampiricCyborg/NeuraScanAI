@@ -304,7 +304,7 @@ class BaselineProgress extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           remaining == 0
-              ? text.statusStableBody
+              ? text.statusBaselineSetBody
               : text.dashboardBaselineRemaining(remaining),
           style: context.texts.bodyMedium,
         ),

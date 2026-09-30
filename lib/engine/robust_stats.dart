@@ -5,7 +5,7 @@
 /// which would shadow a top-level function of the same name anywhere inside the
 /// class body. The better one is that these are general-purpose and worth reading
 /// on their own: the choice of median and MAD over mean and standard deviation is
-/// the single decision that makes a six-session baseline usable at all.
+/// the single decision that makes a baseline built from a handful of sessions usable at all.
 library;
 
 import 'dart:math' as math;

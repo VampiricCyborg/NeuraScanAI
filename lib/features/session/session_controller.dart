@@ -29,7 +29,9 @@ import '../../engine/features.dart';
 import '../../engine/quality.dart';
 import '../../engine/screening_engine.dart';
 import '../../services/audio_capture.dart';
+import '../../services/record_audio_capture.dart';
 import 'keystroke_recorder.dart';
+import 'tasks/scenes.dart';
 import 'word_lists.dart';
 
 /// Where the user is in the session.
@@ -63,6 +65,7 @@ class SessionState {
     required this.step,
     required this.startedAt,
     required this.wordList,
+    this.sceneIndex = 0,
     this.checkIn,
     this.result,
     this.savedSessionId,
@@ -77,6 +80,9 @@ class SessionState {
 
   /// The words shown this session.
   final WordList wordList;
+
+  /// Which picture the speech task shows this session.
+  final int sceneIndex;
 
   /// Null until the check-in is answered.
   final CheckIn? checkIn;
@@ -114,6 +120,7 @@ class SessionState {
     step: step ?? this.step,
     startedAt: startedAt,
     wordList: wordList,
+    sceneIndex: sceneIndex,
     checkIn: checkIn ?? this.checkIn,
     result: result ?? this.result,
     savedSessionId: savedSessionId ?? this.savedSessionId,
@@ -137,16 +144,22 @@ class SessionController extends Notifier<SessionState> {
   final keystrokes = KeystrokeLog();
 
   @override
-  SessionState build() => SessionState(
-    step: SessionStep.checkIn,
-    startedAt: DateTime.now(),
-    wordList: pickWordList(
+  SessionState build() {
+    final sessionIndex = ref.read(sessionsProvider).value?.length ?? 0;
+    return SessionState(
+      step: SessionStep.checkIn,
+      startedAt: DateTime.now(),
       // The same list twice in a row would be learned rather than recalled, so the
       // choice follows the session count and rotates.
-      sessionIndex: ref.read(sessionsProvider).value?.length ?? 0,
-      languageCode: ref.read(profileProvider).value?.languageCode ?? 'en',
-    ),
-  );
+      wordList: pickWordList(
+        sessionIndex: sessionIndex,
+        languageCode: ref.read(profileProvider).value?.languageCode ?? 'en',
+      ),
+      // Ten pictures, rotated by session so the user is not describing the same one twice
+      // running.
+      sceneIndex: sceneIndexFor(sessionIndex),
+    );
+  }
 
   // -- step transitions -----------------------------------------------------
 
@@ -332,10 +345,12 @@ final sessionControllerProvider =
       SessionController.new,
     );
 
-/// The microphone, or the simulator standing in for it.
-final audioCaptureProvider = Provider<AudioCaptureService>(
-  (ref) => SimulatedAudioCapture(),
-);
+/// The real microphone. Tests override this with the simulator or a silent source.
+final audioCaptureProvider = Provider<AudioCaptureService>((ref) {
+  final capture = RecordAudioCapture();
+  ref.onDispose(capture.dispose);
+  return capture;
+});
 
 /// How many reaction trials a session runs.
 const int sessionReactionTrials = kReactionTrials;

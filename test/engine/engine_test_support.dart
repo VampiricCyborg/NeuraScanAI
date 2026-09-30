@@ -6,6 +6,7 @@
 /// `engine_lab/tests/conftest.py`.
 library;
 
+import 'package:neurascan_ai/engine/constants.dart';
 import 'package:neurascan_ai/engine/features.dart';
 import 'package:neurascan_ai/engine/screening_engine.dart';
 
@@ -86,8 +87,16 @@ EngineSession makeSession({
 /// A baseline fitted from identical sessions would have a MAD of zero on every
 /// feature and rely entirely on the scale floor, which is not what most tests
 /// want to exercise.
-List<EngineSession> variedBaselineSessions([int count = 6]) {
-  const offsets = [-1.0, -0.5, 0.0, 0.25, 0.5, 1.0, -0.75, 0.75, -0.25, 1.25];
+///
+/// The default is exactly the number the engine pools. A larger default would leave the
+/// extra sessions to be *scored* after the baseline froze, quietly giving every test an
+/// engine with history and a non-zero EWMA.
+///
+/// The first four offsets are symmetric about zero, so the baseline centre is the nominal
+/// value whatever the pool size -- a typical session then reads as typical rather than as
+/// slightly off.
+List<EngineSession> variedBaselineSessions([int count = kBaselineSessions]) {
+  const offsets = [-1.0, 0.5, -0.5, 1.0, -0.25, 0.25, -0.75, 0.75, 0.0, 1.25];
   return [
     for (var i = 0; i < count; i++)
       makeSession(

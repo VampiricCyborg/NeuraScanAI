@@ -108,8 +108,9 @@ void main() {
     CheckIn? checkIn,
     bool valid = true,
     RecallDetail? recallDetail,
+    DateTime? at,
   }) {
-    final now = DateTime.utc(2026, 4, 2, 10);
+    final now = at ?? DateTime.utc(2026, 4, 2, 10);
     return SessionRecord(
       id: id,
       userId: 'user-1',
@@ -550,6 +551,175 @@ void main() {
         expect(engine.baselineProgress, closeTo(2 / kBaselineSessions, 1e-12));
       },
     );
+  });
+
+  group('trends once the baseline is set', () {
+    /// Saves familiarisation plus the pooled sessions, returning the engine afterwards.
+    Future<ScreeningEngine> saveBaselinePeriod({
+      List<EngineSession>? pooled,
+    }) async {
+      final engine = ScreeningEngine();
+      final sessions = [
+        makeSession(sessionId: 'familiarisation-1'),
+        makeSession(sessionId: 'familiarisation-2'),
+        ...(pooled ?? variedBaselineSessions()),
+      ];
+      for (var i = 0; i < sessions.length; i++) {
+        final result = engine.update(sessions[i]);
+        await repository.saveSession(
+          session: buildSession(
+            id: 'session-$i',
+            result: result,
+            features: sessions[i].features,
+            at: DateTime.utc(2026, 4, 2 + i * 2, 10),
+          ),
+          engine: engine,
+        );
+      }
+      return engine;
+    }
+
+    test('the sessions that built the baseline appear straight away', () async {
+      // Without this, the Trends tab stayed empty until one more session after the
+      // baseline was set, which reads as broken.
+      await signedUpUser();
+      final engine = await saveBaselinePeriod();
+      final stored = await repository.loadSessions('user-1');
+
+      expect(
+        repository.deviationSeries(stored, baseline: engine.baseline),
+        hasLength(kBaselineSessions),
+      );
+      for (final domain in Domain.values) {
+        expect(
+          repository.domainSeries(stored, baseline: engine.baseline)[domain],
+          hasLength(kBaselineSessions),
+          reason: domain.key,
+        );
+      }
+    });
+
+    test('without a baseline nothing is invented', () async {
+      await signedUpUser();
+      await saveBaselinePeriod();
+      final stored = await repository.loadSessions('user-1');
+
+      expect(repository.deviationSeries(stored), isEmpty);
+    });
+
+    test('familiarisation sessions are not plotted', () async {
+      // They are discarded from the baseline precisely because practice distorts them.
+      await signedUpUser();
+      final engine = await saveBaselinePeriod();
+      final stored = await repository.loadSessions('user-1');
+
+      final plotted = repository
+          .deviationSeries(stored, baseline: engine.baseline)
+          .map((point) => point.at)
+          .toSet();
+      expect(plotted, isNot(contains(stored[0].completedAt)));
+      expect(plotted, isNot(contains(stored[1].completedAt)));
+    });
+
+    test('the baseline-period values are small, being in-sample', () async {
+      await signedUpUser();
+      final engine = await saveBaselinePeriod();
+      final stored = await repository.loadSessions('user-1');
+
+      for (final point in repository.deviationSeries(
+        stored,
+        baseline: engine.baseline,
+      )) {
+        expect(point.ewma, lessThan(kDefaultThreshold));
+      }
+    });
+
+    test('later sessions follow the baseline period in order', () async {
+      await signedUpUser();
+      final engine = await saveBaselinePeriod();
+      final result = engine.update(makeSession());
+      await repository.saveSession(
+        session: buildSession(
+          id: 'after',
+          result: result,
+          at: DateTime.utc(2026, 5, 20, 10),
+        ),
+        engine: engine,
+      );
+
+      final stored = await repository.loadSessions('user-1');
+      final series = repository.deviationSeries(
+        stored,
+        baseline: engine.baseline,
+      );
+
+      expect(series, hasLength(kBaselineSessions + 1));
+      for (var i = 1; i < series.length; i++) {
+        expect(
+          series[i].at.isBefore(series[i - 1].at),
+          isFalse,
+          reason: 'point $i is out of order',
+        );
+      }
+    });
+
+    test(
+      'a confounded session inside the baseline period is not plotted',
+      () async {
+        // The engine did not pool it, so it must not appear as though it had.
+        await signedUpUser();
+        final engine = ScreeningEngine();
+        final plan = [
+          makeSession(sessionId: 'f1'),
+          makeSession(sessionId: 'f2'),
+          makeSession(sessionId: 'tired', confounded: true),
+          ...variedBaselineSessions(),
+        ];
+        for (var i = 0; i < plan.length; i++) {
+          final result = engine.update(plan[i]);
+          await repository.saveSession(
+            session: buildSession(
+              id: 'session-$i',
+              result: result,
+              features: plan[i].features,
+              at: DateTime.utc(2026, 4, 2 + i * 2, 10),
+              checkIn: plan[i].confounded
+                  ? CheckIn(
+                      sleep: SleepQuality.poor,
+                      fatigue: FatigueLevel.none,
+                      illnessOrMedicationChange: false,
+                      answeredAt: DateTime.utc(2026, 4, 2, 10),
+                    )
+                  : null,
+            ),
+            engine: engine,
+          );
+        }
+
+        final stored = await repository.loadSessions('user-1');
+        expect(
+          repository.deviationSeries(stored, baseline: engine.baseline),
+          hasLength(kBaselineSessions),
+        );
+      },
+    );
+
+    test('showing them does not disturb the engine', () async {
+      // Display only: the EWMA and the run length must be exactly what they were.
+      await signedUpUser();
+      final engine = await saveBaselinePeriod();
+      final stored = await repository.loadSessions('user-1');
+
+      final ewmaBefore = engine.ewma;
+      final runBefore = engine.run;
+      repository
+        ..deviationSeries(stored, baseline: engine.baseline)
+        ..domainSeries(stored, baseline: engine.baseline);
+
+      expect(engine.ewma, ewmaBefore);
+      expect(engine.run, runBefore);
+      expect(engine.ewma, 0.0);
+    });
   });
 
   group('export', () {

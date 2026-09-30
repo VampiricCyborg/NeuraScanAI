@@ -157,6 +157,7 @@ class _StepView extends ConsumerWidget {
       case SessionStep.speech:
         return SpeechTask(
           capture: ref.watch(audioCaptureProvider),
+          sceneIndex: state.sceneIndex,
           onFinished: controller.finishSpeech,
         );
 

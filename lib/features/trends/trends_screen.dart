@@ -102,6 +102,14 @@ class _OverallTab extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
+                text.trendsBaselineNote,
+                style: context.texts.bodySmall?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
                 text.trendsExcludedNote,
                 style: context.texts.bodySmall?.copyWith(
                   color: context.colors.onSurfaceVariant,

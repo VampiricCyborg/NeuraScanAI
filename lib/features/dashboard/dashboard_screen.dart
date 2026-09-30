@@ -7,7 +7,7 @@
 /// While the baseline is still building, the standing result is replaced by progress
 /// towards it. That is the honest thing to show -- there is no result yet -- and it is
 /// also the retention problem the app has to solve, since a user who does not
-/// understand why the first seven sessions say nothing will stop before the eighth.
+/// understand why the first sessions say nothing will stop before the baseline is set.
 library;
 
 import 'package:flutter/material.dart';
@@ -75,7 +75,46 @@ class DashboardScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 22),
 
-              if (baselineReady)
+              if (baselineReady && latest == null)
+                // The baseline has just been set and nothing has been compared with it yet.
+                // Saying so is better than showing "building your baseline" for a baseline
+                // that is finished.
+                SectionCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            color: context.colors.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              text.statusBaselineSet,
+                              style: context.texts.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        text.statusBaselineSetBody,
+                        style: context.texts.bodyMedium?.copyWith(height: 1.5),
+                      ),
+                      const SizedBox(height: 14),
+                      OutlinedButton.icon(
+                        onPressed: () => context.go(Routes.trends),
+                        icon: const Icon(Icons.show_chart),
+                        label: Text(text.summaryViewTrends),
+                      ),
+                    ],
+                  ),
+                )
+              else if (baselineReady)
                 _StatusCard(status: status, session: latest)
               else
                 SectionCard(

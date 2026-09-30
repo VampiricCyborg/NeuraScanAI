@@ -112,6 +112,14 @@ class SummaryScreen extends ConsumerWidget {
                 onPressed: () => context.push(Routes.report),
                 icon: const Icon(Icons.description_outlined),
                 label: Text(text.summaryViewReport),
+              )
+            else if (session.status == ScreeningStatus.buildingBaseline &&
+                ref.watch(baselineRemainingProvider) == 0)
+              // The session that completed the baseline. Trends exist now, so say where.
+              OutlinedButton.icon(
+                onPressed: () => context.go(Routes.trends),
+                icon: const Icon(Icons.show_chart),
+                label: Text(text.summaryViewTrends),
               ),
             const SizedBox(height: 10),
             PrimaryButton(

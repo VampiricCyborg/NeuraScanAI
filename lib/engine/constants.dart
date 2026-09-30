@@ -18,10 +18,17 @@ const int kFamiliarisationSessions = 2;
 
 /// Valid, unconfounded sessions summarised into the frozen baseline.
 ///
-/// Six is a compromise: enough observations for a median and a median absolute
-/// deviation to mean something, few enough that a user reaches a usable baseline
-/// in roughly two weeks at one session every two to three days.
-const int kBaselineSessions = 6;
+/// Four, which is the project team's decision after trying the app: six felt like too
+/// long before the app had anything to say. At one session every two to three days,
+/// two familiarisation sessions plus four pooled ones is about two weeks.
+///
+/// The trade-off is worth knowing. A median and a MAD from four observations are noisier
+/// than from six, so the frozen baseline is a rougher estimate of the user's normal and
+/// the alert thresholds calibrated in the report's simulation (which used six) are not
+/// guaranteed to hold the same false-alert rate. The persistence rule and EWMA still stand
+/// between one unlucky baseline and an alert, but the simulation should be re-run with this
+/// value before the figures in the report are quoted for it.
+const int kBaselineSessions = 4;
 
 /// Consistency constant that rescales a median absolute deviation so that it
 /// estimates the standard deviation of a normal distribution.
@@ -29,7 +36,7 @@ const double kMadToSigma = 1.4826;
 
 /// A baseline scale of zero would make every later z-score infinite, which
 /// happens easily on bounded features -- a user who recalls 6 of 8 words in all
-/// six baseline sessions has a MAD of exactly zero. The scale is therefore
+/// every baseline session has a MAD of exactly zero. The scale is therefore
 /// floored at a small fraction of the median, with an absolute epsilon as a last
 /// resort for features whose median is itself zero.
 const double kScaleFloorFraction = 0.02;

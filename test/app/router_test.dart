@@ -35,7 +35,7 @@ void main() {
       tester,
     ) async {
       // A user who does not know why the first seven sessions say nothing will conclude the
-      // app is broken and stop before the eighth.
+      // app is broken and stop before the baseline is set.
       await pumpApp(tester);
       // Page two of three.
       await tester.tap(find.text('Next'));

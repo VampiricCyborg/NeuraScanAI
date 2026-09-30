@@ -36,9 +36,23 @@ const double kResampleHz = 100.0;
 /// densely in one corner cannot pass the gate.
 const int kCoverageBins = 60;
 
-/// Proximity, in device-independent pixels, at which a sample counts as covering
-/// its part of the guide.
-const double kCoverageToleranceDp = 24.0;
+/// How close a sample must be to the guide to count as covering its part of it,
+/// as a fraction of the gap between neighbouring turns.
+///
+/// This was a fixed 24 dp, which turned out to be far too generous on a real phone:
+/// there the turns are only about 55 dp apart, so 24 dp either side of the line meant
+/// a finger anywhere in roughly 85 % of the space between turns still counted as
+/// "on the spiral", and a trace well off the line reached the 70 % gate anyway.
+///
+/// Tying it to the turn spacing keeps it meaningful at any screen size. A quarter of
+/// the spacing is about 14 dp on a phone, comfortably above the roughly 6 dp of
+/// ordinary hand error in the report's simulation parameters, but tight enough that
+/// straying half way to the next turn no longer counts.
+const double kCoverageToleranceFraction = 0.25;
+
+/// The largest step between consecutive samples, as a fraction of the turn spacing, that
+/// still counts as the same continuous stroke. Beyond it the turn is re-resolved by radius.
+const double kMaxContinuousStepFraction = 0.6;
 
 /// Samples closer than this to the centre are left out of the error analysis.
 ///
@@ -99,6 +113,12 @@ class GuideSpiral {
 
   double get _totalAngle => turns * 2 * math.pi;
 
+  /// Radial distance between neighbouring turns.
+  ///
+  /// The natural unit for judging accuracy: how far off the line is only meaningful
+  /// relative to how far away the next turn is.
+  double get turnSpacing => maxRadius / turns;
+
   /// Guide radius at angle [theta], measured from the centre outwards.
   double radiusAt(double theta) => maxRadius * (theta / _totalAngle);
 
@@ -109,6 +129,42 @@ class GuideSpiral {
       x: centre.x + r * math.cos(theta),
       y: centre.y + r * math.sin(theta),
     );
+  }
+
+  /// The unwrapped angle to start tracking from, given the first recorded point.
+  ///
+  /// `atan2` only says where a point is *round* the circle, in -pi..pi. Which *turn* of
+  /// the spiral the finger is on is invisible in that: a point 3.5 rad round the third
+  /// turn and a point -2.8 rad round the zeroth turn look identical. Taking the raw angle
+  /// silently assumed the first turn, and every later sample was then compared with the
+  /// guide one full turn out, so a perfectly accurate trace scored as a poor one.
+  ///
+  /// It matters in practice, not just in theory. A touchscreen only starts reporting a drag
+  /// after the finger has moved past the touch slop, roughly 18 px, so the first recorded
+  /// point is already well out from the centre and often more than half a turn round.
+  ///
+  /// So the turn is chosen by radius: of the angles that fit the point's direction, the one
+  /// whose guide radius is nearest the point's actual distance from the centre. Nearer the
+  /// centre than one turn there is only one sensible answer, and the search reduces to the
+  /// raw angle, as before.
+  double initialAngle(TracePoint first) {
+    final dx = first.x - centre.x;
+    final dy = first.y - centre.y;
+    final distance = math.sqrt(dx * dx + dy * dy);
+    final raw = math.atan2(dy, dx);
+
+    var best = raw;
+    var bestError = double.infinity;
+    for (var turn = 0; turn <= turns; turn++) {
+      final candidate = raw + 2 * math.pi * turn;
+      final error = (distance - radiusAt(math.max(0.0, candidate))).abs();
+      // Strictly better, so a tie keeps the earlier turn.
+      if (error < bestError - 1e-9) {
+        bestError = error;
+        best = candidate;
+      }
+    }
+    return best;
   }
 
   /// Unwrapped angle of a trace point, given the angle of the previous point.
@@ -183,14 +239,20 @@ SpiralResult extractSpiralFeatures({
   final analysableErrors = <double>[];
   final analysableTimes = <double>[];
 
-  var previousAngle = math.atan2(
-    trace.first.y - guide.centre.y,
-    trace.first.x - guide.centre.x,
-  );
+  var previousAngle = 0.0;
+  TracePoint? previous;
 
   for (final point in trace) {
-    final theta = guide.unwrapAngle(point, previousAngle);
+    // Continuity picks the turn while consecutive points are close together. It cannot
+    // across a gap: the touchscreen reports nothing until the finger passes the pan slop
+    // (about 36 px), so the point after the touch-down sample can be a long way on, and
+    // "the nearest angle to the last one" then lands a whole turn out for the rest of the
+    // trace. After a gap, and for the first point, the turn is chosen by radius instead.
+    final theta = previous == null || _isGap(previous, point, guide)
+        ? guide.initialAngle(point)
+        : guide.unwrapAngle(point, previousAngle);
     previousAngle = theta;
+    previous = point;
 
     final dx = point.x - guide.centre.x;
     final dy = point.y - guide.centre.y;
@@ -256,22 +318,37 @@ SpiralResult extractSpiralFeatures({
   );
 }
 
+/// Whether [to] is too far from [from] to trust that it is the same turn of the spiral.
+///
+/// A fraction of the turn spacing, because that is the scale on which the turns are
+/// distinguishable at all. A finger moving fast enough to cover this in one touch sample
+/// (about 30 dp between samples on a phone, roughly 1800 dp/s at 60 Hz) is far quicker than
+/// anyone traces a spiral.
+bool _isGap(TracePoint from, TracePoint to, GuideSpiral guide) {
+  final dx = to.x - from.x;
+  final dy = to.y - from.y;
+  return math.sqrt(dx * dx + dy * dy) >
+      guide.turnSpacing * kMaxContinuousStepFraction;
+}
+
 /// Share of the guide the trace came close to.
 ///
 /// The guide's angular range is split into bins and a bin counts as covered when
-/// some sample fell in it within [kCoverageToleranceDp] of the guide radius.
+/// some sample fell in it within [kCoverageToleranceFraction] of a turn's spacing of
+/// the guide radius.
 double _coverage({
   required List<double> angles,
   required List<double> errors,
   required GuideSpiral guide,
 }) {
   final totalAngle = guide.turns * 2 * math.pi;
+  final tolerance = guide.turnSpacing * kCoverageToleranceFraction;
   final covered = List<bool>.filled(kCoverageBins, false);
 
   for (var i = 0; i < angles.length; i++) {
     final theta = angles[i];
     if (theta < 0 || theta > totalAngle) continue;
-    if (errors[i].abs() > kCoverageToleranceDp) continue;
+    if (errors[i].abs() > tolerance) continue;
 
     final bin = ((theta / totalAngle) * kCoverageBins).floor();
     if (bin >= 0 && bin < kCoverageBins) covered[bin] = true;

@@ -3,8 +3,9 @@
 The whole point of NeuraScan is that a score is judged against the user's own
 history rather than a population norm, and this module is where that history is
 frozen into a comparison point.  Robust statistics are used throughout because
-the baseline rests on six observations, where a single unusual session would
-drag a mean and inflate a standard deviation enough to hide a later decline.
+the baseline rests on only a handful of observations, where a single unusual
+session would drag a mean and inflate a standard deviation enough to hide a
+later decline.
 """
 
 from __future__ import annotations

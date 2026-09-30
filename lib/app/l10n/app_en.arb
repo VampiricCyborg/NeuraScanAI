@@ -119,7 +119,7 @@
       }
     }
   },
-  "dashboardBaselineExplainer": "The first two sessions do not count, because everyone improves just by getting used to the tasks. After that, six good sessions set your baseline.",
+  "dashboardBaselineExplainer": "The first two sessions do not count, because everyone improves just by getting used to the tasks. After that, four good sessions set your baseline.",
   "dashboardBaselineRemaining": "{count, plural, =1{One more session to go} other{{count} more sessions to go}}",
   "@dashboardBaselineRemaining": {
     "placeholders": {
@@ -136,6 +136,8 @@
   "statusNotable": "A notable change",
   "statusNotableBody": "Your measurements have stayed outside your usual range for several sessions. This is worth mentioning to a doctor. It is not a diagnosis, and there are many ordinary explanations.",
   "statusBuilding": "Building your baseline",
+  "statusBaselineSet": "Your baseline is set",
+  "statusBaselineSetBody": "From now on, each session is compared with your own usual range. Your trends are ready to view.",
   "statusExcluded": "Set aside",
   "statusExcludedBody": "You told us about {reasons}, so this session is saved but left out of your trend.",
   "@statusExcludedBody": {
@@ -257,6 +259,7 @@
   "summaryWordsMissed": "Not remembered",
   "summaryWhatContributed": "What this is based on",
   "summaryViewReport": "See the full report",
+  "summaryViewTrends": "See your trends",
   "summaryBackToHome": "Back to home",
 
   "reportTitle": "Your report",
@@ -308,6 +311,7 @@
   "trendsNoData": "Your trends will appear once your baseline is set.",
   "trendsExcludedNote": "Sessions you marked as tired or unwell are not shown here.",
   "trendsHigherIsWorse": "Higher means further from your usual range.",
+  "trendsBaselineNote": "Your first sessions set your baseline, so they sit close to zero by design. Real changes show from here on.",
 
   "profileTitle": "You and your settings",
   "profileReminders": "Reminders",

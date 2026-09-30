@@ -6,16 +6,12 @@
 /// buffer, then forget it -- keeps that lifetime in one place instead of spread across
 /// a task screen.
 ///
-/// The implementation used in this build is [SimulatedAudioCapture]: it synthesises a
-/// plausible speech-like waveform instead of opening the microphone. That is a real
-/// limitation and worth stating plainly. The feature extraction it feeds is the
-/// genuine article -- the same energy envelope, voice-activity detection and syllable
-/// counting that would run on a real recording -- but the *input* is manufactured, so
-/// nothing here demonstrates that the speech features track real speech. Doing that
-/// needs a pilot study with real recordings, which is listed as future work.
-///
-/// Swapping in a real implementation means writing one class against this interface
-/// and changing one provider. Nothing above this line knows which is in use.
+/// The app uses `RecordAudioCapture` (record_audio_capture.dart) on a device, which streams
+/// the real microphone into memory. [SimulatedAudioCapture] below synthesises a plausible
+/// speech-like waveform instead, and exists for tests and for running on a machine with no
+/// microphone. It is not speech and nothing measured from it says anything about people.
+/// Whether the speech features track real speech is a question for a pilot study, which the
+/// report lists as future work.
 library;
 
 import 'dart:async';
@@ -79,6 +75,11 @@ abstract interface class AudioCaptureService {
 
   /// True while capturing.
   bool get isRecording;
+
+  /// Live input loudness in 0..1 while recording, for the on-screen level meter.
+  ///
+  /// Empty for sources with no real input to meter.
+  Stream<double> get levels;
 }
 
 /// Synthesises speech-like audio instead of opening the microphone.
@@ -109,6 +110,9 @@ class SimulatedAudioCapture implements AudioCaptureService {
 
   @override
   bool get isRecording => _startedAt != null;
+
+  @override
+  Stream<double> get levels => const Stream.empty();
 
   @override
   Future<bool> ensurePermission() async => true;
@@ -197,6 +201,9 @@ class SilentAudioCapture implements AudioCaptureService {
   bool get isRecording => _recording;
 
   @override
+  Stream<double> get levels => const Stream.empty();
+
+  @override
   Future<bool> ensurePermission() async => true;
 
   @override
@@ -216,6 +223,9 @@ class SilentAudioCapture implements AudioCaptureService {
 class DeniedAudioCapture implements AudioCaptureService {
   @override
   bool get isRecording => false;
+
+  @override
+  Stream<double> get levels => const Stream.empty();
 
   @override
   Future<bool> ensurePermission() async => false;

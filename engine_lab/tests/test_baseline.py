@@ -27,6 +27,16 @@ from neurascan_engine.constants import MAD_TO_SIGMA, SCALE_FLOOR_FRACTION
 from .conftest import NOMINAL, make_session, varied_baseline_sessions
 
 
+def test_the_baseline_is_four_sessions_as_decided() -> None:
+    """Pinned so that changing it is deliberate, not a side effect.
+
+    The report's simulation used six.  Four is the team's decision after trying the
+    app; see the note on ``BASELINE_SESSIONS`` before changing it.
+    """
+    assert BASELINE_SESSIONS == 4
+    assert FAMILIARISATION_SESSIONS == 2
+
+
 class TestUT3FamiliarisationExcluded:
     """UT3 -- the first sessions are discarded so practice is not baked in."""
 
@@ -37,8 +47,8 @@ class TestUT3FamiliarisationExcluded:
             assert status_of(result) is Status.BUILDING_BASELINE
         assert not engine.baseline_ready
 
-    def test_baseline_freezes_on_the_eighth_session(self) -> None:
-        """Test case TC7: two familiarisation plus six pooled sessions."""
+    def test_baseline_freezes_after_familiarisation_plus_the_pool(self) -> None:
+        """Test case TC7: two familiarisation plus four pooled sessions."""
         engine = ScreeningEngine()
         for i in range(FAMILIARISATION_SESSIONS + BASELINE_SESSIONS):
             engine.update(make_session(session_id=str(i)))

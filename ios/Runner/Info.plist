@@ -7,7 +7,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Neurascan Ai</string>
+	<string>NeuraScan AI</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>NeuraScan AI listens for twenty seconds while you describe a picture, to measure how fast you speak and how often you pause. The recording is analysed on your phone and deleted straight away; it is never saved or sent anywhere.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

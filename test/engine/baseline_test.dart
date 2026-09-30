@@ -30,14 +30,21 @@ void main() {
         expect(engine.baselineReady, isFalse);
       });
 
-      test('the baseline freezes on the eighth session (TC7)', () {
-        final engine = ScreeningEngine();
-        for (var i = 0; i < kFamiliarisationSessions + kBaselineSessions; i++) {
-          engine.update(makeSession(sessionId: '$i'));
-        }
-        expect(engine.baselineReady, isTrue);
-        expect(engine.baseline!.sessionCount, kBaselineSessions);
-      });
+      test(
+        'the baseline freezes after familiarisation plus the pool (TC7)',
+        () {
+          final engine = ScreeningEngine();
+          for (
+            var i = 0;
+            i < kFamiliarisationSessions + kBaselineSessions;
+            i++
+          ) {
+            engine.update(makeSession(sessionId: '$i'));
+          }
+          expect(engine.baselineReady, isTrue);
+          expect(engine.baseline!.sessionCount, kBaselineSessions);
+        },
+      );
 
       test('familiarisation values never reach the baseline medians', () {
         final engine = ScreeningEngine();

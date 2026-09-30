@@ -28,7 +28,8 @@ A session is a check-in followed by five tasks:
 The engine then:
 
 1. discards the first two sessions (practice effect);
-2. freezes a per-feature median and MAD from the next six valid sessions;
+2. freezes a per-feature median and MAD from the next four valid sessions (the report's
+   simulation used six; see the note in `lib/engine/constants.dart`);
 3. converts later sessions to robust z-scores, averaged into four domains and combined with
    weights 35 / 25 / 25 / 15 %, counting only changes in the worse direction;
 4. smooths the index with an EWMA (lambda 0.3);

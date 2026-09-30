@@ -10,6 +10,7 @@
 /// never stored.
 library;
 
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/material.dart';
 
 import '../../../app/l10n/generated/app_localizations.dart';
@@ -118,6 +119,11 @@ class _SpiralTaskState extends State<SpiralTask> {
               _canvasSize = size;
 
               return GestureDetector(
+                // Report the drag from where the finger landed. By default a drag only
+                // starts once the finger has moved past the touch slop (about 18 px), so
+                // the first recorded point was already well out from the centre and the
+                // start of the spiral -- the tightest, most telling part -- was lost.
+                dragStartBehavior: DragStartBehavior.down,
                 // Both handlers record, so a tap-and-drag and a slow drag produce the
                 // same series. onPanUpdate alone would miss the first sample.
                 onPanStart: (details) => _addPoint(details.localPosition),
@@ -180,15 +186,21 @@ class _SpiralTaskState extends State<SpiralTask> {
           ],
         ),
 
-        if (!enoughTraced && _trace.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
+        const SizedBox(height: 8),
+        // Always laid out, and only hidden. This line used to be added to the column once
+        // drawing began, which shrank the canvas by about 40 px while the user's finger was
+        // on it. The guide spiral is centred in the canvas, so it slid roughly 20 px under
+        // the finger mid-stroke -- enough to make an accurate trace look inaccurate and to
+        // corrupt the accuracy measurement itself.
+        Opacity(
+          opacity: !enoughTraced && _trace.isNotEmpty ? 1.0 : 0.0,
+          child: Text(
             text.taskSpiralIncomplete,
             style: context.texts.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
           ),
-        ],
+        ),
 
         const SizedBox(height: 12),
         PrimaryButton(

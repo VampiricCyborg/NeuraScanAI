@@ -23,6 +23,7 @@ import 'package:drift/drift.dart';
 import '../engine/baseline.dart';
 import '../engine/constants.dart';
 import '../engine/features.dart';
+import '../engine/scoring.dart';
 import '../engine/screening_engine.dart';
 import 'local_db.dart';
 import 'models.dart';
@@ -439,18 +440,69 @@ class Repository {
 
   // -- derived views --------------------------------------------------------
 
+  /// The sessions that built the baseline, scored against it for display.
+  ///
+  /// These are not "scored" sessions in the engine's sense: they defined normal, so they
+  /// were never compared with it, and their stored status stays "building baseline". But a
+  /// user who has just finished the last of them expects to see trends at once, not after
+  /// yet another session, so for display they are placed against the baseline they created.
+  ///
+  /// This is display only. Nothing here touches the engine's state, the EWMA or the run
+  /// length, and the values are in-sample -- each session helped set the baseline it is
+  /// measured against -- so they sit close to zero by construction. The trends screen says
+  /// so.
+  ///
+  /// Selects exactly the sessions the engine pooled: valid, past familiarisation and not
+  /// confounded, while still in the building state.
+  List<({SessionRecord session, Map<Domain, double> scores, double index})>
+  _baselinePeriod(List<SessionRecord> sessions, Baseline baseline) {
+    final result =
+        <({SessionRecord session, Map<Domain, double> scores, double index})>[];
+    var seen = 0;
+    for (final session in sessions) {
+      seen++;
+      if (session.status != ScreeningStatus.buildingBaseline) continue;
+      if (!session.valid || session.features.isEmpty) continue;
+      if (seen <= kFamiliarisationSessions) continue;
+      if (session.checkIn.isConfounded) continue;
+
+      final scores = domainScores(
+        session.features,
+        baseline.median,
+        baseline.scale,
+      );
+      result.add((
+        session: session,
+        scores: scores,
+        index: deviationIndex(scores),
+      ));
+    }
+    return result;
+  }
+
   /// The per-domain history for the trend charts.
   ///
-  /// Only scored sessions appear. Plotting a confounded or invalid session as a
-  /// gap-free point would show the user a change in their trend that the engine
-  /// explicitly decided to ignore.
+  /// Only scored sessions appear, plus -- when a [baseline] is given -- the sessions that
+  /// built it. Plotting a confounded or invalid session as a gap-free point would show the
+  /// user a change in their trend that the engine explicitly decided to ignore.
   Map<Domain, List<({DateTime at, double score})>> domainSeries(
-    List<SessionRecord> sessions,
-  ) {
+    List<SessionRecord> sessions, {
+    Baseline? baseline,
+  }) {
     final series = {
       for (final domain in Domain.values)
         domain: <({DateTime at, double score})>[],
     };
+    if (baseline != null) {
+      for (final point in _baselinePeriod(sessions, baseline)) {
+        for (final domain in Domain.values) {
+          series[domain]!.add((
+            at: point.session.completedAt,
+            score: point.scores[domain] ?? 0.0,
+          ));
+        }
+      }
+    }
     for (final session in sessions) {
       final scores = session.domainScores;
       if (!session.countsTowardsTrend || scores == null) continue;
@@ -465,13 +517,33 @@ class Repository {
   }
 
   /// The smoothed deviation history, for the main trend chart.
+  ///
+  /// With a [baseline], the sessions that built it come first, smoothed the same way
+  /// (an EWMA over their deviation indices, starting from zero). The engine's own smoothing
+  /// starts from zero at the first scored session, so the line can step slightly where the
+  /// two meet; both values are small by construction, and only the engine's decides the
+  /// status.
   List<({DateTime at, double ewma})> deviationSeries(
-    List<SessionRecord> sessions,
-  ) => [
-    for (final session in sessions)
-      if (session.countsTowardsTrend && session.ewma != null)
-        (at: session.completedAt, ewma: session.ewma!),
-  ];
+    List<SessionRecord> sessions, {
+    Baseline? baseline,
+  }) {
+    final series = <({DateTime at, double ewma})>[];
+
+    if (baseline != null) {
+      var smoothed = 0.0;
+      for (final point in _baselinePeriod(sessions, baseline)) {
+        smoothed = kEwmaLambda * point.index + (1 - kEwmaLambda) * smoothed;
+        series.add((at: point.session.completedAt, ewma: smoothed));
+      }
+    }
+
+    for (final session in sessions) {
+      if (session.countsTowardsTrend && session.ewma != null) {
+        series.add((at: session.completedAt, ewma: session.ewma!));
+      }
+    }
+    return series;
+  }
 
   /// How many more sessions before the baseline freezes.
   ///

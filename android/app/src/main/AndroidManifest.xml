@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Microphone, for the twenty-second picture description. Audio is streamed into
+         memory, measured, and discarded; it is never written to storage. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
-        android:label="neurascan_ai"
+        android:label="NeuraScan AI"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
