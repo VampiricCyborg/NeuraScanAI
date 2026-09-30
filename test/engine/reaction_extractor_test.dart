@@ -5,8 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:neurascan_ai/engine/extractors/reaction_extractor.dart';
 
 void main() {
-  List<ReactionTrial> responded(List<int> times) =>
-      [for (final ms in times) ReactionTrial.responded(ms)];
+  List<ReactionTrial> responded(List<int> times) => [
+    for (final ms in times) ReactionTrial.responded(ms),
+  ];
 
   group('trial usability', () {
     test('a plausible response is usable', () {
@@ -56,7 +57,9 @@ void main() {
     });
 
     test('does not depend on the order trials arrived in', () {
-      final ascending = extractReactionFeatures(responded([280, 300, 320, 340]));
+      final ascending = extractReactionFeatures(
+        responded([280, 300, 320, 340]),
+      );
       final shuffled = extractReactionFeatures(responded([340, 280, 320, 300]));
       expect(shuffled.medianMs, ascending.medianMs);
     });
@@ -79,8 +82,10 @@ void main() {
     test('rises with spread at the same average', () {
       final tight = extractReactionFeatures(responded([310, 315, 325, 330]));
       final loose = extractReactionFeatures(responded([200, 260, 380, 440]));
-      expect(loose.coefficientOfVariation,
-          greaterThan(tight.coefficientOfVariation));
+      expect(
+        loose.coefficientOfVariation,
+        greaterThan(tight.coefficientOfVariation),
+      );
     });
 
     test('is dimensionless, so scaling every trial leaves it unchanged', () {
@@ -92,15 +97,18 @@ void main() {
       );
     });
 
-    test('is zero when only one trial survives, having no spread to estimate', () {
-      final result = extractReactionFeatures([
-        const ReactionTrial.responded(320),
-        const ReactionTrial.anticipation(),
-        const ReactionTrial.timedOut(),
-      ]);
-      expect(result.usableTrials, 1);
-      expect(result.coefficientOfVariation, 0.0);
-    });
+    test(
+      'is zero when only one trial survives, having no spread to estimate',
+      () {
+        final result = extractReactionFeatures([
+          const ReactionTrial.responded(320),
+          const ReactionTrial.anticipation(),
+          const ReactionTrial.timedOut(),
+        ]);
+        expect(result.usableTrials, 1);
+        expect(result.coefficientOfVariation, 0.0);
+      },
+    );
 
     test('uses the sample standard deviation', () {
       // Values 100, 200, 300: mean 200, sample SD 100, so the CV is 0.5. With the
@@ -124,27 +132,33 @@ void main() {
       expect(result.medianMs, 320.0);
     });
 
-    test('timeouts reduce the usable count without counting as anticipations', () {
-      final result = extractReactionFeatures([
-        const ReactionTrial.timedOut(),
-        ...responded([300, 320]),
-      ]);
-      expect(result.anticipations, 0);
-      expect(result.usableTrials, 2);
-      expect(result.totalTrials, 3);
-    });
+    test(
+      'timeouts reduce the usable count without counting as anticipations',
+      () {
+        final result = extractReactionFeatures([
+          const ReactionTrial.timedOut(),
+          ...responded([300, 320]),
+        ]);
+        expect(result.anticipations, 0);
+        expect(result.usableTrials, 2);
+        expect(result.totalTrials, 3);
+      },
+    );
 
-    test('a session with nothing usable returns zeros rather than throwing', () {
-      // The quality gate is what turns this into an invalid session; the extractor
-      // must not crash on the way there.
-      final result = extractReactionFeatures(
-        List.filled(10, const ReactionTrial.anticipation()),
-      );
-      expect(result.usableTrials, 0);
-      expect(result.medianMs, 0.0);
-      expect(result.coefficientOfVariation, 0.0);
-      expect(result.anticipations, 10);
-    });
+    test(
+      'a session with nothing usable returns zeros rather than throwing',
+      () {
+        // The quality gate is what turns this into an invalid session; the extractor
+        // must not crash on the way there.
+        final result = extractReactionFeatures(
+          List.filled(10, const ReactionTrial.anticipation()),
+        );
+        expect(result.usableTrials, 0);
+        expect(result.medianMs, 0.0);
+        expect(result.coefficientOfVariation, 0.0);
+        expect(result.anticipations, 10);
+      },
+    );
 
     test('an empty trial list returns zeros', () {
       final result = extractReactionFeatures(const []);

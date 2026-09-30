@@ -12,10 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:neurascan_ai/engine/extractors/spiral_extractor.dart';
 
 void main() {
-  const guide = GuideSpiral(
-    centre: (x: 180.0, y: 180.0),
-    maxRadius: 150.0,
-  );
+  const guide = GuideSpiral(centre: (x: 180.0, y: 180.0), maxRadius: 150.0);
 
   /// Samples the guide at [sampleRateHz] over [seconds], optionally adding a
   /// constant radial [offset] and a [wobbleHz] oscillation of [wobbleAmplitude].
@@ -41,7 +38,7 @@ void main() {
       final progress = i / (count - 1);
       final theta =
           (startFraction + progress * (coverageFraction - startFraction)) *
-              totalAngle;
+          totalAngle;
       final t = i / sampleRateHz;
 
       var radius = guide.radiusAt(theta) + offset;
@@ -49,11 +46,13 @@ void main() {
         radius += wobbleAmplitude * math.sin(2 * math.pi * wobbleHz * t);
       }
 
-      points.add(TracePoint(
-        x: guide.centre.x + radius * math.cos(theta),
-        y: guide.centre.y + radius * math.sin(theta),
-        timestampMs: (t * 1000).round(),
-      ));
+      points.add(
+        TracePoint(
+          x: guide.centre.x + radius * math.cos(theta),
+          y: guide.centre.y + radius * math.sin(theta),
+          timestampMs: (t * 1000).round(),
+        ),
+      );
     }
     return points;
   }
@@ -109,27 +108,39 @@ void main() {
     });
 
     test('a constant radial offset shows up as that offset', () {
-      final result =
-          extractSpiralFeatures(trace: traceGuide(offset: 8.0), guide: guide);
+      final result = extractSpiralFeatures(
+        trace: traceGuide(offset: 8.0),
+        guide: guide,
+      );
       expect(result.rmse, closeTo(8.0, 0.5));
     });
 
     test('a larger stray gives a larger error', () {
-      final near =
-          extractSpiralFeatures(trace: traceGuide(offset: 3.0), guide: guide);
-      final far =
-          extractSpiralFeatures(trace: traceGuide(offset: 15.0), guide: guide);
+      final near = extractSpiralFeatures(
+        trace: traceGuide(offset: 3.0),
+        guide: guide,
+      );
+      final far = extractSpiralFeatures(
+        trace: traceGuide(offset: 15.0),
+        guide: guide,
+      );
       expect(far.rmse, greaterThan(near.rmse));
     });
 
-    test('the error is a magnitude, so an inward stray counts like an outward one',
-        () {
-      final inward =
-          extractSpiralFeatures(trace: traceGuide(offset: -9.0), guide: guide);
-      final outward =
-          extractSpiralFeatures(trace: traceGuide(offset: 9.0), guide: guide);
-      expect(inward.rmse, closeTo(outward.rmse, 0.6));
-    });
+    test(
+      'the error is a magnitude, so an inward stray counts like an outward one',
+      () {
+        final inward = extractSpiralFeatures(
+          trace: traceGuide(offset: -9.0),
+          guide: guide,
+        );
+        final outward = extractSpiralFeatures(
+          trace: traceGuide(offset: 9.0),
+          guide: guide,
+        );
+        expect(inward.rmse, closeTo(outward.rmse, 0.6));
+      },
+    );
   });
 
   group('tremor index', () {
@@ -146,13 +157,16 @@ void main() {
       expect(result.tremorIndex, greaterThan(0.6));
     });
 
-    test('a 1 Hz sway does not, being deliberate movement rather than tremor', () {
-      final result = extractSpiralFeatures(
-        trace: traceGuide(wobbleHz: 1.0, wobbleAmplitude: 5.0),
-        guide: guide,
-      );
-      expect(result.tremorIndex, lessThan(0.3));
-    });
+    test(
+      'a 1 Hz sway does not, being deliberate movement rather than tremor',
+      () {
+        final result = extractSpiralFeatures(
+          trace: traceGuide(wobbleHz: 1.0, wobbleAmplitude: 5.0),
+          guide: guide,
+        );
+        expect(result.tremorIndex, lessThan(0.3));
+      },
+    );
 
     test('a wobble at the top of the band still counts', () {
       final result = extractSpiralFeatures(
@@ -187,8 +201,10 @@ void main() {
     test('a constant offset is not mistaken for tremor', () {
       // The mean is removed before the transform, so a trace drawn simply too
       // large does not put all its power at DC and dilute the band share.
-      final result =
-          extractSpiralFeatures(trace: traceGuide(offset: 20.0), guide: guide);
+      final result = extractSpiralFeatures(
+        trace: traceGuide(offset: 20.0),
+        guide: guide,
+      );
       expect(result.tremorIndex, lessThan(0.3));
     });
 
@@ -206,7 +222,11 @@ void main() {
       // Real touch events are neither evenly spaced nor at a consistent rate, so
       // the series is resampled before the transform.
       final result = extractSpiralFeatures(
-        trace: traceGuide(wobbleHz: 6.0, wobbleAmplitude: 5.0, sampleRateHz: 63.0),
+        trace: traceGuide(
+          wobbleHz: 6.0,
+          wobbleAmplitude: 5.0,
+          sampleRateHz: 63.0,
+        ),
         guide: guide,
       );
       expect(result.tremorIndex, greaterThan(0.5));
@@ -225,7 +245,11 @@ void main() {
 
     test('stopping half way covers about half', () {
       final result = extractSpiralFeatures(
-        trace: traceGuide(startFraction: 0.0, coverageFraction: 0.5, offset: 4.0),
+        trace: traceGuide(
+          startFraction: 0.0,
+          coverageFraction: 0.5,
+          offset: 4.0,
+        ),
         guide: guide,
       );
       expect(result.coverage, closeTo(0.5, 0.08));
@@ -243,7 +267,11 @@ void main() {
 
     test('a trace below the gate is reported as such', () {
       final result = extractSpiralFeatures(
-        trace: traceGuide(startFraction: 0.0, coverageFraction: 0.4, offset: 4.0),
+        trace: traceGuide(
+          startFraction: 0.0,
+          coverageFraction: 0.4,
+          offset: 4.0,
+        ),
         guide: guide,
       );
       expect(result.coverage, lessThan(0.70));
@@ -274,25 +302,24 @@ void main() {
       // Two touch events can share a millisecond.
       final trace = [
         for (var i = 0; i < 40; i++)
-          TracePoint(
-            x: 180.0 + i,
-            y: 180.0 + i,
-            timestampMs: (i ~/ 2) * 10,
-          ),
+          TracePoint(x: 180.0 + i, y: 180.0 + i, timestampMs: (i ~/ 2) * 10),
       ];
       final result = extractSpiralFeatures(trace: trace, guide: guide);
       expect(result.rmse.isFinite, isTrue);
       expect(result.tremorIndex.isFinite, isTrue);
     });
 
-    test('a trace too short in time to resample yields a zero tremor index', () {
-      final trace = [
-        for (var i = 0; i < 20; i++)
-          TracePoint(x: 180.0 + i, y: 180.0, timestampMs: i)
-      ];
-      final result = extractSpiralFeatures(trace: trace, guide: guide);
-      expect(result.tremorIndex, 0.0);
-      expect(result.rmse.isFinite, isTrue);
-    });
+    test(
+      'a trace too short in time to resample yields a zero tremor index',
+      () {
+        final trace = [
+          for (var i = 0; i < 20; i++)
+            TracePoint(x: 180.0 + i, y: 180.0, timestampMs: i),
+        ];
+        final result = extractSpiralFeatures(trace: trace, guide: guide);
+        expect(result.tremorIndex, 0.0);
+        expect(result.rmse.isFinite, isTrue);
+      },
+    );
   });
 }

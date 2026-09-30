@@ -1,0 +1,400 @@
+{
+  "@@locale": "en",
+
+  "appName": "NeuraScan AI",
+  "@appName": {
+    "description": "The application name. Not translated."
+  },
+
+  "appTagline": "Screening that learns your own normal",
+  "@appTagline": {
+    "description": "Shown under the app name on the splash and onboarding screens."
+  },
+
+  "notADiagnosis": "This app does not diagnose any condition.",
+  "@notADiagnosis": {
+    "description": "The standing disclaimer. Appears on every screen that shows a result, and must never be softened or dropped."
+  },
+
+  "notADiagnosisLong": "NeuraScan AI measures how your own performance changes over time. It cannot tell you whether you have any illness, and a notable change has many ordinary explanations. Only a doctor can diagnose.",
+  "@notADiagnosisLong": {
+    "description": "The full disclaimer, on the consent and report screens."
+  },
+
+  "continueAction": "Continue",
+  "back": "Back",
+  "next": "Next",
+  "cancel": "Cancel",
+  "done": "Done",
+  "retry": "Try again",
+  "save": "Save",
+  "close": "Close",
+  "skip": "Skip",
+  "start": "Start",
+  "finish": "Finish",
+  "delete": "Delete",
+  "share": "Share",
+  "loading": "Loading",
+
+  "onboardingTitle1": "A four-minute check",
+  "onboardingBody1": "Five short tasks measure your memory, reaction speed, speech and steadiness of hand. Most people finish in about four minutes.",
+
+  "onboardingTitle2": "Compared with you, not a population",
+  "onboardingBody2": "The first sessions build a picture of what is normal for you. After that, the app watches for changes from your own baseline rather than from an average.",
+
+  "onboardingTitle3": "Private by design",
+  "onboardingBody3": "Your recording, your finger movements and the words you type stay on this phone. Only the measurements are kept, and only you decide whether they are backed up.",
+
+  "signIn": "Sign in",
+  "signUp": "Create account",
+  "signOut": "Sign out",
+  "email": "Email address",
+  "password": "Password",
+  "displayName": "Your name",
+  "displayNameOptional": "Your name (optional)",
+  "noAccountYet": "New here? Create an account",
+  "haveAccount": "Already have an account? Sign in",
+  "passwordTooShort": "Please use at least {count} characters.",
+  "@passwordTooShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "emailRequired": "Please enter your email address.",
+  "passwordRequired": "Please enter your password.",
+  "worksOffline": "You can use NeuraScan without a connection. An account keeps your baseline separate from anyone else using this phone.",
+
+  "consentTitle": "Before you begin",
+  "consentWhatItDoes": "What this app does",
+  "consentWhatItDoesBody": "It asks you to do five short tasks every couple of days, measures nine things about how you did them, and tells you when those measurements drift away from your own usual range.",
+  "consentWhatItDoesNot": "What it does not do",
+  "consentWhatItDoesNotBody": "It does not diagnose Alzheimer's disease, Parkinson's disease, or anything else. It does not replace a doctor. A notable change is a reason to have a conversation, not a result.",
+  "consentDataTitle": "Your data",
+  "consentDataBody": "Your voice recording is deleted as soon as the two measurements are taken from it. Your finger movements and the words you type are never stored. Everything that is stored is encrypted on this phone.",
+  "consentAgree": "I understand that this app does not diagnose any condition.",
+  "consentMustAgree": "Please confirm you understand before continuing.",
+
+  "settingsHandTitle": "Which hand will you use?",
+  "settingsHandBody": "The tracing and typing tasks depend on this. If you change hands later, the app will need to learn your baseline again.",
+  "handRight": "Right hand",
+  "handLeft": "Left hand",
+
+  "settingsLanguage": "Language",
+  "languageEnglish": "English",
+  "languageTamil": "Tamil",
+
+  "settingsSyncTitle": "Back up your measurements",
+  "settingsSyncBody": "Off by default. If you turn this on, only the nine measurements and your scores are uploaded. Your recording, your finger movements and your typing never leave this phone.",
+  "settingsSyncOn": "Back up my measurements",
+  "settingsSyncOff": "Keep everything on this phone only",
+
+  "dashboardGreeting": "Hello, {name}",
+  "@dashboardGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardStartSession": "Start a session",
+  "dashboardNoSessionsYet": "You have not done a session yet.",
+  "dashboardLastSession": "Last session {when}",
+  "@dashboardLastSession": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardBaselineProgress": "Building your baseline: {done} of {total} sessions",
+  "@dashboardBaselineProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardBaselineExplainer": "The first two sessions do not count, because everyone improves just by getting used to the tasks. After that, six good sessions set your baseline.",
+  "dashboardBaselineRemaining": "{count, plural, =1{One more session to go} other{{count} more sessions to go}}",
+  "@dashboardBaselineRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "statusStable": "Stable",
+  "statusStableBody": "Your measurements are within your usual range.",
+  "statusMild": "Worth watching",
+  "statusMildBody": "Your measurements have moved a little from your usual range. This is common and often passes. Keep doing your sessions.",
+  "statusNotable": "A notable change",
+  "statusNotableBody": "Your measurements have stayed outside your usual range for several sessions. This is worth mentioning to a doctor. It is not a diagnosis, and there are many ordinary explanations.",
+  "statusBuilding": "Building your baseline",
+  "statusExcluded": "Set aside",
+  "statusExcludedBody": "You told us about {reasons}, so this session is saved but left out of your trend.",
+  "@statusExcludedBody": {
+    "placeholders": {
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "statusInvalid": "Not counted",
+  "statusInvalidBody": "Something went wrong with this session, so it has not been counted.",
+
+  "checkInTitle": "How are you today?",
+  "checkInBody": "Being tired or unwell changes how anyone performs. Answering honestly lets the app set those days aside instead of treating them as a change.",
+  "checkInSleepQuestion": "How did you sleep last night?",
+  "checkInSleepGood": "Well",
+  "checkInSleepFair": "Reasonably",
+  "checkInSleepPoor": "Badly",
+  "checkInFatigueQuestion": "How tired do you feel right now?",
+  "checkInFatigueNone": "Not tired",
+  "checkInFatigueSome": "A little tired",
+  "checkInFatigueVery": "Very tired",
+  "checkInIllnessQuestion": "Are you unwell, or have you changed any medication recently?",
+  "checkInIllnessNo": "No",
+  "checkInIllnessYes": "Yes",
+  "checkInWillBeExcluded": "Thank you. This session will be saved but kept out of your trend.",
+
+  "taskMemoryTitle": "Remember these words",
+  "taskMemoryBody": "Read them aloud if that helps. You will be asked for them at the end of the session.",
+  "taskMemoryReady": "I have them",
+
+  "taskReactionTitle": "Tap as soon as the circle turns green",
+  "taskReactionBody": "There will be {count} turns. The wait before each one is different on purpose, so do not try to guess.",
+  "@taskReactionBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskReactionWait": "Wait",
+  "taskReactionTapNow": "Tap",
+  "taskReactionTooEarly": "That was before the circle changed. Wait for green.",
+  "taskReactionTrialProgress": "{done} of {total}",
+  "@taskReactionTrialProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+
+  "taskSpeechTitle": "Describe what you see",
+  "taskSpeechBody": "Talk about the picture for {seconds} seconds. Say whatever you notice. There is no right answer, and nobody will hear the recording.",
+  "@taskSpeechBody": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "taskSpeechRecording": "Listening",
+  "taskSpeechDeleted": "The recording was deleted. Only two measurements were kept.",
+  "taskSpeechMicrophoneNeeded": "NeuraScan needs the microphone for this task. The recording is deleted as soon as it has been measured.",
+  "taskSpeechTooQuiet": "We could not hear enough speech. Please try again somewhere quieter.",
+
+  "taskSpiralTitle": "Trace the spiral",
+  "taskSpiralBody": "Follow the line from the centre outwards with one finger. Take your time. Staying exactly on the line matters more than speed.",
+  "taskSpiralCoverage": "{percent}% traced",
+  "@taskSpiralCoverage": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "taskSpiralIncomplete": "Please trace more of the spiral before finishing.",
+  "taskSpiralClear": "Start again",
+
+  "taskRecallTitle": "Which words do you remember?",
+  "taskRecallBody": "Type the words you were shown earlier, in any order. Spelling does not have to be perfect.",
+  "taskRecallHint": "One word, then add it",
+  "taskRecallAdd": "Add",
+  "taskRecallNoneYet": "No words added yet.",
+  "taskRecallFinish": "That is all I remember",
+
+  "sessionProgress": "Step {step} of {total}",
+  "@sessionProgress": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionQuitTitle": "Leave this session?",
+  "sessionQuitBody": "Nothing from this session will be saved. You can start again whenever you like.",
+  "sessionQuitConfirm": "Leave",
+  "sessionQuitStay": "Keep going",
+
+  "summaryTitle": "Your session",
+  "summaryRecallResult": "You remembered {recalled} of {total} words.",
+  "@summaryRecallResult": {
+    "placeholders": {
+      "recalled": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "summaryWordsRemembered": "Remembered",
+  "summaryWordsMissed": "Not remembered",
+  "summaryWhatContributed": "What this is based on",
+  "summaryViewReport": "See the full report",
+  "summaryBackToHome": "Back to home",
+
+  "reportTitle": "Your report",
+  "reportPeriod": "{start} to {end}",
+  "@reportPeriod": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "reportSessionCount": "{count, plural, =1{One session} other{{count} sessions}}",
+  "@reportSessionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportContributions": "Where the change is coming from",
+  "reportContributionsBody": "These add up to everything the app noticed. A change in thinking often shows up in speech and typing too, which is why all four are shown.",
+  "reportTalkToDoctor": "Talk to a doctor",
+  "reportTalkToDoctorBody": "Take this report with you. It shows months of measurements rather than a single test, which is more use to a doctor than a one-off score.",
+  "reportExport": "Save or share this report",
+  "reportExportFailed": "The report could not be created. Please try again.",
+  "reportNoData": "There is not enough history for a report yet.",
+
+  "domainCognitive": "Thinking",
+  "domainSpeech": "Speech",
+  "domainMotor": "Movement",
+  "domainInteraction": "Typing",
+
+  "featureDelayedRecall": "Words remembered",
+  "featureReactionMedian": "Reaction speed",
+  "featureReactionCv": "Reaction steadiness",
+  "featureSpeakingRate": "Speaking pace",
+  "featurePauseRatio": "Time spent pausing",
+  "featureSpiralRmse": "Tracing accuracy",
+  "featureTremorIndex": "Hand steadiness",
+  "featureInterKeyInterval": "Typing pace",
+  "featureInterKeyCv": "Typing rhythm",
+
+  "trendsTitle": "Your trends",
+  "trendsOverall": "Overall",
+  "trendsByDomain": "By area",
+  "trendsNoData": "Your trends will appear once your baseline is set.",
+  "trendsExcludedNote": "Sessions you marked as tired or unwell are not shown here.",
+  "trendsHigherIsWorse": "Higher means further from your usual range.",
+
+  "profileTitle": "You and your settings",
+  "profileReminders": "Reminders",
+  "profileReminderEvery": "{count, plural, =1{Every day} other{Every {count} days}}",
+  "@profileReminderEvery": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileRemindersOff": "No reminders",
+  "profileRemindersBody": "A session every two to three days gives the app enough to see a trend.",
+
+  "privacyTitle": "Privacy and your data",
+  "privacyOnDeviceTitle": "What stays on this phone",
+  "privacyOnDeviceBody": "Your voice recording, deleted as soon as it is measured. Your finger movements. The words you type. None of these are ever stored or sent.",
+  "privacyStoredTitle": "What is stored",
+  "privacyStoredBody": "Nine measurements per session and the scores worked out from them, in an encrypted database on this phone.",
+  "privacySyncTitle": "Backup",
+  "privacySyncPending": "{count, plural, =0{Everything is backed up} =1{One session waiting to be backed up} other{{count} sessions waiting to be backed up}}",
+  "@privacySyncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacySyncFailed": "{count, plural, =1{One session could not be backed up} other{{count} sessions could not be backed up}}",
+  "@privacySyncFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacySyncNow": "Back up now",
+  "privacyExport": "Download all my data",
+  "privacyExportDone": "Your data has been saved.",
+  "privacyDeleteTitle": "Delete my account and all data",
+  "privacyDeleteBody": "This removes your baseline, every session and every report, from this phone and from the backup. It cannot be undone.",
+  "privacyDeleteConfirmTitle": "Delete everything?",
+  "privacyDeleteConfirmBody": "Your baseline and all {count} sessions will be permanently deleted. This cannot be undone.",
+  "@privacyDeleteConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyDeleteConfirmAction": "Delete everything",
+  "privacyDeletedRemoteFailed": "Your data has been deleted from this phone. The backup could not be reached and will be cleared when a connection is available.",
+
+  "navHome": "Home",
+  "navTrends": "Trends",
+  "navProfile": "You",
+
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorNoConnection": "No connection. NeuraScan still works offline.",
+
+  "sessionInvalidTitle": "This session was not counted",
+  "sessionInvalidBody": "One of the tasks did not give a usable measurement, so this session has been left out. Nothing is wrong; it happens.",
+  "sessionInvalidReasons": "What happened",
+
+  "timeJustNow": "just now",
+  "timeToday": "today",
+  "timeYesterday": "yesterday",
+  "timeDaysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@timeDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "reminderTitle": "Time for a session",
+  "reminderBody": "A four-minute check keeps your trend up to date.",
+
+  "aboutTitle": "About NeuraScan AI",
+  "aboutVersion": "Version {version}",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutBody": "Built as a Project-Based Learning submission for Mobile Application Development at Chennai Institute of Technology. The screening method has not been clinically validated, and the app is not a medical device."
+}

@@ -142,13 +142,12 @@ final Map<String, FeatureSpec> kSpecByKey = {
 };
 
 /// Feature keys, in report order.
-final List<String> kFeatureKeys = [
-  for (final spec in kFeatureSpecs) spec.key,
-];
+final List<String> kFeatureKeys = [for (final spec in kFeatureSpecs) spec.key];
 
 /// The features belonging to [domain], in report order.
-List<FeatureSpec> specsFor(Domain domain) =>
-    kFeatureSpecs.where((spec) => spec.domain == domain).toList(growable: false);
+List<FeatureSpec> specsFor(Domain domain) => kFeatureSpecs
+    .where((spec) => spec.domain == domain)
+    .toList(growable: false);
 
 /// One screening session as the engine sees it.
 ///

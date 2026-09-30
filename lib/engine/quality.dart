@@ -45,13 +45,12 @@ class TaskMetrics {
     int? validReactionTrials,
     double? voicedSeconds,
     double? spiralCoverage,
-  }) =>
-      TaskMetrics(
-        anticipations: anticipations ?? this.anticipations,
-        validReactionTrials: validReactionTrials ?? this.validReactionTrials,
-        voicedSeconds: voicedSeconds ?? this.voicedSeconds,
-        spiralCoverage: spiralCoverage ?? this.spiralCoverage,
-      );
+  }) => TaskMetrics(
+    anticipations: anticipations ?? this.anticipations,
+    validReactionTrials: validReactionTrials ?? this.validReactionTrials,
+    voicedSeconds: voicedSeconds ?? this.voicedSeconds,
+    spiralCoverage: spiralCoverage ?? this.spiralCoverage,
+  );
 }
 
 /// Outcome of the gates: whether the session counts, and why not.
@@ -62,9 +61,8 @@ class QualityReport {
   final List<String> failures;
 
   /// Human-readable summary, for the retry prompt shown to the user.
-  String reason() => valid
-      ? 'All tasks met the quality checks.'
-      : failures.join('; ');
+  String reason() =>
+      valid ? 'All tasks met the quality checks.' : failures.join('; ');
 }
 
 /// Applies every gate to [metrics] and reports the combined result.

@@ -75,17 +75,17 @@ class Baseline {
 
   /// Plain-map form, as stored locally and synced when sync is on.
   Map<String, dynamic> toJson() => {
-        'median': Map<String, double>.of(median),
-        'scale': Map<String, double>.of(scale),
-        'sessionCount': sessionCount,
-      };
+    'median': Map<String, double>.of(median),
+    'scale': Map<String, double>.of(scale),
+    'sessionCount': sessionCount,
+  };
 
   /// Inverse of [toJson].
   factory Baseline.fromJson(Map<String, dynamic> json) {
     Map<String, double> numbers(Object? raw) => {
-          for (final entry in (raw as Map).entries)
-            entry.key as String: (entry.value as num).toDouble(),
-        };
+      for (final entry in (raw as Map).entries)
+        entry.key as String: (entry.value as num).toDouble(),
+    };
     return Baseline(
       median: numbers(json['median']),
       scale: numbers(json['scale']),

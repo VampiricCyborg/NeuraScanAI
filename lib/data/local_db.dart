@@ -178,21 +178,20 @@ class LocalDatabase extends _$LocalDatabase {
   /// Named so that it cannot be mistaken for the production opener at a glance: a
   /// test database that silently became the real one would drop encryption
   /// without anything failing.
-  factory LocalDatabase.forTesting() =>
-      LocalDatabase(NativeDatabase.memory());
+  factory LocalDatabase.forTesting() => LocalDatabase(NativeDatabase.memory());
 
   @override
   int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        beforeOpen: (details) async {
-          // Drift does not enable foreign keys by default; without this the
-          // references declared above would be documentation rather than
-          // constraints, and deleting a user would leave their sessions behind.
-          await customStatement('PRAGMA foreign_keys = ON');
-        },
-      );
+    beforeOpen: (details) async {
+      // Drift does not enable foreign keys by default; without this the
+      // references declared above would be documentation rather than
+      // constraints, and deleting a user would leave their sessions behind.
+      await customStatement('PRAGMA foreign_keys = ON');
+    },
+  );
 }
 
 /// Opens the database file with SQLCipher, fetching the key first.
@@ -201,26 +200,26 @@ class LocalDatabase extends _$LocalDatabase {
 /// platform keystore, which is asynchronous, but SQLCipher's `PRAGMA key` has to
 /// run synchronously in the connection setup.
 QueryExecutor _openEncrypted() => LazyDatabase(() async {
-      final key = await obtainDatabaseKey();
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File(p.join(directory.path, _databaseFile));
+  final key = await obtainDatabaseKey();
+  final directory = await getApplicationDocumentsDirectory();
+  final file = File(p.join(directory.path, _databaseFile));
 
-      return NativeDatabase(
-        file,
-        setup: (database) {
-          // The x'...' form supplies the key material directly instead of running
-          // it through SQLCipher's key derivation. That is the right choice here
-          // because the key is already 32 bytes from a cryptographic generator;
-          // derivation exists to stretch a user-chosen passphrase, which this is
-          // not. The value is generated hex, so it cannot break out of the quotes.
-          database.execute('PRAGMA key = "x\'$key\'"');
+  return NativeDatabase(
+    file,
+    setup: (database) {
+      // The x'...' form supplies the key material directly instead of running
+      // it through SQLCipher's key derivation. That is the right choice here
+      // because the key is already 32 bytes from a cryptographic generator;
+      // derivation exists to stretch a user-chosen passphrase, which this is
+      // not. The value is generated hex, so it cannot break out of the quotes.
+      database.execute('PRAGMA key = "x\'$key\'"');
 
-          // Fails loudly if the key is wrong rather than on the first query,
-          // which would be reported as a corrupt database.
-          database.execute('SELECT count(*) FROM sqlite_master');
-        },
-      );
-    });
+      // Fails loudly if the key is wrong rather than on the first query,
+      // which would be reported as a corrupt database.
+      database.execute('SELECT count(*) FROM sqlite_master');
+    },
+  );
+});
 
 /// Returns the SQLCipher key, generating and storing one on first run.
 ///
@@ -253,7 +252,8 @@ Future<void> destroyDatabaseKey({FlutterSecureStorage? storage}) async {
 /// predictably enough that a key from it would not be worth encrypting with.
 String generateDatabaseKey() {
   final random = Random.secure();
-  return List<int>.generate(_keyBytes, (_) => random.nextInt(256))
-      .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-      .join();
+  return List<int>.generate(
+    _keyBytes,
+    (_) => random.nextInt(256),
+  ).map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
 }

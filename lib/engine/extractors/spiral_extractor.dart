@@ -105,7 +105,10 @@ class GuideSpiral {
   /// The point on the guide at angle [theta].
   ({double x, double y}) pointAt(double theta) {
     final r = radiusAt(theta);
-    return (x: centre.x + r * math.cos(theta), y: centre.y + r * math.sin(theta));
+    return (
+      x: centre.x + r * math.cos(theta),
+      y: centre.y + r * math.sin(theta),
+    );
   }
 
   /// Unwrapped angle of a trace point, given the angle of the previous point.
@@ -208,8 +211,11 @@ SpiralResult extractSpiralFeatures({
     }
   }
 
-  final coverage =
-      _coverage(angles: allAngles, errors: allErrors, guide: guide);
+  final coverage = _coverage(
+    angles: allAngles,
+    errors: allErrors,
+    guide: guide,
+  );
   final durationSeconds = allTimes.last - allTimes.first;
 
   if (analysableErrors.isEmpty) {
@@ -224,9 +230,8 @@ SpiralResult extractSpiralFeatures({
     );
   }
 
-  final sumSquares = analysableErrors
-          .map((error) => error * error)
-          .reduce((a, b) => a + b) /
+  final sumSquares =
+      analysableErrors.map((error) => error * error).reduce((a, b) => a + b) /
       analysableErrors.length;
   final rmse = math.sqrt(sumSquares);
 
@@ -303,7 +308,8 @@ List<double> _resampleUniform({
     // Coincident timestamps happen when two touch events share a millisecond;
     // interpolating across a zero span would divide by zero.
     final weight = span <= 0 ? 0.0 : ((t - t0) / span).clamp(0.0, 1.0);
-    resampled[i] = values[cursor] + weight * (values[cursor + 1] - values[cursor]);
+    resampled[i] =
+        values[cursor] + weight * (values[cursor + 1] - values[cursor]);
   }
   return resampled;
 }

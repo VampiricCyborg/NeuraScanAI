@@ -223,28 +223,33 @@ void main() {
       expect(backend.sessions, hasLength(1));
     });
 
-    test('turning sync off drops what was queued rather than sending it',
-        () async {
-      // A user who has just withdrawn permission should not have the last few
-      // sessions go up because they were already in the queue.
-      final profile = await signedUpUser(syncEnabled: true);
-      backend.failure = const SyncException(SyncFailure.offline);
+    test(
+      'turning sync off drops what was queued rather than sending it',
+      () async {
+        // A user who has just withdrawn permission should not have the last few
+        // sessions go up because they were already in the queue.
+        final profile = await signedUpUser(syncEnabled: true);
+        backend.failure = const SyncException(SyncFailure.offline);
 
-      final engine = readyEngine();
-      await repository.saveSession(
-        session: buildSession(id: 'session-1', result: engine.update(makeSession())),
-        engine: engine,
-      );
-      expect(queue.abandonedCount + queue.pendingCount, greaterThan(0));
+        final engine = readyEngine();
+        await repository.saveSession(
+          session: buildSession(
+            id: 'session-1',
+            result: engine.update(makeSession()),
+          ),
+          engine: engine,
+        );
+        expect(queue.abandonedCount + queue.pendingCount, greaterThan(0));
 
-      backend.failure = null;
-      await repository.recordConsent(profile: profile, syncEnabled: false);
+        backend.failure = null;
+        await repository.recordConsent(profile: profile, syncEnabled: false);
 
-      expect(queue.pendingCount, 0);
-      expect(queue.abandonedCount, 0);
-      await repository.syncNow();
-      expect(backend.sessions, isEmpty);
-    });
+        expect(queue.pendingCount, 0);
+        expect(queue.abandonedCount, 0);
+        await repository.syncNow();
+        expect(backend.sessions, isEmpty);
+      },
+    );
   });
 
   group('the sync payload carries no raw signal', () {
@@ -290,39 +295,40 @@ void main() {
       final payload = backend.sessions.single.toSyncJson();
       // An allow-list rather than a deny-list: a new field added to the model has
       // to be named here before it can be uploaded, which is the point.
-      expect(
-        payload.keys.toSet(),
-        {
-          'id',
-          'userId',
-          'startedAt',
-          'completedAt',
-          'checkIn',
-          'features',
-          'valid',
-          'status',
-          'invalidReasons',
-          'index',
-          'ewma',
-          'run',
-          'domainScores',
-          'contributions',
-        },
-      );
+      expect(payload.keys.toSet(), {
+        'id',
+        'userId',
+        'startedAt',
+        'completedAt',
+        'checkIn',
+        'features',
+        'valid',
+        'status',
+        'invalidReasons',
+        'index',
+        'ewma',
+        'run',
+        'domainScores',
+        'contributions',
+      });
     });
 
     test('the uploaded features are exactly the nine derived ones', () async {
       await signedUpUser(syncEnabled: true);
       final engine = readyEngine();
       await repository.saveSession(
-        session: buildSession(id: 'session-1', result: engine.update(makeSession())),
+        session: buildSession(
+          id: 'session-1',
+          result: engine.update(makeSession()),
+        ),
         engine: engine,
       );
 
       await repository.inFlightSync;
 
       final features =
-          (backend.sessions.single.toSyncJson()['features']! as Map).keys.toSet();
+          (backend.sessions.single.toSyncJson()['features']! as Map).keys
+              .toSet();
       expect(features, kFeatureKeys.toSet());
     });
 
@@ -333,7 +339,10 @@ void main() {
       await signedUpUser(syncEnabled: true);
       final engine = readyEngine();
       await repository.saveSession(
-        session: buildSession(id: 'session-1', result: engine.update(makeSession())),
+        session: buildSession(
+          id: 'session-1',
+          result: engine.update(makeSession()),
+        ),
         engine: engine,
       );
 
@@ -393,24 +402,29 @@ void main() {
       expect(backend.baselines, hasLength(1));
     });
 
-    test('a pool that has not frozen yet is rebuilt by replaying sessions',
-        () async {
-      await signedUpUser();
-      final engine = ScreeningEngine();
-      for (var i = 0; i < 4; i++) {
-        final result = engine.update(makeSession(sessionId: 'session-$i'));
-        await repository.saveSession(
-          session: buildSession(id: 'session-$i', result: result),
-          engine: engine,
-        );
-      }
+    test(
+      'a pool that has not frozen yet is rebuilt by replaying sessions',
+      () async {
+        await signedUpUser();
+        final engine = ScreeningEngine();
+        for (var i = 0; i < 4; i++) {
+          final result = engine.update(makeSession(sessionId: 'session-$i'));
+          await repository.saveSession(
+            session: buildSession(id: 'session-$i', result: result),
+            engine: engine,
+          );
+        }
 
-      final reloaded = await repository.loadEngine('user-1');
-      expect(reloaded.baselineReady, isFalse);
-      expect(reloaded.sessionsSeen, 4);
-      // Two familiarisation sessions discarded, two pooled.
-      expect(reloaded.baselineProgress, closeTo(2 / kBaselineSessions, 1e-12));
-    });
+        final reloaded = await repository.loadEngine('user-1');
+        expect(reloaded.baselineReady, isFalse);
+        expect(reloaded.sessionsSeen, 4);
+        // Two familiarisation sessions discarded, two pooled.
+        expect(
+          reloaded.baselineProgress,
+          closeTo(2 / kBaselineSessions, 1e-12),
+        );
+      },
+    );
   });
 
   group('derived views', () {
@@ -444,88 +458,98 @@ void main() {
       final sessions = await repository.loadSessions('user-1');
       expect(sessions, hasLength(2));
       expect(repository.deviationSeries(sessions), hasLength(1));
-      expect(
-        repository.domainSeries(sessions)[Domain.cognitive],
-        hasLength(1),
-      );
+      expect(repository.domainSeries(sessions)[Domain.cognitive], hasLength(1));
     });
 
-    test('the last scored session is not blanked out by a later bad one',
-        () async {
-      await signedUpUser();
-      final engine = readyEngine();
+    test(
+      'the last scored session is not blanked out by a later bad one',
+      () async {
+        await signedUpUser();
+        final engine = readyEngine();
 
-      await repository.saveSession(
-        session: buildSession(id: 'good', result: engine.update(makeSession())),
-        engine: engine,
-      );
-      await repository.saveSession(
-        session: buildSession(
-          id: 'invalid',
-          result: engine.update(makeSession(valid: false)),
-          valid: false,
-        ),
-        engine: engine,
-      );
-
-      expect((await repository.lastScoredSession('user-1'))!.id, 'good');
-    });
-
-    test('there is no last scored session before the baseline freezes', () async {
-      await signedUpUser();
-      final engine = ScreeningEngine();
-      await repository.saveSession(
-        session: buildSession(id: 'first', result: engine.update(makeSession())),
-        engine: engine,
-      );
-      expect(await repository.lastScoredSession('user-1'), isNull);
-    });
-
-    test('the baseline countdown matches what the engine will actually pool',
-        () async {
-      await signedUpUser();
-      final engine = ScreeningEngine();
-
-      // Two familiarisation, one invalid, one confounded, two good. Only the two
-      // good ones should count.
-      final plan = <({String id, bool valid, bool confounded})>[
-        (id: 'fam-1', valid: true, confounded: false),
-        (id: 'fam-2', valid: true, confounded: false),
-        (id: 'invalid', valid: false, confounded: false),
-        (id: 'confounded', valid: true, confounded: true),
-        (id: 'good-1', valid: true, confounded: false),
-        (id: 'good-2', valid: true, confounded: false),
-      ];
-
-      for (final step in plan) {
-        final result = engine.update(
-          makeSession(valid: step.valid, confounded: step.confounded),
-        );
         await repository.saveSession(
           session: buildSession(
-            id: step.id,
-            result: result,
-            valid: step.valid,
-            checkIn: step.confounded
-                ? CheckIn(
-                    sleep: SleepQuality.poor,
-                    fatigue: FatigueLevel.none,
-                    illnessOrMedicationChange: false,
-                    answeredAt: DateTime.utc(2026, 4, 2, 10),
-                  )
-                : null,
+            id: 'good',
+            result: engine.update(makeSession()),
           ),
           engine: engine,
         );
-      }
+        await repository.saveSession(
+          session: buildSession(
+            id: 'invalid',
+            result: engine.update(makeSession(valid: false)),
+            valid: false,
+          ),
+          engine: engine,
+        );
 
-      final sessions = await repository.loadSessions('user-1');
-      expect(
-        repository.baselineSessionsRemaining(sessions),
-        kBaselineSessions - 2,
-      );
-      expect(engine.baselineProgress, closeTo(2 / kBaselineSessions, 1e-12));
-    });
+        expect((await repository.lastScoredSession('user-1'))!.id, 'good');
+      },
+    );
+
+    test(
+      'there is no last scored session before the baseline freezes',
+      () async {
+        await signedUpUser();
+        final engine = ScreeningEngine();
+        await repository.saveSession(
+          session: buildSession(
+            id: 'first',
+            result: engine.update(makeSession()),
+          ),
+          engine: engine,
+        );
+        expect(await repository.lastScoredSession('user-1'), isNull);
+      },
+    );
+
+    test(
+      'the baseline countdown matches what the engine will actually pool',
+      () async {
+        await signedUpUser();
+        final engine = ScreeningEngine();
+
+        // Two familiarisation, one invalid, one confounded, two good. Only the two
+        // good ones should count.
+        final plan = <({String id, bool valid, bool confounded})>[
+          (id: 'fam-1', valid: true, confounded: false),
+          (id: 'fam-2', valid: true, confounded: false),
+          (id: 'invalid', valid: false, confounded: false),
+          (id: 'confounded', valid: true, confounded: true),
+          (id: 'good-1', valid: true, confounded: false),
+          (id: 'good-2', valid: true, confounded: false),
+        ];
+
+        for (final step in plan) {
+          final result = engine.update(
+            makeSession(valid: step.valid, confounded: step.confounded),
+          );
+          await repository.saveSession(
+            session: buildSession(
+              id: step.id,
+              result: result,
+              valid: step.valid,
+              checkIn: step.confounded
+                  ? CheckIn(
+                      sleep: SleepQuality.poor,
+                      fatigue: FatigueLevel.none,
+                      illnessOrMedicationChange: false,
+                      answeredAt: DateTime.utc(2026, 4, 2, 10),
+                    )
+                  : null,
+            ),
+            engine: engine,
+          );
+        }
+
+        final sessions = await repository.loadSessions('user-1');
+        expect(
+          repository.baselineSessionsRemaining(sessions),
+          kBaselineSessions - 2,
+        );
+        expect(engine.baselineProgress, closeTo(2 / kBaselineSessions, 1e-12));
+      },
+    );
   });
 
   group('export', () {
@@ -573,7 +597,10 @@ void main() {
       await signedUpUser();
       final engine = readyEngine();
       await repository.saveSession(
-        session: buildSession(id: 'session-1', result: engine.update(makeSession())),
+        session: buildSession(
+          id: 'session-1',
+          result: engine.update(makeSession()),
+        ),
         engine: engine,
       );
       await repository.recordReport(
@@ -606,7 +633,10 @@ void main() {
       await signedUpUser(syncEnabled: true);
       final engine = readyEngine();
       await repository.saveSession(
-        session: buildSession(id: 'session-1', result: engine.update(makeSession())),
+        session: buildSession(
+          id: 'session-1',
+          result: engine.update(makeSession()),
+        ),
         engine: engine,
       );
 
@@ -623,7 +653,10 @@ void main() {
       backend.failure = const SyncException(SyncFailure.offline);
       final engine = readyEngine();
       await repository.saveSession(
-        session: buildSession(id: 'session-1', result: engine.update(makeSession())),
+        session: buildSession(
+          id: 'session-1',
+          result: engine.update(makeSession()),
+        ),
         engine: engine,
       );
 

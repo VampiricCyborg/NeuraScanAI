@@ -34,12 +34,20 @@ void main() {
 
       expect(
         tables,
-        containsAll(['users', 'sessions', 'baselines', 'engine_states', 'reports']),
+        containsAll([
+          'users',
+          'sessions',
+          'baselines',
+          'engine_states',
+          'reports',
+        ]),
       );
     });
 
     test('stores and reads back a user', () async {
-      await db.into(db.users).insert(
+      await db
+          .into(db.users)
+          .insert(
             UsersCompanion.insert(
               id: 'user-1',
               createdAt: DateTime.utc(2026, 3, 14, 9),
@@ -58,37 +66,45 @@ void main() {
       expect(stored.reminderIntervalDays, 2);
     });
 
-    test('foreign keys are enforced, so an orphan session cannot be written',
-        () async {
-      // Drift leaves foreign keys off by default, which would make the references
-      // in the schema documentation rather than constraints.
-      await expectLater(
-        db.into(db.sessions).insert(
-              SessionsCompanion.insert(
-                id: 'session-1',
-                userId: 'nobody',
-                startedAt: DateTime.utc(2026, 3, 14, 9),
-                completedAt: DateTime.utc(2026, 3, 14, 9, 4),
-                checkInJson: '{}',
-                featuresJson: '{}',
-                valid: true,
-                status: 'STABLE',
+    test(
+      'foreign keys are enforced, so an orphan session cannot be written',
+      () async {
+        // Drift leaves foreign keys off by default, which would make the references
+        // in the schema documentation rather than constraints.
+        await expectLater(
+          db
+              .into(db.sessions)
+              .insert(
+                SessionsCompanion.insert(
+                  id: 'session-1',
+                  userId: 'nobody',
+                  startedAt: DateTime.utc(2026, 3, 14, 9),
+                  completedAt: DateTime.utc(2026, 3, 14, 9, 4),
+                  checkInJson: '{}',
+                  featuresJson: '{}',
+                  valid: true,
+                  status: 'STABLE',
+                ),
               ),
-            ),
-        throwsA(isA<SqliteException>()),
-      );
-    });
+          throwsA(isA<SqliteException>()),
+        );
+      },
+    );
 
     test('deleting a user takes their sessions with them', () async {
       // Account deletion has to leave nothing behind; relying on application code
       // to delete each table in the right order is how rows get orphaned.
-      await db.into(db.users).insert(
+      await db
+          .into(db.users)
+          .insert(
             UsersCompanion.insert(
               id: 'user-1',
               createdAt: DateTime.utc(2026, 3, 14, 9),
             ),
           );
-      await db.into(db.sessions).insert(
+      await db
+          .into(db.sessions)
+          .insert(
             SessionsCompanion.insert(
               id: 'session-1',
               userId: 'user-1',
@@ -101,9 +117,9 @@ void main() {
             ),
           );
 
-      await db.delete(db.users).delete(
-            const UsersCompanion(id: Value('user-1')),
-          );
+      await db
+          .delete(db.users)
+          .delete(const UsersCompanion(id: Value('user-1')));
 
       expect(await db.select(db.sessions).get(), isEmpty);
     });
@@ -156,12 +172,14 @@ void main() {
 
       final database = sqlite3.openInMemory();
       addTearDown(database.close);
-      final cipherVersion =
-          database.select('PRAGMA cipher_version').singleOrNull;
+      final cipherVersion = database
+          .select('PRAGMA cipher_version')
+          .singleOrNull;
       expect(
         cipherVersion,
         isNotNull,
-        reason: 'PRAGMA cipher_version returned nothing, so this is plain '
+        reason:
+            'PRAGMA cipher_version returned nothing, so this is plain '
             'SQLite and the local database would not be encrypted',
       );
     });
@@ -224,15 +242,16 @@ void main() {
       final file = File('${directory.path}/drift.db');
 
       LocalDatabase openDrift() => LocalDatabase(
-            NativeDatabase(
-              file,
-              setup: (database) =>
-                  database.execute('PRAGMA key = "x\'$key\'"'),
-            ),
-          );
+        NativeDatabase(
+          file,
+          setup: (database) => database.execute('PRAGMA key = "x\'$key\'"'),
+        ),
+      );
 
       final first = openDrift();
-      await first.into(first.users).insert(
+      await first
+          .into(first.users)
+          .insert(
             UsersCompanion.insert(
               id: 'user-1',
               createdAt: DateTime.utc(2026, 3, 14, 9),
@@ -243,8 +262,10 @@ void main() {
 
       final second = openDrift();
       addTearDown(second.close);
-      expect((await second.select(second.users).getSingle()).displayName,
-          'Test User');
+      expect(
+        (await second.select(second.users).getSingle()).displayName,
+        'Test User',
+      );
 
       final asText = String.fromCharCodes(
         file.readAsBytesSync().where((byte) => byte >= 32 && byte < 127),

@@ -30,11 +30,9 @@ import 'sync_service.dart';
 
 /// Reads and writes everything the app stores.
 class Repository {
-  Repository({
-    required LocalDatabase database,
-    required SyncQueue syncQueue,
-  })  : _db = database,
-        _sync = syncQueue;
+  Repository({required LocalDatabase database, required SyncQueue syncQueue})
+    : _db = database,
+      _sync = syncQueue;
 
   final LocalDatabase _db;
   final SyncQueue _sync;
@@ -56,9 +54,9 @@ class Repository {
 
   /// The stored profile for [userId], or null if this is a new account.
   Future<UserProfile?> loadProfile(String userId) async {
-    final row = await (_db.select(_db.users)
-          ..where((table) => table.id.equals(userId)))
-        .getSingleOrNull();
+    final row = await (_db.select(
+      _db.users,
+    )..where((table) => table.id.equals(userId))).getSingleOrNull();
     return row == null ? null : _profileFromRow(row);
   }
 
@@ -133,12 +131,12 @@ class Repository {
   /// pool of whole sessions is not something the state row can hold. That is
   /// bounded work: it happens at most eight times in a user's life.
   Future<ScreeningEngine> loadEngine(String userId) async {
-    final baselineRow = await (_db.select(_db.baselines)
-          ..where((table) => table.userId.equals(userId)))
-        .getSingleOrNull();
-    final stateRow = await (_db.select(_db.engineStates)
-          ..where((table) => table.userId.equals(userId)))
-        .getSingleOrNull();
+    final baselineRow = await (_db.select(
+      _db.baselines,
+    )..where((table) => table.userId.equals(userId))).getSingleOrNull();
+    final stateRow = await (_db.select(
+      _db.engineStates,
+    )..where((table) => table.userId.equals(userId))).getSingleOrNull();
 
     if (baselineRow != null) {
       return ScreeningEngine(
@@ -162,7 +160,9 @@ class Repository {
 
   /// Persists the engine's state, and its baseline the first time it freezes.
   Future<void> saveEngineState(String userId, ScreeningEngine engine) async {
-    await _db.into(_db.engineStates).insertOnConflictUpdate(
+    await _db
+        .into(_db.engineStates)
+        .insertOnConflictUpdate(
           EngineStatesCompanion.insert(
             userId: userId,
             ewma: Value(engine.ewma),
@@ -175,12 +175,14 @@ class Repository {
     final baseline = engine.baseline;
     if (baseline == null) return;
 
-    final alreadyStored = await (_db.select(_db.baselines)
-          ..where((table) => table.userId.equals(userId)))
-        .getSingleOrNull();
+    final alreadyStored = await (_db.select(
+      _db.baselines,
+    )..where((table) => table.userId.equals(userId))).getSingleOrNull();
     if (alreadyStored != null) return;
 
-    await _db.into(_db.baselines).insert(
+    await _db
+        .into(_db.baselines)
+        .insert(
           BaselinesCompanion.insert(
             userId: userId,
             frozenAt: DateTime.now(),
@@ -203,10 +205,11 @@ class Repository {
   /// Oldest first because that is replay order; the UI reverses it where it wants
   /// the most recent at the top.
   Future<List<SessionRecord>> loadSessions(String userId) async {
-    final rows = await (_db.select(_db.sessions)
-          ..where((table) => table.userId.equals(userId))
-          ..orderBy([(table) => OrderingTerm.asc(table.startedAt)]))
-        .get();
+    final rows =
+        await (_db.select(_db.sessions)
+              ..where((table) => table.userId.equals(userId))
+              ..orderBy([(table) => OrderingTerm.asc(table.startedAt)]))
+            .get();
     return rows.map(_sessionFromRow).toList();
   }
 
@@ -240,9 +243,9 @@ class Repository {
     required ScreeningEngine engine,
   }) async {
     await _db.transaction(() async {
-      await _db.into(_db.sessions).insertOnConflictUpdate(
-            _sessionToRow(session),
-          );
+      await _db
+          .into(_db.sessions)
+          .insertOnConflictUpdate(_sessionToRow(session));
       await saveEngineState(session.userId, engine);
     });
 
@@ -313,7 +316,9 @@ class Repository {
       for (final entry in contributions.entries) entry.key.key: entry.value,
     };
 
-    await _db.into(_db.reports).insert(
+    await _db
+        .into(_db.reports)
+        .insert(
           ReportsCompanion.insert(
             id: id,
             userId: userId,
@@ -355,17 +360,18 @@ class Repository {
   Future<Map<String, dynamic>> exportEverything(String userId) async {
     final profile = await loadProfile(userId);
     final sessions = await loadSessions(userId);
-    final baselineRow = await (_db.select(_db.baselines)
-          ..where((table) => table.userId.equals(userId)))
-        .getSingleOrNull();
-    final reports = await (_db.select(_db.reports)
-          ..where((table) => table.userId.equals(userId)))
-        .get();
+    final baselineRow = await (_db.select(
+      _db.baselines,
+    )..where((table) => table.userId.equals(userId))).getSingleOrNull();
+    final reports = await (_db.select(
+      _db.reports,
+    )..where((table) => table.userId.equals(userId))).get();
 
     return {
       'exportedAt': DateTime.now().toUtc().toIso8601String(),
       'appVersion': '1.0.0',
-      'note': 'Behavioural screening data from NeuraScan AI. '
+      'note':
+          'Behavioural screening data from NeuraScan AI. '
           'These are derived measurements, not a medical diagnosis.',
       'profile': profile?.toJson(),
       'baseline': baselineRow == null
@@ -406,20 +412,21 @@ class Repository {
     await _db.transaction(() async {
       // Foreign keys cascade from users, but the deletes are explicit so that this
       // does not depend on the pragma having been applied.
-      await (_db.delete(_db.sessions)
-            ..where((table) => table.userId.equals(userId)))
-          .go();
-      await (_db.delete(_db.baselines)
-            ..where((table) => table.userId.equals(userId)))
-          .go();
-      await (_db.delete(_db.engineStates)
-            ..where((table) => table.userId.equals(userId)))
-          .go();
-      await (_db.delete(_db.reports)
-            ..where((table) => table.userId.equals(userId)))
-          .go();
-      await (_db.delete(_db.users)..where((table) => table.id.equals(userId)))
-          .go();
+      await (_db.delete(
+        _db.sessions,
+      )..where((table) => table.userId.equals(userId))).go();
+      await (_db.delete(
+        _db.baselines,
+      )..where((table) => table.userId.equals(userId))).go();
+      await (_db.delete(
+        _db.engineStates,
+      )..where((table) => table.userId.equals(userId))).go();
+      await (_db.delete(
+        _db.reports,
+      )..where((table) => table.userId.equals(userId))).go();
+      await (_db.delete(
+        _db.users,
+      )..where((table) => table.id.equals(userId))).go();
     });
 
     try {
@@ -440,7 +447,10 @@ class Repository {
   Map<Domain, List<({DateTime at, double score})>> domainSeries(
     List<SessionRecord> sessions,
   ) {
-    final series = {for (final domain in Domain.values) domain: <({DateTime at, double score})>[]};
+    final series = {
+      for (final domain in Domain.values)
+        domain: <({DateTime at, double score})>[],
+    };
     for (final session in sessions) {
       final scores = session.domainScores;
       if (!session.countsTowardsTrend || scores == null) continue;
@@ -457,12 +467,11 @@ class Repository {
   /// The smoothed deviation history, for the main trend chart.
   List<({DateTime at, double ewma})> deviationSeries(
     List<SessionRecord> sessions,
-  ) =>
-      [
-        for (final session in sessions)
-          if (session.countsTowardsTrend && session.ewma != null)
-            (at: session.completedAt, ewma: session.ewma!),
-      ];
+  ) => [
+    for (final session in sessions)
+      if (session.countsTowardsTrend && session.ewma != null)
+        (at: session.completedAt, ewma: session.ewma!),
+  ];
 
   /// How many more sessions before the baseline freezes.
   ///
@@ -485,70 +494,69 @@ class Repository {
   // -- mapping --------------------------------------------------------------
 
   EngineSession _toEngineSession(SessionRecord session) => EngineSession(
-        features: session.features,
-        valid: session.valid,
-        confounded: session.checkIn.isConfounded,
-        sessionId: session.id,
-      );
+    features: session.features,
+    valid: session.valid,
+    confounded: session.checkIn.isConfounded,
+    sessionId: session.id,
+  );
 
   UserProfile _profileFromRow(UserRow row) => UserProfile(
-        id: row.id,
-        createdAt: row.createdAt,
-        email: row.email,
-        displayName: row.displayName,
-        dominantHand: DominantHand.fromKey(row.dominantHand),
-        languageCode: row.languageCode,
-        consent: row.consentJson == null
-            ? null
-            : ConsentRecord.fromJson(
-                (jsonDecode(row.consentJson!) as Map).cast<String, dynamic>(),
-              ),
-        reminderEnabled: row.reminderEnabled,
-        reminderIntervalDays: row.reminderIntervalDays,
-      );
+    id: row.id,
+    createdAt: row.createdAt,
+    email: row.email,
+    displayName: row.displayName,
+    dominantHand: DominantHand.fromKey(row.dominantHand),
+    languageCode: row.languageCode,
+    consent: row.consentJson == null
+        ? null
+        : ConsentRecord.fromJson(
+            (jsonDecode(row.consentJson!) as Map).cast<String, dynamic>(),
+          ),
+    reminderEnabled: row.reminderEnabled,
+    reminderIntervalDays: row.reminderIntervalDays,
+  );
 
   UsersCompanion _profileToRow(UserProfile profile) => UsersCompanion.insert(
-        id: profile.id,
-        createdAt: profile.createdAt,
-        email: Value(profile.email),
-        displayName: Value(profile.displayName),
-        dominantHand: Value(profile.dominantHand.key),
-        languageCode: Value(profile.languageCode),
-        consentJson: Value(
-          profile.consent == null ? null : jsonEncode(profile.consent!.toJson()),
-        ),
-        reminderEnabled: Value(profile.reminderEnabled),
-        reminderIntervalDays: Value(profile.reminderIntervalDays),
-      );
+    id: profile.id,
+    createdAt: profile.createdAt,
+    email: Value(profile.email),
+    displayName: Value(profile.displayName),
+    dominantHand: Value(profile.dominantHand.key),
+    languageCode: Value(profile.languageCode),
+    consentJson: Value(
+      profile.consent == null ? null : jsonEncode(profile.consent!.toJson()),
+    ),
+    reminderEnabled: Value(profile.reminderEnabled),
+    reminderIntervalDays: Value(profile.reminderIntervalDays),
+  );
 
   SessionRecord _sessionFromRow(SessionRow row) => SessionRecord(
-        id: row.id,
-        userId: row.userId,
-        startedAt: row.startedAt,
-        completedAt: row.completedAt,
-        checkIn: CheckIn.fromJson(
-          (jsonDecode(row.checkInJson) as Map).cast<String, dynamic>(),
-        ),
-        features: _decodeDoubles(row.featuresJson),
-        valid: row.valid,
-        status: ScreeningStatus.fromKey(row.status),
-        invalidReasons: [
-          for (final reason in jsonDecode(row.invalidReasonsJson) as List)
-            reason as String,
-        ],
-        index: row.deviationIndex,
-        ewma: row.ewma,
-        run: row.runLength,
-        domainScores: _decodeDomains(row.domainScoresJson),
-        contributions: _decodeDomains(row.contributionsJson),
-        recallDetail: row.recallDetailJson == null
-            ? null
-            : RecallDetail.fromJson(
-                (jsonDecode(row.recallDetailJson!) as Map)
-                    .cast<String, dynamic>(),
-              ),
-        synced: row.synced,
-      );
+    id: row.id,
+    userId: row.userId,
+    startedAt: row.startedAt,
+    completedAt: row.completedAt,
+    checkIn: CheckIn.fromJson(
+      (jsonDecode(row.checkInJson) as Map).cast<String, dynamic>(),
+    ),
+    features: _decodeDoubles(row.featuresJson),
+    valid: row.valid,
+    status: ScreeningStatus.fromKey(row.status),
+    invalidReasons: [
+      for (final reason in jsonDecode(row.invalidReasonsJson) as List)
+        reason as String,
+    ],
+    index: row.deviationIndex,
+    ewma: row.ewma,
+    run: row.runLength,
+    domainScores: _decodeDomains(row.domainScoresJson),
+    contributions: _decodeDomains(row.contributionsJson),
+    recallDetail: row.recallDetailJson == null
+        ? null
+        : RecallDetail.fromJson(
+            (jsonDecode(row.recallDetailJson!) as Map).cast<String, dynamic>(),
+          ),
+    synced: row.synced,
+  );
 
   SessionsCompanion _sessionToRow(SessionRecord session) =>
       SessionsCompanion.insert(
@@ -600,8 +608,9 @@ class Repository {
 
   static String _generateId() {
     final random = Random.secure();
-    return List<int>.generate(12, (_) => random.nextInt(256))
-        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-        .join();
+    return List<int>.generate(
+      12,
+      (_) => random.nextInt(256),
+    ).map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
   }
 }

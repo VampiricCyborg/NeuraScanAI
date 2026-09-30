@@ -52,7 +52,8 @@ class SyncException implements Exception {
   final String? detail;
 
   @override
-  String toString() => 'SyncException(${failure.name}${detail == null ? '' : ': $detail'})';
+  String toString() =>
+      'SyncException(${failure.name}${detail == null ? '' : ': $detail'})';
 }
 
 /// Where derived scores go when sync is on.
@@ -160,11 +161,11 @@ class SyncQueue {
     Duration maximumBackoff = const Duration(minutes: 30),
     int maximumAttempts = 8,
     Future<void> Function(Duration)? delay,
-  })  : _backend = backend,
-        _initialBackoff = initialBackoff,
-        _maximumBackoff = maximumBackoff,
-        _maximumAttempts = maximumAttempts,
-        _delay = delay ?? Future<void>.delayed;
+  }) : _backend = backend,
+       _initialBackoff = initialBackoff,
+       _maximumBackoff = maximumBackoff,
+       _maximumAttempts = maximumAttempts,
+       _delay = delay ?? Future<void>.delayed;
 
   final SyncBackend _backend;
   final Duration _initialBackoff;
@@ -203,9 +204,9 @@ class SyncQueue {
 
   /// Queues a baseline upload.
   void enqueueBaseline(String userId, Baseline baseline) => enqueue(
-        'baseline:$userId',
-        () => _backend.upsertBaseline(userId, baseline),
-      );
+    'baseline:$userId',
+    () => _backend.upsertBaseline(userId, baseline),
+  );
 
   /// Sends everything queued, retrying transient failures.
   ///

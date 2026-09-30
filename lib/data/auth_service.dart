@@ -38,20 +38,20 @@ enum AuthFailure {
   /// English wording. The localised strings live with the screens; this is the
   /// fallback and what the tests assert on.
   String get message => switch (this) {
-        AuthFailure.invalidCredentials =>
-          'That email and password do not match an account.',
-        AuthFailure.emailAlreadyInUse =>
-          'There is already an account with that email address.',
-        AuthFailure.weakPassword =>
-          'Please choose a password of at least 8 characters.',
-        AuthFailure.invalidEmail => 'That does not look like an email address.',
-        AuthFailure.userNotFound => 'No account was found for that email.',
-        AuthFailure.networkUnavailable =>
-          'No connection. You can still use the app offline.',
-        AuthFailure.tooManyAttempts =>
-          'Too many attempts. Please wait a few minutes and try again.',
-        AuthFailure.unknown => 'Something went wrong. Please try again.',
-      };
+    AuthFailure.invalidCredentials =>
+      'That email and password do not match an account.',
+    AuthFailure.emailAlreadyInUse =>
+      'There is already an account with that email address.',
+    AuthFailure.weakPassword =>
+      'Please choose a password of at least 8 characters.',
+    AuthFailure.invalidEmail => 'That does not look like an email address.',
+    AuthFailure.userNotFound => 'No account was found for that email.',
+    AuthFailure.networkUnavailable =>
+      'No connection. You can still use the app offline.',
+    AuthFailure.tooManyAttempts =>
+      'Too many attempts. Please wait a few minutes and try again.',
+    AuthFailure.unknown => 'Something went wrong. Please try again.',
+  };
 }
 
 /// Thrown by the auth service when an attempt fails.
@@ -72,11 +72,7 @@ class AuthException implements Exception {
 /// the user lives in [UserProfile] in the local database, where it is encrypted
 /// and under the user's control.
 class AuthAccount {
-  const AuthAccount({
-    required this.id,
-    this.email,
-    this.displayName,
-  });
+  const AuthAccount({required this.id, this.email, this.displayName});
 
   final String id;
   final String? email;
@@ -148,7 +144,7 @@ bool looksLikeEmail(String value) {
 /// baselines, which is what the account is actually for.
 class LocalAuthService implements AuthService {
   LocalAuthService({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   static const _accountsKey = 'neurascan_local_accounts';
   static const _sessionKey = 'neurascan_local_session';
@@ -279,10 +275,10 @@ class LocalAuthService implements AuthService {
   }
 
   AuthAccount _toAccount(String id, Map<String, String> record) => AuthAccount(
-        id: id,
-        email: record['email'],
-        displayName: record['displayName'],
-      );
+    id: id,
+    email: record['email'],
+    displayName: record['displayName'],
+  );
 
   Future<Map<String, Map<String, String>>> _readAccounts() async {
     final raw = await _storage.read(key: _accountsKey);
@@ -322,9 +318,10 @@ class LocalAuthService implements AuthService {
 
   static String _generateId() {
     final random = Random.secure();
-    return List<int>.generate(16, (_) => random.nextInt(256))
-        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-        .join();
+    return List<int>.generate(
+      16,
+      (_) => random.nextInt(256),
+    ).map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
   }
 }
 

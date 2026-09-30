@@ -18,8 +18,9 @@ void main() {
     test('a confounded session leaves the EWMA unchanged', () {
       final engine = readyEngine();
       final before = engine.ewma;
-      final result =
-          engine.update(makeSession(confounded: true, jitter: kSevere));
+      final result = engine.update(
+        makeSession(confounded: true, jitter: kSevere),
+      );
       expect(result.status, ScreeningStatus.excludedContext);
       expect(engine.ewma, before);
     });
@@ -51,8 +52,9 @@ void main() {
     test('gating can be switched off for ablation', () {
       final engine = readyEngine(useContext: false);
       final before = engine.ewma;
-      final result =
-          engine.update(makeSession(confounded: true, jitter: kSevere));
+      final result = engine.update(
+        makeSession(confounded: true, jitter: kSevere),
+      );
       expect(result.isScored, isTrue);
       expect(engine.ewma, greaterThan(before));
     });
@@ -168,7 +170,10 @@ void main() {
         final result = engine.update(makeSession(jitter: kSevere));
         if (result.status == ScreeningStatus.mildDeviation) {
           seenMild++;
-          expect(result.ewma, greaterThanOrEqualTo(kMildFraction * engine.threshold));
+          expect(
+            result.ewma,
+            greaterThanOrEqualTo(kMildFraction * engine.threshold),
+          );
           expect(result.run, lessThan(engine.persistence));
         }
       }
@@ -312,7 +317,10 @@ void main() {
       expect(restored.ewma, closeTo(result.ewma!, 1e-12));
       expect(restored.run, result.run);
       for (final domain in Domain.values) {
-        expect(restored.domains![domain], closeTo(result.domains![domain]!, 1e-12));
+        expect(
+          restored.domains![domain],
+          closeTo(result.domains![domain]!, 1e-12),
+        );
         expect(
           restored.contributions![domain],
           closeTo(result.contributions![domain]!, 1e-12),

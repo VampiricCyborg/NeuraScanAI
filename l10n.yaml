@@ -1,0 +1,15 @@
+# Localisation is generated from the ARB files rather than hand-written, so a
+# string added to English but not Tamil is a build-time warning instead of an
+# English word appearing in a Tamil sentence at runtime.
+arb-dir: lib/app/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppText
+output-dir: lib/app/l10n/generated
+nullable-getter: false
+
+# Tamil currently covers every message. This file is written on each generation and
+# lists anything that has fallen behind, so a string added to English and forgotten
+# in Tamil shows up here rather than appearing as an English sentence in a Tamil
+# interface. It should stay empty.
+untranslated-messages-file: lib/app/l10n/untranslated.json

@@ -39,7 +39,11 @@ void main() {
   }
 
   /// [count] amplitude bursts separated by short dips, as syllables look.
-  Float64List syllableBursts(int count, {double burst = 0.18, double dip = 0.07}) {
+  Float64List syllableBursts(
+    int count, {
+    double burst = 0.18,
+    double dip = 0.07,
+  }) {
     final parts = <Float64List>[];
     for (var i = 0; i < count; i++) {
       parts.add(tone(burst));
@@ -66,12 +70,15 @@ void main() {
       expect(loud.first, greaterThan(quiet.first));
     });
 
-    test('digital silence gives a very low level rather than negative infinity', () {
-      final envelope = intensityEnvelopeDb(silence(0.5));
-      expect(envelope, isNotEmpty);
-      expect(envelope.first.isFinite, isTrue);
-      expect(envelope.first, lessThan(-100));
-    });
+    test(
+      'digital silence gives a very low level rather than negative infinity',
+      () {
+        final envelope = intensityEnvelopeDb(silence(0.5));
+        expect(envelope, isNotEmpty);
+        expect(envelope.first.isFinite, isTrue);
+        expect(envelope.first, lessThan(-100));
+      },
+    );
   });
 
   group('voiced seconds', () {
@@ -128,7 +135,13 @@ void main() {
       // hesitant.
       const brief = kPauseThresholdMs / 2 / 1000;
       final result = extractSpeechFeatures(
-        concat([tone(2.0), silence(brief), tone(2.0), silence(brief), tone(2.0)]),
+        concat([
+          tone(2.0),
+          silence(brief),
+          tone(2.0),
+          silence(brief),
+          tone(2.0),
+        ]),
       );
       expect(result.pauseRatio, lessThan(0.1));
     });
@@ -142,7 +155,11 @@ void main() {
     });
 
     test('the ratio stays within zero and one', () {
-      for (final samples in [tone(5.0), silence(5.0), concat([tone(2.0), silence(8.0)])]) {
+      for (final samples in [
+        tone(5.0),
+        silence(5.0),
+        concat([tone(2.0), silence(8.0)]),
+      ]) {
         final ratio = extractSpeechFeatures(samples).pauseRatio;
         expect(ratio, inInclusiveRange(0.0, 1.0));
       }
@@ -156,8 +173,12 @@ void main() {
     });
 
     test('more bursts in the same time means a higher rate', () {
-      final slow = extractSpeechFeatures(syllableBursts(8, burst: 0.3, dip: 0.12));
-      final fast = extractSpeechFeatures(syllableBursts(20, burst: 0.1, dip: 0.05));
+      final slow = extractSpeechFeatures(
+        syllableBursts(8, burst: 0.3, dip: 0.12),
+      );
+      final fast = extractSpeechFeatures(
+        syllableBursts(20, burst: 0.1, dip: 0.05),
+      );
       expect(fast.speakingRate, greaterThan(slow.speakingRate));
     });
 
@@ -174,13 +195,19 @@ void main() {
       expect(result.speakingRate, 0.0);
     });
 
-    test('the rate is per voiced minute, so added silence does not lower it', () {
-      final tight = extractSpeechFeatures(syllableBursts(12));
-      final padded = extractSpeechFeatures(
-        concat([syllableBursts(12), silence(8.0)]),
-      );
-      expect(padded.speakingRate, closeTo(tight.speakingRate, tight.speakingRate * 0.35));
-    });
+    test(
+      'the rate is per voiced minute, so added silence does not lower it',
+      () {
+        final tight = extractSpeechFeatures(syllableBursts(12));
+        final padded = extractSpeechFeatures(
+          concat([syllableBursts(12), silence(8.0)]),
+        );
+        expect(
+          padded.speakingRate,
+          closeTo(tight.speakingRate, tight.speakingRate * 0.35),
+        );
+      },
+    );
 
     test('audio too short to frame yields zeroed features', () {
       final result = extractSpeechFeatures(Float64List(10));

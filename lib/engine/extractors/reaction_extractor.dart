@@ -41,19 +41,13 @@ class ReactionTrial {
   final bool anticipated;
 
   /// A trial the user reacted to.
-  const ReactionTrial.responded(int ms)
-      : responseMs = ms,
-        anticipated = false;
+  const ReactionTrial.responded(int ms) : responseMs = ms, anticipated = false;
 
   /// A trial the user tapped ahead of.
-  const ReactionTrial.anticipation()
-      : responseMs = null,
-        anticipated = true;
+  const ReactionTrial.anticipation() : responseMs = null, anticipated = true;
 
   /// A trial the user never responded to.
-  const ReactionTrial.timedOut()
-      : responseMs = null,
-        anticipated = false;
+  const ReactionTrial.timedOut() : responseMs = null, anticipated = false;
 
   /// True when the time is present and physiologically plausible.
   bool get isUsable =>

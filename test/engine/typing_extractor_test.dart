@@ -24,9 +24,12 @@ void main() {
     });
 
     test('is unaffected by the absolute clock offset', () {
-      final early = extractTypingFeatures(fromGaps(List.filled(10, 250), start: 0));
-      final late =
-          extractTypingFeatures(fromGaps(List.filled(10, 250), start: 9999999));
+      final early = extractTypingFeatures(
+        fromGaps(List.filled(10, 250), start: 0),
+      );
+      final late = extractTypingFeatures(
+        fromGaps(List.filled(10, 250), start: 9999999),
+      );
       expect(late.medianIntervalMs, early.medianIntervalMs);
     });
 
@@ -89,8 +92,10 @@ void main() {
       final ragged = extractTypingFeatures(
         fromGaps([120, 400, 150, 380, 130, 420, 140, 390, 160, 410]),
       );
-      expect(ragged.coefficientOfVariation,
-          greaterThan(even.coefficientOfVariation));
+      expect(
+        ragged.coefficientOfVariation,
+        greaterThan(even.coefficientOfVariation),
+      );
     });
 
     test('is dimensionless, so a uniformly slower typist scores the same', () {

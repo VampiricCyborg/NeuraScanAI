@@ -12,6 +12,12 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+
+        // flutter_local_notifications schedules reminders with java.time, which does not
+        // exist below API 26 in the platform itself. Desugaring back-ports it into the APK.
+        // Required even though minSdk is 26, because the library declares the requirement
+        // and Gradle refuses the build without it.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -57,4 +63,10 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Supplies the back-ported java.time used by the notifications plugin. The version has
+    // to be at least 2.0.4 for the plugin's API level.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

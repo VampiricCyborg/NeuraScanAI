@@ -24,18 +24,21 @@ void main() {
       expect(report.valid, isTrue);
     });
 
-    test('metrics exactly at the limits pass, because the gates are inclusive', () {
-      // TaskMetrics defaults sit exactly on each limit, so the default instance is
-      // the boundary case. Asserted here rather than assumed, since a future
-      // change to either the defaults or the limits would otherwise make this
-      // test quietly stop checking the boundary.
-      const boundary = TaskMetrics();
-      expect(boundary.anticipations, lessThanOrEqualTo(kMaxAnticipations));
-      expect(boundary.validReactionTrials, kMinValidReactionTrials);
-      expect(boundary.voicedSeconds, kMinVoicedSeconds);
-      expect(boundary.spiralCoverage, kMinSpiralCoverage);
-      expect(evaluateQuality(boundary).valid, isTrue);
-    });
+    test(
+      'metrics exactly at the limits pass, because the gates are inclusive',
+      () {
+        // TaskMetrics defaults sit exactly on each limit, so the default instance is
+        // the boundary case. Asserted here rather than assumed, since a future
+        // change to either the defaults or the limits would otherwise make this
+        // test quietly stop checking the boundary.
+        const boundary = TaskMetrics();
+        expect(boundary.anticipations, lessThanOrEqualTo(kMaxAnticipations));
+        expect(boundary.validReactionTrials, kMinValidReactionTrials);
+        expect(boundary.voicedSeconds, kMinVoicedSeconds);
+        expect(boundary.spiralCoverage, kMinSpiralCoverage);
+        expect(evaluateQuality(boundary).valid, isTrue);
+      },
+    );
 
     test('a valid report gives a reassuring reason', () {
       expect(

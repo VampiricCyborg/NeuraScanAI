@@ -48,8 +48,7 @@ Map<Domain, double> domainScores(
 Map<Domain, double> domainScoresFrom(
   Map<String, double> features,
   Baseline baseline,
-) =>
-    domainScores(features, baseline.median, baseline.scale);
+) => domainScores(features, baseline.median, baseline.scale);
 
 /// Weighted sum of the worsening part of each domain score.
 ///
@@ -80,9 +79,7 @@ Map<Domain, double> contributions(Map<Domain, double> scores) {
   if (total <= 0.0) {
     return Map<Domain, double>.of(kDomainWeights);
   }
-  return {
-    for (final entry in weighted.entries) entry.key: entry.value / total,
-  };
+  return {for (final entry in weighted.entries) entry.key: entry.value / total};
 }
 
 /// Domain with the largest share of the index.

@@ -99,9 +99,11 @@ List<double> intensityEnvelopeDb(Float64List samples) {
   if (samples.length < kFrameSamples) return const [];
 
   final envelope = <double>[];
-  for (var start = 0;
-      start + kFrameSamples <= samples.length;
-      start += kHopSamples) {
+  for (
+    var start = 0;
+    start + kFrameSamples <= samples.length;
+    start += kHopSamples
+  ) {
     var sumSquares = 0.0;
     for (var i = start; i < start + kFrameSamples; i++) {
       sumSquares += samples[i] * samples[i];
@@ -181,8 +183,10 @@ int _countSyllableNuclei({
   required List<bool> voiced,
   required double frameSeconds,
 }) {
-  final minSpacingFrames =
-      math.max(1, (kMinSyllableSpacingMs / 1000 / frameSeconds).round());
+  final minSpacingFrames = math.max(
+    1,
+    (kMinSyllableSpacingMs / 1000 / frameSeconds).round(),
+  );
 
   // Candidate peaks: a local maximum that the user was actually voicing.
   final peaks = <int>[];

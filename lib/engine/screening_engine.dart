@@ -83,7 +83,7 @@ class SessionResult {
 
   /// A session that failed a quality gate.
   const SessionResult.invalid({String? sessionId})
-      : this(status: ScreeningStatus.invalidSession, sessionId: sessionId);
+    : this(status: ScreeningStatus.invalidSession, sessionId: sessionId);
 
   /// A session pooled towards a baseline that is not yet frozen.
   const SessionResult.building({
@@ -91,15 +91,15 @@ class SessionResult {
     required int collected,
     String? sessionId,
   }) : this(
-          status: ScreeningStatus.buildingBaseline,
-          baselineProgress: progress,
-          baselineCollected: collected,
-          sessionId: sessionId,
-        );
+         status: ScreeningStatus.buildingBaseline,
+         baselineProgress: progress,
+         baselineCollected: collected,
+         sessionId: sessionId,
+       );
 
   /// A session the context check-in marked as confounded.
   const SessionResult.excluded({String? sessionId})
-      : this(status: ScreeningStatus.excludedContext, sessionId: sessionId);
+    : this(status: ScreeningStatus.excludedContext, sessionId: sessionId);
 
   final ScreeningStatus status;
 
@@ -138,23 +138,22 @@ class SessionResult {
       domains == null ? null : topContributor(domains!);
 
   Map<String, dynamic> toJson() => {
-        'status': status.key,
-        if (index != null) 'index': index,
-        if (ewma != null) 'ewma': ewma,
-        if (run != null) 'run': run,
-        if (domains != null)
-          'domains': {
-            for (final entry in domains!.entries) entry.key.key: entry.value,
-          },
-        if (contributions != null)
-          'contributions': {
-            for (final entry in contributions!.entries)
-              entry.key.key: entry.value,
-          },
-        if (baselineProgress != null) 'baselineProgress': baselineProgress,
-        if (baselineCollected != null) 'baselineCollected': baselineCollected,
-        if (sessionId != null) 'sessionId': sessionId,
-      };
+    'status': status.key,
+    if (index != null) 'index': index,
+    if (ewma != null) 'ewma': ewma,
+    if (run != null) 'run': run,
+    if (domains != null)
+      'domains': {
+        for (final entry in domains!.entries) entry.key.key: entry.value,
+      },
+    if (contributions != null)
+      'contributions': {
+        for (final entry in contributions!.entries) entry.key.key: entry.value,
+      },
+    if (baselineProgress != null) 'baselineProgress': baselineProgress,
+    if (baselineCollected != null) 'baselineCollected': baselineCollected,
+    if (sessionId != null) 'sessionId': sessionId,
+  };
 
   factory SessionResult.fromJson(Map<String, dynamic> json) {
     Map<Domain, double>? domainMap(Object? raw) {
@@ -196,10 +195,10 @@ class ScreeningEngine {
     double ewma = 0.0,
     int run = 0,
     int seen = 0,
-  })  : _baseline = baseline,
-        _ewma = ewma,
-        _run = run,
-        _seen = seen;
+  }) : _baseline = baseline,
+       _ewma = ewma,
+       _run = run,
+       _seen = seen;
 
   /// Smoothed level that counts as notable.
   final double threshold;
@@ -278,8 +277,8 @@ class ScreeningEngine {
   }
 
   SessionResult _accumulateBaseline(EngineSession session) {
-    final usable = _seen > kFamiliarisationSessions &&
-        !(useContext && session.confounded);
+    final usable =
+        _seen > kFamiliarisationSessions && !(useContext && session.confounded);
     if (usable) {
       _pool.add(session);
     }
@@ -333,33 +332,33 @@ class ScreeningEngine {
   /// database and would drift if duplicated here, and excludes the baseline pool
   /// once the baseline is frozen, since the raw sessions are no longer needed.
   Map<String, dynamic> toJson() => {
-        'threshold': threshold,
-        'persistence': persistence,
-        'useContext': useContext,
-        'useEwma': useEwma,
-        'baseline': _baseline?.toJson(),
-        'ewma': _ewma,
-        'run': _run,
-        'seen': _seen,
-      };
+    'threshold': threshold,
+    'persistence': persistence,
+    'useContext': useContext,
+    'useEwma': useEwma,
+    'baseline': _baseline?.toJson(),
+    'ewma': _ewma,
+    'run': _run,
+    'seen': _seen,
+  };
 
   /// Restores an engine from [toJson].
   ///
   /// A baseline that has not been frozen yet cannot be restored, because the pool
   /// holds whole sessions rather than a summary. Those live in the local database
   /// and are replayed through [update] on startup instead.
-  factory ScreeningEngine.fromJson(Map<String, dynamic> json) => ScreeningEngine(
-        threshold: (json['threshold'] as num?)?.toDouble() ?? kDefaultThreshold,
-        persistence: (json['persistence'] as num?)?.toInt() ?? kDefaultPersistence,
-        useContext: json['useContext'] as bool? ?? true,
-        useEwma: json['useEwma'] as bool? ?? true,
-        baseline: json['baseline'] == null
-            ? null
-            : Baseline.fromJson(
-                (json['baseline'] as Map).cast<String, dynamic>(),
-              ),
-        ewma: (json['ewma'] as num?)?.toDouble() ?? 0.0,
-        run: (json['run'] as num?)?.toInt() ?? 0,
-        seen: (json['seen'] as num?)?.toInt() ?? 0,
-      );
+  factory ScreeningEngine.fromJson(
+    Map<String, dynamic> json,
+  ) => ScreeningEngine(
+    threshold: (json['threshold'] as num?)?.toDouble() ?? kDefaultThreshold,
+    persistence: (json['persistence'] as num?)?.toInt() ?? kDefaultPersistence,
+    useContext: json['useContext'] as bool? ?? true,
+    useEwma: json['useEwma'] as bool? ?? true,
+    baseline: json['baseline'] == null
+        ? null
+        : Baseline.fromJson((json['baseline'] as Map).cast<String, dynamic>()),
+    ewma: (json['ewma'] as num?)?.toDouble() ?? 0.0,
+    run: (json['run'] as num?)?.toInt() ?? 0,
+    seen: (json['seen'] as num?)?.toInt() ?? 0,
+  );
 }

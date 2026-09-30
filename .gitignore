@@ -12,8 +12,10 @@ build/
 coverage/
 doc/api/
 
-# Generated localisation output
+# Generated localisation output. Flutter regenerates this from the ARB files on
+# every build and test run, so committing it would only create merge noise.
 lib/app/l10n/generated/
+lib/app/l10n/untranslated.json
 
 # ---------- Android ----------
 android/.gradle/

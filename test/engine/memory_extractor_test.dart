@@ -52,7 +52,10 @@ void main() {
     });
 
     test('distance is symmetric', () {
-      expect(editDistance('harbour', 'harbor'), editDistance('harbor', 'harbour'));
+      expect(
+        editDistance('harbour', 'harbor'),
+        editDistance('harbor', 'harbour'),
+      );
     });
   });
 
@@ -111,7 +114,10 @@ void main() {
       // would call it a slip. Widening the tolerance to two would fix that and
       // start matching genuinely different words instead, which is the worse
       // failure -- it would credit the user with a word they did not recall.
-      final result = scoreRecall(presented: presented, typed: const ['elehpant']);
+      final result = scoreRecall(
+        presented: presented,
+        typed: const ['elehpant'],
+      );
       expect(editDistance('elehpant', 'elephant'), 2);
       expect(result.recalledCount, 0);
       expect(result.extras, ['elehpant']);
@@ -119,7 +125,10 @@ void main() {
 
     test('punctuation is stripped before matching, not counted as an edit', () {
       // 'elepant2' normalises to 'elepant', which is one edit from 'elephant'.
-      final result = scoreRecall(presented: presented, typed: const ['elepant2']);
+      final result = scoreRecall(
+        presented: presented,
+        typed: const ['elepant2'],
+      );
       expect(result.recalledCount, 1);
       expect(result.matched, ['elephant']);
     });
@@ -178,10 +187,16 @@ void main() {
       expect(result.matched, ['elephant', 'meadow']);
     });
 
-    test('an empty presented list scores zero rather than dividing by zero', () {
-      final result = scoreRecall(presented: const [], typed: const ['anything']);
-      expect(result.fraction, 0.0);
-    });
+    test(
+      'an empty presented list scores zero rather than dividing by zero',
+      () {
+        final result = scoreRecall(
+          presented: const [],
+          typed: const ['anything'],
+        );
+        expect(result.fraction, 0.0);
+      },
+    );
 
     test('no two words on a list are within the tolerance of each other', () {
       // The word lists must not contain a pair that the tolerance could confuse,

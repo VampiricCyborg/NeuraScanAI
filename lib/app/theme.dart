@@ -110,8 +110,7 @@ ThemeData buildTheme(Brightness brightness) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    scaffoldBackgroundColor:
-        isLight ? const Color(0xFFF4F9FB) : scheme.surface,
+    scaffoldBackgroundColor: isLight ? const Color(0xFFF4F9FB) : scheme.surface,
     visualDensity: VisualDensity.standard,
 
     appBarTheme: AppBarTheme(
@@ -141,9 +140,15 @@ ThemeData buildTheme(Brightness brightness) {
     // Buttons are deliberately taller than Material's default: they are pressed
     // under time pressure during the reaction task, and by users who may not
     // have a steady aim.
+    //
+    // The minimum width is finite on purpose. This was Size.fromHeight(52), whose
+    // minimum width is infinite: fine in a stretched column, but it throws inside a
+    // Row (which crashed the recall step) and stretches buttons across dialogs.
+    // Full-width buttons get their width from the parent's stretch or tight
+    // constraints, not from the theme.
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
+        minimumSize: const Size(kMinTapTarget, 52),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(kCornerRadius),
@@ -152,7 +157,7 @@ ThemeData buildTheme(Brightness brightness) {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
+        minimumSize: const Size(kMinTapTarget, 52),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(kCornerRadius),
@@ -201,9 +206,7 @@ ThemeData buildTheme(Brightness brightness) {
 
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
 
     progressIndicatorTheme: ProgressIndicatorThemeData(
@@ -224,6 +227,5 @@ extension ThemeShortcuts on BuildContext {
       kStatusPresentation[ScreeningStatus.invalidSession]!;
 
   /// Colour for a domain key, falling back to the brand colour.
-  Color domainColor(String domainKey) =>
-      kDomainColors[domainKey] ?? kBrandSeed;
+  Color domainColor(String domainKey) => kDomainColors[domainKey] ?? kBrandSeed;
 }

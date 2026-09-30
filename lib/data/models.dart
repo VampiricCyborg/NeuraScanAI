@@ -97,47 +97,46 @@ class CheckIn {
 
   /// Short phrases naming what confounded the session, for the summary screen.
   List<String> get confoundingReasons => [
-        if (sleep.isConfounding) 'a poor night of sleep',
-        if (fatigue.isConfounding) 'heavy tiredness',
-        if (illnessOrMedicationChange) 'illness or a medication change',
-      ];
+    if (sleep.isConfounding) 'a poor night of sleep',
+    if (fatigue.isConfounding) 'heavy tiredness',
+    if (illnessOrMedicationChange) 'illness or a medication change',
+  ];
 
   /// A check-in reporting nothing unusual. Used as the default in tests and when
   /// replaying a session recorded before the check-in existed.
   static CheckIn unremarkable(DateTime at) => CheckIn(
-        sleep: SleepQuality.good,
-        fatigue: FatigueLevel.none,
-        illnessOrMedicationChange: false,
-        answeredAt: at,
-      );
+    sleep: SleepQuality.good,
+    fatigue: FatigueLevel.none,
+    illnessOrMedicationChange: false,
+    answeredAt: at,
+  );
 
   Map<String, dynamic> toJson() => {
-        'sleep': sleep.key,
-        'fatigue': fatigue.key,
-        'illnessOrMedicationChange': illnessOrMedicationChange,
-        'answeredAt': answeredAt.toUtc().toIso8601String(),
-      };
+    'sleep': sleep.key,
+    'fatigue': fatigue.key,
+    'illnessOrMedicationChange': illnessOrMedicationChange,
+    'answeredAt': answeredAt.toUtc().toIso8601String(),
+  };
 
   factory CheckIn.fromJson(Map<String, dynamic> json) => CheckIn(
-        sleep: SleepQuality.fromKey(json['sleep'] as String),
-        fatigue: FatigueLevel.fromKey(json['fatigue'] as String),
-        illnessOrMedicationChange:
-            json['illnessOrMedicationChange'] as bool? ?? false,
-        answeredAt: DateTime.parse(json['answeredAt'] as String).toLocal(),
-      );
+    sleep: SleepQuality.fromKey(json['sleep'] as String),
+    fatigue: FatigueLevel.fromKey(json['fatigue'] as String),
+    illnessOrMedicationChange:
+        json['illnessOrMedicationChange'] as bool? ?? false,
+    answeredAt: DateTime.parse(json['answeredAt'] as String).toLocal(),
+  );
 
   CheckIn copyWith({
     SleepQuality? sleep,
     FatigueLevel? fatigue,
     bool? illnessOrMedicationChange,
-  }) =>
-      CheckIn(
-        sleep: sleep ?? this.sleep,
-        fatigue: fatigue ?? this.fatigue,
-        illnessOrMedicationChange:
-            illnessOrMedicationChange ?? this.illnessOrMedicationChange,
-        answeredAt: answeredAt,
-      );
+  }) => CheckIn(
+    sleep: sleep ?? this.sleep,
+    fatigue: fatigue ?? this.fatigue,
+    illnessOrMedicationChange:
+        illnessOrMedicationChange ?? this.illnessOrMedicationChange,
+    answeredAt: answeredAt,
+  );
 }
 
 /// The consent the user gave, and the choices that went with it.
@@ -171,16 +170,16 @@ class ConsentRecord {
   bool get isCurrent => version >= currentVersion;
 
   Map<String, dynamic> toJson() => {
-        'version': version,
-        'acceptedAt': acceptedAt.toUtc().toIso8601String(),
-        'syncEnabled': syncEnabled,
-      };
+    'version': version,
+    'acceptedAt': acceptedAt.toUtc().toIso8601String(),
+    'syncEnabled': syncEnabled,
+  };
 
   factory ConsentRecord.fromJson(Map<String, dynamic> json) => ConsentRecord(
-        version: (json['version'] as num).toInt(),
-        acceptedAt: DateTime.parse(json['acceptedAt'] as String).toLocal(),
-        syncEnabled: json['syncEnabled'] as bool? ?? false,
-      );
+    version: (json['version'] as num).toInt(),
+    acceptedAt: DateTime.parse(json['acceptedAt'] as String).toLocal(),
+    syncEnabled: json['syncEnabled'] as bool? ?? false,
+  );
 }
 
 /// A signed-in user and their settings.
@@ -238,49 +237,47 @@ class UserProfile {
     ConsentRecord? consent,
     bool? reminderEnabled,
     int? reminderIntervalDays,
-  }) =>
-      UserProfile(
-        id: id,
-        createdAt: createdAt,
-        email: email ?? this.email,
-        displayName: displayName ?? this.displayName,
-        dominantHand: dominantHand ?? this.dominantHand,
-        languageCode: languageCode ?? this.languageCode,
-        consent: consent ?? this.consent,
-        reminderEnabled: reminderEnabled ?? this.reminderEnabled,
-        reminderIntervalDays: reminderIntervalDays ?? this.reminderIntervalDays,
-      );
+  }) => UserProfile(
+    id: id,
+    createdAt: createdAt,
+    email: email ?? this.email,
+    displayName: displayName ?? this.displayName,
+    dominantHand: dominantHand ?? this.dominantHand,
+    languageCode: languageCode ?? this.languageCode,
+    consent: consent ?? this.consent,
+    reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+    reminderIntervalDays: reminderIntervalDays ?? this.reminderIntervalDays,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'createdAt': createdAt.toUtc().toIso8601String(),
-        'email': email,
-        'displayName': displayName,
-        'dominantHand': dominantHand.key,
-        'languageCode': languageCode,
-        'consent': consent?.toJson(),
-        'reminderEnabled': reminderEnabled,
-        'reminderIntervalDays': reminderIntervalDays,
-      };
+    'id': id,
+    'createdAt': createdAt.toUtc().toIso8601String(),
+    'email': email,
+    'displayName': displayName,
+    'dominantHand': dominantHand.key,
+    'languageCode': languageCode,
+    'consent': consent?.toJson(),
+    'reminderEnabled': reminderEnabled,
+    'reminderIntervalDays': reminderIntervalDays,
+  };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
-        id: json['id'] as String,
-        createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
-        email: json['email'] as String?,
-        displayName: json['displayName'] as String?,
-        dominantHand: DominantHand.fromKey(
-          json['dominantHand'] as String? ?? 'right',
-        ),
-        languageCode: json['languageCode'] as String? ?? 'en',
-        consent: json['consent'] == null
-            ? null
-            : ConsentRecord.fromJson(
-                (json['consent'] as Map).cast<String, dynamic>(),
-              ),
-        reminderEnabled: json['reminderEnabled'] as bool? ?? true,
-        reminderIntervalDays:
-            (json['reminderIntervalDays'] as num?)?.toInt() ?? 2,
-      );
+    id: json['id'] as String,
+    createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+    email: json['email'] as String?,
+    displayName: json['displayName'] as String?,
+    dominantHand: DominantHand.fromKey(
+      json['dominantHand'] as String? ?? 'right',
+    ),
+    languageCode: json['languageCode'] as String? ?? 'en',
+    consent: json['consent'] == null
+        ? null
+        : ConsentRecord.fromJson(
+            (json['consent'] as Map).cast<String, dynamic>(),
+          ),
+    reminderEnabled: json['reminderEnabled'] as bool? ?? true,
+    reminderIntervalDays: (json['reminderIntervalDays'] as num?)?.toInt() ?? 2,
+  );
 }
 
 /// One completed session, with its features and the engine's verdict.
@@ -351,29 +348,29 @@ class SessionRecord {
   Duration get duration => completedAt.difference(startedAt);
 
   SessionRecord copyWith({bool? synced}) => SessionRecord(
-        id: id,
-        userId: userId,
-        startedAt: startedAt,
-        completedAt: completedAt,
-        checkIn: checkIn,
-        features: features,
-        valid: valid,
-        status: status,
-        invalidReasons: invalidReasons,
-        index: index,
-        ewma: ewma,
-        run: run,
-        domainScores: domainScores,
-        contributions: contributions,
-        recallDetail: recallDetail,
-        synced: synced ?? this.synced,
-      );
+    id: id,
+    userId: userId,
+    startedAt: startedAt,
+    completedAt: completedAt,
+    checkIn: checkIn,
+    features: features,
+    valid: valid,
+    status: status,
+    invalidReasons: invalidReasons,
+    index: index,
+    ewma: ewma,
+    run: run,
+    domainScores: domainScores,
+    contributions: contributions,
+    recallDetail: recallDetail,
+    synced: synced ?? this.synced,
+  );
 
   /// The form stored locally, including everything.
   Map<String, dynamic> toJson() => {
-        ...toSyncJson(),
-        if (recallDetail != null) 'recallDetail': recallDetail!.toJson(),
-      };
+    ...toSyncJson(),
+    if (recallDetail != null) 'recallDetail': recallDetail!.toJson(),
+  };
 
   /// The form uploaded when sync is on.
   ///
@@ -381,28 +378,27 @@ class SessionRecord {
   /// privacy boundary, and having it be a difference between two methods means a
   /// new field cannot silently cross it.
   Map<String, dynamic> toSyncJson() => {
-        'id': id,
-        'userId': userId,
-        'startedAt': startedAt.toUtc().toIso8601String(),
-        'completedAt': completedAt.toUtc().toIso8601String(),
-        'checkIn': checkIn.toJson(),
-        'features': Map<String, double>.of(features),
-        'valid': valid,
-        'status': status.key,
-        'invalidReasons': invalidReasons,
-        if (index != null) 'index': index,
-        if (ewma != null) 'ewma': ewma,
-        if (run != null) 'run': run,
-        if (domainScores != null)
-          'domainScores': {
-            for (final entry in domainScores!.entries) entry.key.key: entry.value,
-          },
-        if (contributions != null)
-          'contributions': {
-            for (final entry in contributions!.entries)
-              entry.key.key: entry.value,
-          },
-      };
+    'id': id,
+    'userId': userId,
+    'startedAt': startedAt.toUtc().toIso8601String(),
+    'completedAt': completedAt.toUtc().toIso8601String(),
+    'checkIn': checkIn.toJson(),
+    'features': Map<String, double>.of(features),
+    'valid': valid,
+    'status': status.key,
+    'invalidReasons': invalidReasons,
+    if (index != null) 'index': index,
+    if (ewma != null) 'ewma': ewma,
+    if (run != null) 'run': run,
+    if (domainScores != null)
+      'domainScores': {
+        for (final entry in domainScores!.entries) entry.key.key: entry.value,
+      },
+    if (contributions != null)
+      'contributions': {
+        for (final entry in contributions!.entries) entry.key.key: entry.value,
+      },
+  };
 
   factory SessionRecord.fromJson(Map<String, dynamic> json) {
     Map<Domain, double>? domains(Object? raw) {
@@ -418,7 +414,9 @@ class SessionRecord {
       userId: json['userId'] as String,
       startedAt: DateTime.parse(json['startedAt'] as String).toLocal(),
       completedAt: DateTime.parse(json['completedAt'] as String).toLocal(),
-      checkIn: CheckIn.fromJson((json['checkIn'] as Map).cast<String, dynamic>()),
+      checkIn: CheckIn.fromJson(
+        (json['checkIn'] as Map).cast<String, dynamic>(),
+      ),
       features: {
         for (final entry in (json['features'] as Map).entries)
           entry.key as String: (entry.value as num).toDouble(),
@@ -459,18 +457,14 @@ class RecallDetail {
   final List<String> missed;
 
   Map<String, dynamic> toJson() => {
-        'listId': listId,
-        'recalled': recalled,
-        'missed': missed,
-      };
+    'listId': listId,
+    'recalled': recalled,
+    'missed': missed,
+  };
 
   factory RecallDetail.fromJson(Map<String, dynamic> json) => RecallDetail(
-        listId: (json['listId'] as num).toInt(),
-        recalled: [
-          for (final word in json['recalled'] as List) word as String,
-        ],
-        missed: [
-          for (final word in json['missed'] as List) word as String,
-        ],
-      );
+    listId: (json['listId'] as num).toInt(),
+    recalled: [for (final word in json['recalled'] as List) word as String],
+    missed: [for (final word in json['missed'] as List) word as String],
+  );
 }
