@@ -1,0 +1,51 @@
+name: neurascan_ai
+description: >-
+  NeuraScan AI -- intelligent behavioural screening for neurological risk
+  analysis. A four-minute smartphone session becomes nine behavioural features,
+  compared against the user's own personal baseline rather than a population
+  norm. A screening and awareness tool; not a diagnostic device.
+publish_to: none
+
+# Kept in step with the version shown on the about screen and in the PDF report
+# footer, so a shared report can always be traced to the build that produced it.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  collection: ^1.19.1
+  drift: ^2.35.0
+  drift_flutter: ^0.3.1
+  fl_chart: ^1.2.0
+  flutter:
+    sdk: flutter
+  flutter_local_notifications: ^22.3.1
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  flutter_secure_storage: ^11.2.0
+  go_router: ^18.0.2
+  intl: ^0.20.3
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  pdf: ^3.13.1
+  printing: ^5.15.1
+  share_plus: ^13.3.0
+  sqlcipher_flutter_libs: ^0.7.0+eol
+  sqlite3_flutter_libs: ^0.6.0+eol
+  timezone: ^0.11.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.35.0
+  build_runner: ^2.16.1
+  mocktail: ^1.0.5
+
+flutter:
+  uses-material-design: true
+  generate: true
