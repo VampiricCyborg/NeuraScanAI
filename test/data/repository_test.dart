@@ -408,7 +408,9 @@ void main() {
       () async {
         await signedUpUser();
         final engine = ScreeningEngine();
-        for (var i = 0; i < 4; i++) {
+        // The practice test and two pooled ones: one short of freezing.
+        const saved = kFamiliarisationSessions + kBaselineSessions - 1;
+        for (var i = 0; i < saved; i++) {
           final result = engine.update(makeSession(sessionId: 'session-$i'));
           await repository.saveSession(
             session: buildSession(id: 'session-$i', result: result),
@@ -418,11 +420,11 @@ void main() {
 
         final reloaded = await repository.loadEngine('user-1');
         expect(reloaded.baselineReady, isFalse);
-        expect(reloaded.sessionsSeen, 4);
-        // Two familiarisation sessions discarded, two pooled.
+        expect(reloaded.sessionsSeen, saved);
+        // The practice test discarded, the rest pooled.
         expect(
           reloaded.baselineProgress,
-          closeTo(2 / kBaselineSessions, 1e-12),
+          closeTo((kBaselineSessions - 1) / kBaselineSessions, 1e-12),
         );
       },
     );
@@ -510,11 +512,10 @@ void main() {
         await signedUpUser();
         final engine = ScreeningEngine();
 
-        // Two familiarisation, one invalid, one confounded, two good. Only the two
-        // good ones should count.
+        // The practice test, one invalid, one confounded, two good. Only the two good
+        // ones should count.
         final plan = <({String id, bool valid, bool confounded})>[
           (id: 'fam-1', valid: true, confounded: false),
-          (id: 'fam-2', valid: true, confounded: false),
           (id: 'invalid', valid: false, confounded: false),
           (id: 'confounded', valid: true, confounded: true),
           (id: 'good-1', valid: true, confounded: false),
@@ -554,14 +555,14 @@ void main() {
   });
 
   group('trends once the baseline is set', () {
-    /// Saves familiarisation plus the pooled sessions, returning the engine afterwards.
+    /// Saves the practice test plus the pooled tests, returning the engine afterwards.
     Future<ScreeningEngine> saveBaselinePeriod({
       List<EngineSession>? pooled,
     }) async {
       final engine = ScreeningEngine();
       final sessions = [
-        makeSession(sessionId: 'familiarisation-1'),
-        makeSession(sessionId: 'familiarisation-2'),
+        for (var i = 0; i < kFamiliarisationSessions; i++)
+          makeSession(sessionId: 'familiarisation-${i + 1}'),
         ...(pooled ?? variedBaselineSessions()),
       ];
       for (var i = 0; i < sessions.length; i++) {
@@ -617,8 +618,9 @@ void main() {
           .deviationSeries(stored, baseline: engine.baseline)
           .map((point) => point.at)
           .toSet();
-      expect(plotted, isNot(contains(stored[0].completedAt)));
-      expect(plotted, isNot(contains(stored[1].completedAt)));
+      for (var i = 0; i < kFamiliarisationSessions; i++) {
+        expect(plotted, isNot(contains(stored[i].completedAt)));
+      }
     });
 
     test('the baseline-period values are small, being in-sample', () async {
@@ -671,7 +673,6 @@ void main() {
         final engine = ScreeningEngine();
         final plan = [
           makeSession(sessionId: 'f1'),
-          makeSession(sessionId: 'f2'),
           makeSession(sessionId: 'tired', confounded: true),
           ...variedBaselineSessions(),
         ];
@@ -719,6 +720,179 @@ void main() {
       expect(engine.ewma, ewmaBefore);
       expect(engine.run, runBefore);
       expect(engine.ewma, 0.0);
+    });
+  });
+
+  group('changing the baseline', () {
+    /// Stores [count] tests for the current baseline, driving a real engine loaded from the
+    /// repository, so each test is stamped and scored as the app would.
+    Future<ScreeningEngine> saveTests(int count, {String prefix = 't'}) async {
+      late ScreeningEngine engine;
+      for (var i = 0; i < count; i++) {
+        engine = await repository.loadEngine('user-1');
+        final result = engine.update(
+          makeSession(
+            sessionId: '$prefix-$i',
+            jitter: {for (final key in kWithinSd.keys) key: (i % 3) - 1.0},
+          ),
+        );
+        await repository.saveSession(
+          session: buildSession(
+            id: '$prefix-$i',
+            result: result,
+            at: DateTime.utc(2026, 4, 2 + i, 10),
+            features: makeSession(
+              jitter: {for (final key in kWithinSd.keys) key: (i % 3) - 1.0},
+            ).features,
+          ),
+          engine: engine,
+        );
+      }
+      return engine;
+    }
+
+    test('a new user is on the first baseline', () async {
+      final profile = await signedUpUser();
+      expect(profile.baselineEpoch, 0);
+    });
+
+    test(
+      'redoing it starts a new baseline and hides the earlier tests',
+      () async {
+        await signedUpUser();
+        await saveTests(kFamiliarisationSessions + kBaselineSessions);
+        expect((await repository.loadEngine('user-1')).baselineReady, isTrue);
+
+        await repository.redoBaseline('user-1');
+
+        expect(await repository.loadSessions('user-1'), isEmpty);
+        final engine = await repository.loadEngine('user-1');
+        expect(engine.baselineReady, isFalse);
+        expect(engine.ewma, 0.0);
+        expect((await repository.loadProfile('user-1'))!.baselineEpoch, 1);
+      },
+    );
+
+    test('the frozen baseline and the smoothing state are cleared', () async {
+      await signedUpUser();
+      await saveTests(kFamiliarisationSessions + kBaselineSessions);
+      expect(await db.select(db.baselines).get(), isNotEmpty);
+      expect(await db.select(db.engineStates).get(), isNotEmpty);
+
+      await repository.redoBaseline('user-1');
+
+      expect(await db.select(db.baselines).get(), isEmpty);
+      expect(await db.select(db.engineStates).get(), isEmpty);
+    });
+
+    test(
+      'earlier tests are kept, and the export includes all of them',
+      () async {
+        await signedUpUser();
+        const first = kFamiliarisationSessions + kBaselineSessions;
+        await saveTests(first, prefix: 'old');
+        await repository.redoBaseline('user-1');
+        await saveTests(2, prefix: 'new');
+
+        // Only the new baseline's tests are loaded...
+        final current = await repository.loadSessions('user-1');
+        expect(current.map((s) => s.id), ['new-0', 'new-1']);
+
+        // ...but nothing was deleted, and the export has everything, marked by baseline.
+        final all = await repository.loadSessions('user-1', allBaselines: true);
+        expect(all, hasLength(first + 2));
+        final export = await repository.exportEverything('user-1');
+        final exported = (export['sessions']! as List)
+            .cast<Map<String, dynamic>>();
+        expect(exported, hasLength(first + 2));
+        expect(exported.where((s) => s['epoch'] == 0), hasLength(first));
+        expect(exported.where((s) => s['epoch'] == 1), hasLength(2));
+      },
+    );
+
+    test('a test is stamped with the baseline that was current', () async {
+      await signedUpUser();
+      await saveTests(1, prefix: 'a');
+      await repository.redoBaseline('user-1');
+      await repository.redoBaseline('user-1');
+      await saveTests(1, prefix: 'b');
+
+      final all = await repository.loadSessions('user-1', allBaselines: true);
+      expect({for (final s in all) s.id: s.epoch}, {'a-0': 0, 'b-0': 2});
+    });
+
+    test('the epoch is local: it is not in the sync payload', () async {
+      await signedUpUser(syncEnabled: true);
+      await repository.redoBaseline('user-1');
+      await saveTests(1);
+      await repository.inFlightSync;
+
+      expect(backend.sessions, isNotEmpty);
+      for (final session in backend.sessions) {
+        expect(session.toSyncJson().containsKey('epoch'), isFalse);
+      }
+    });
+
+    test('a later baseline has no practice test', () async {
+      await signedUpUser();
+      await saveTests(kFamiliarisationSessions + kBaselineSessions);
+      await repository.redoBaseline('user-1');
+
+      // Three tests are enough now: the user has already met the tasks.
+      final engine = await saveTests(kBaselineSessions);
+      expect(engine.baselineReady, isTrue);
+      expect((await repository.loadEngine('user-1')).baselineReady, isTrue);
+    });
+
+    test('the countdown of a later baseline is out of three', () async {
+      await signedUpUser();
+      await saveTests(kFamiliarisationSessions + kBaselineSessions);
+      await repository.redoBaseline('user-1');
+      await saveTests(1);
+
+      final sessions = await repository.loadSessions('user-1');
+      expect(
+        repository.baselineSessionsRemaining(sessions),
+        kBaselineSessions - 1,
+      );
+    });
+
+    test('the first baseline still has its practice test', () async {
+      await signedUpUser();
+      await saveTests(kBaselineSessions);
+
+      // One short: the first of these was the practice test.
+      final engine = await repository.loadEngine('user-1');
+      expect(engine.baselineReady, isFalse);
+    });
+
+    test('watching the tests notices the baseline being redone', () async {
+      await signedUpUser();
+      await saveTests(2);
+
+      final lengths = <int>[];
+      final subscription = repository
+          .watchSessions('user-1')
+          .listen((sessions) => lengths.add(sessions.length));
+      await pumpEventQueue();
+      expect(lengths.last, 2);
+
+      await repository.redoBaseline('user-1');
+      await pumpEventQueue();
+      expect(lengths.last, 0);
+
+      await subscription.cancel();
+    });
+
+    test('saving a stale profile does not undo it', () async {
+      final stale = await signedUpUser();
+      await repository.redoBaseline('user-1');
+
+      await repository.saveProfile(stale.copyWith(languageCode: 'ta'));
+
+      final now = (await repository.loadProfile('user-1'))!;
+      expect(now.languageCode, 'ta');
+      expect(now.baselineEpoch, 1);
     });
   });
 
@@ -847,11 +1021,7 @@ void main() {
         periodStart: DateTime.utc(2026, 3, 14, 9),
         periodEnd: DateTime.utc(2026, 4, 14, 9),
         status: ScreeningStatus.notableDeviation,
-        contributions: const {
-          Domain.cognitive: 0.47,
-          Domain.speech: 0.39,
-          Domain.interaction: 0.14,
-        },
+        contributions: const {Domain.cognitive: 0.55, Domain.speech: 0.45},
         sessionCount: 12,
       );
       await repository.inFlightSync;

@@ -3,15 +3,15 @@
 /// This is the file where the app's privacy claim is either true or false, so it is
 /// worth being explicit about what it does.
 ///
-/// What may be uploaded: the nine derived features, the domain scores, the
+/// What may be uploaded: the five derived features, the domain scores, the
 /// deviation index, the smoothed index, the status, and the check-in answers. All
 /// of it is numbers and a handful of enum values, about half a kilobyte per
 /// session.
 ///
-/// What may never be uploaded: the recorded audio, the touch trace, the keystroke
-/// timings, the words the user typed, and the PDF report. Those never leave the
-/// phone. The audio is deleted as soon as its two features have been extracted,
-/// and the trace and keystroke timings are never written to the database at all.
+/// What may never be uploaded: the recorded audio, the touch trace, the words the user
+/// typed, and the PDF report. Those never leave the phone. The audio is deleted as soon as
+/// its two features have been extracted, and the touch trace is never written to the
+/// database at all.
 ///
 /// That boundary is enforced in two places rather than trusted: [SessionRecord]
 /// has a separate `toSyncJson`, and the test suite asserts that the upload payload

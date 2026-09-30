@@ -11,9 +11,9 @@ library;
 import '../engine/features.dart';
 import '../engine/screening_engine.dart';
 
-/// Which hand the user traces and types with.
+/// Which hand the user traces with.
 ///
-/// Recorded because it affects the motor and interaction features, and because a
+/// Recorded because it affects the motor features, and because a
 /// user who switches hands needs a new baseline rather than an alert.
 enum DominantHand {
   right('right', 'Right'),
@@ -159,7 +159,7 @@ class ConsentRecord {
   /// Whether derived scores may be backed up to the cloud.
   ///
   /// Off by default. Raw audio, touch traces and typed text are never synced
-  /// whatever this says -- the choice is only about the nine derived features and
+  /// whatever this says -- the choice is only about the five derived features and
   /// the scores computed from them.
   final bool syncEnabled;
 
@@ -194,6 +194,7 @@ class UserProfile {
     this.consent,
     this.reminderEnabled = true,
     this.reminderIntervalDays = 2,
+    this.baselineEpoch = 0,
   });
 
   /// Stable identifier. Matches the Firebase uid when cloud auth is in use.
@@ -216,6 +217,12 @@ class UserProfile {
   /// a trend without the tasks becoming a chore.
   final int reminderIntervalDays;
 
+  /// Which baseline the user is on, counting from zero. Redoing the baseline adds one.
+  ///
+  /// The first baseline opens with a practice test; a later one does not, because the user
+  /// has already met the tasks.
+  final int baselineEpoch;
+
   /// True when the user may proceed past the consent gate.
   bool get hasCurrentConsent => consent?.isCurrent ?? false;
 
@@ -237,6 +244,7 @@ class UserProfile {
     ConsentRecord? consent,
     bool? reminderEnabled,
     int? reminderIntervalDays,
+    int? baselineEpoch,
   }) => UserProfile(
     id: id,
     createdAt: createdAt,
@@ -247,6 +255,7 @@ class UserProfile {
     consent: consent ?? this.consent,
     reminderEnabled: reminderEnabled ?? this.reminderEnabled,
     reminderIntervalDays: reminderIntervalDays ?? this.reminderIntervalDays,
+    baselineEpoch: baselineEpoch ?? this.baselineEpoch,
   );
 
   Map<String, dynamic> toJson() => {
@@ -259,6 +268,7 @@ class UserProfile {
     'consent': consent?.toJson(),
     'reminderEnabled': reminderEnabled,
     'reminderIntervalDays': reminderIntervalDays,
+    'baselineEpoch': baselineEpoch,
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -277,13 +287,14 @@ class UserProfile {
           ),
     reminderEnabled: json['reminderEnabled'] as bool? ?? true,
     reminderIntervalDays: (json['reminderIntervalDays'] as num?)?.toInt() ?? 2,
+    baselineEpoch: (json['baselineEpoch'] as num?)?.toInt() ?? 0,
   );
 }
 
 /// One completed session, with its features and the engine's verdict.
 ///
 /// This is the record that is stored locally and, when sync is on, uploaded. It
-/// holds the nine derived features and the scores -- never the audio, the touch
+/// holds the five derived features and the scores -- never the audio, the touch
 /// trace or the typed words.
 class SessionRecord {
   const SessionRecord({
@@ -303,6 +314,7 @@ class SessionRecord {
     this.contributions,
     this.recallDetail,
     this.synced = false,
+    this.epoch = 0,
   });
 
   final String id;
@@ -311,7 +323,7 @@ class SessionRecord {
   final DateTime completedAt;
   final CheckIn checkIn;
 
-  /// The nine derived features. Empty when the session was invalid.
+  /// The derived features, one value per measurement. Empty when the session was invalid.
   final Map<String, double> features;
 
   /// False when a quality gate rejected the session.
@@ -340,6 +352,10 @@ class SessionRecord {
   /// Whether this record has reached the cloud. Always false when sync is off.
   final bool synced;
 
+  /// The baseline this test belongs to. Local only, like [recallDetail]: the cloud holds
+  /// the current baseline, and which earlier one a test came from is of no use there.
+  final int epoch;
+
   bool get isConfounded => status == ScreeningStatus.excludedContext;
 
   /// True when this session contributed to the trend.
@@ -364,12 +380,14 @@ class SessionRecord {
     contributions: contributions,
     recallDetail: recallDetail,
     synced: synced ?? this.synced,
+    epoch: epoch,
   );
 
   /// The form stored locally, including everything.
   Map<String, dynamic> toJson() => {
     ...toSyncJson(),
     if (recallDetail != null) 'recallDetail': recallDetail!.toJson(),
+    'epoch': epoch,
   };
 
   /// The form uploaded when sync is on.
@@ -403,9 +421,12 @@ class SessionRecord {
   factory SessionRecord.fromJson(Map<String, dynamic> json) {
     Map<Domain, double>? domains(Object? raw) {
       if (raw == null) return null;
+      // Tests from before the areas were regrouped carry a key that no longer exists;
+      // those are skipped rather than failing the whole record.
       return {
         for (final entry in (raw as Map).entries)
-          Domain.fromKey(entry.key as String): (entry.value as num).toDouble(),
+          ?Domain.tryFromKey(entry.key as String): (entry.value as num)
+              .toDouble(),
       };
     }
 
@@ -438,6 +459,7 @@ class SessionRecord {
               (json['recallDetail'] as Map).cast<String, dynamic>(),
             ),
       synced: json['synced'] as bool? ?? false,
+      epoch: (json['epoch'] as num?)?.toInt() ?? 0,
     );
   }
 }

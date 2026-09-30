@@ -95,8 +95,13 @@ class Repository {
   }
 
   /// Saves [profile] and queues an upload if sync is on.
+  ///
+  /// Writes only the columns the profile row carries. The baseline epoch is not one of them:
+  /// it changes only through [redoBaseline], so a profile loaded before the baseline was
+  /// redone cannot put the user back on the baseline they just left.
   Future<void> saveProfile(UserProfile profile) async {
-    await _db.update(_db.users).replace(_profileToRow(profile));
+    await (_db.update(_db.users)..where((table) => table.id.equals(profile.id)))
+        .write(_profileToRow(profile));
     if (profile.syncEnabled) {
       _sync.enqueueProfile(profile);
     }
@@ -130,7 +135,7 @@ class Repository {
   ///
   /// When no baseline has been frozen yet, the pool has to be replayed, because a
   /// pool of whole sessions is not something the state row can hold. That is
-  /// bounded work: it happens at most eight times in a user's life.
+  /// bounded work: it happens at most four times per baseline.
   Future<ScreeningEngine> loadEngine(String userId) async {
     final baselineRow = await (_db.select(
       _db.baselines,
@@ -152,11 +157,47 @@ class Repository {
       );
     }
 
-    final engine = ScreeningEngine();
+    // A baseline after the first opens without a practice test, so the engine starts as if
+    // the practice had already happened. Only the current baseline's tests are replayed.
+    final epoch = await _epochOf(userId);
+    final engine = ScreeningEngine(
+      seen: epoch == 0 ? 0 : kFamiliarisationSessions,
+    );
     for (final session in await loadSessions(userId)) {
       engine.update(_toEngineSession(session));
     }
     return engine;
+  }
+
+  /// Which baseline [userId] is on. Zero for a user who has not redone it.
+  Future<int> _epochOf(String userId) async {
+    final row = await (_db.select(
+      _db.users,
+    )..where((table) => table.id.equals(userId))).getSingleOrNull();
+    return row?.baselineEpoch ?? 0;
+  }
+
+  /// Starts a new baseline.
+  ///
+  /// The tests taken so far stay in the database and in the export, but stop counting: they
+  /// no longer feed the trends, the comparison or the new baseline. The frozen baseline and
+  /// the smoothing state are cleared, so the next tests are pooled afresh.
+  ///
+  /// The old baseline is not kept as something to fall back to. Redoing it is for a real
+  /// change -- a new dominant hand, a recovery, a different phone -- and a way back would
+  /// invite mixing two different versions of "normal".
+  Future<void> redoBaseline(String userId) async {
+    await _db.transaction(() async {
+      final epoch = await _epochOf(userId);
+      await (_db.update(_db.users)..where((table) => table.id.equals(userId)))
+          .write(UsersCompanion(baselineEpoch: Value(epoch + 1)));
+      await (_db.delete(
+        _db.baselines,
+      )..where((table) => table.userId.equals(userId))).go();
+      await (_db.delete(
+        _db.engineStates,
+      )..where((table) => table.userId.equals(userId))).go();
+    });
   }
 
   /// Persists the engine's state, and its baseline the first time it freezes.
@@ -201,26 +242,36 @@ class Repository {
 
   // -- sessions -------------------------------------------------------------
 
-  /// Every stored session for [userId], oldest first.
+  /// The stored sessions of the current baseline for [userId], oldest first.
   ///
   /// Oldest first because that is replay order; the UI reverses it where it wants
-  /// the most recent at the top.
-  Future<List<SessionRecord>> loadSessions(String userId) async {
+  /// the most recent at the top. Tests from earlier baselines are left out unless
+  /// [allBaselines] is set, which only the export does.
+  Future<List<SessionRecord>> loadSessions(
+    String userId, {
+    bool allBaselines = false,
+  }) async {
+    final epoch = allBaselines ? null : await _epochOf(userId);
     final rows =
         await (_db.select(_db.sessions)
-              ..where((table) => table.userId.equals(userId))
+              ..where(
+                (table) => epoch == null
+                    ? table.userId.equals(userId)
+                    : table.userId.equals(userId) & table.epoch.equals(epoch),
+              )
               ..orderBy([(table) => OrderingTerm.asc(table.startedAt)]))
             .get();
     return rows.map(_sessionFromRow).toList();
   }
 
   /// Watches the sessions, so the dashboard and trends update as they are added.
-  Stream<List<SessionRecord>> watchSessions(String userId) =>
-      (_db.select(_db.sessions)
-            ..where((table) => table.userId.equals(userId))
-            ..orderBy([(table) => OrderingTerm.asc(table.startedAt)]))
-          .watch()
-          .map((rows) => rows.map(_sessionFromRow).toList());
+  ///
+  /// Watches the users table as well as the sessions, because redoing the baseline
+  /// changes which sessions count without touching a single session row.
+  Stream<List<SessionRecord>> watchSessions(String userId) => _db
+      .customSelect('SELECT 1', readsFrom: {_db.sessions, _db.users})
+      .watch()
+      .asyncMap((_) => loadSessions(userId));
 
   /// The most recent session that was actually scored.
   ///
@@ -244,9 +295,12 @@ class Repository {
     required ScreeningEngine engine,
   }) async {
     await _db.transaction(() async {
+      // Stamped here rather than by the caller, so a test always belongs to the baseline
+      // that was current when it was stored.
+      final epoch = await _epochOf(session.userId);
       await _db
           .into(_db.sessions)
-          .insertOnConflictUpdate(_sessionToRow(session));
+          .insertOnConflictUpdate(_sessionToRow(session, epoch));
       await saveEngineState(session.userId, engine);
     });
 
@@ -360,7 +414,7 @@ class Repository {
   /// their own recall words, which the cloud never receives.
   Future<Map<String, dynamic>> exportEverything(String userId) async {
     final profile = await loadProfile(userId);
-    final sessions = await loadSessions(userId);
+    final sessions = await loadSessions(userId, allBaselines: true);
     final baselineRow = await (_db.select(
       _db.baselines,
     )..where((table) => table.userId.equals(userId))).getSingleOrNull();
@@ -452,8 +506,8 @@ class Repository {
   /// measured against -- so they sit close to zero by construction. The trends screen says
   /// so.
   ///
-  /// Selects exactly the sessions the engine pooled: valid, past familiarisation and not
-  /// confounded, while still in the building state.
+  /// Selects exactly the sessions the engine pooled: valid, past the practice test (the first
+  /// baseline only) and not confounded, while still in the building state.
   List<({SessionRecord session, Map<Domain, double> scores, double index})>
   _baselinePeriod(List<SessionRecord> sessions, Baseline baseline) {
     final result =
@@ -463,7 +517,7 @@ class Repository {
       seen++;
       if (session.status != ScreeningStatus.buildingBaseline) continue;
       if (!session.valid || session.features.isEmpty) continue;
-      if (seen <= kFamiliarisationSessions) continue;
+      if (session.epoch == 0 && seen <= kFamiliarisationSessions) continue;
       if (session.checkIn.isConfounded) continue;
 
       final scores = domainScores(
@@ -556,7 +610,7 @@ class Repository {
     for (final session in sessions) {
       seen++;
       if (!session.valid) continue;
-      if (seen <= kFamiliarisationSessions) continue;
+      if (session.epoch == 0 && seen <= kFamiliarisationSessions) continue;
       if (session.checkIn.isConfounded) continue;
       pooled++;
     }
@@ -586,6 +640,7 @@ class Repository {
           ),
     reminderEnabled: row.reminderEnabled,
     reminderIntervalDays: row.reminderIntervalDays,
+    baselineEpoch: row.baselineEpoch,
   );
 
   UsersCompanion _profileToRow(UserProfile profile) => UsersCompanion.insert(
@@ -628,9 +683,10 @@ class Repository {
             (jsonDecode(row.recallDetailJson!) as Map).cast<String, dynamic>(),
           ),
     synced: row.synced,
+    epoch: row.epoch,
   );
 
-  SessionsCompanion _sessionToRow(SessionRecord session) =>
+  SessionsCompanion _sessionToRow(SessionRecord session, int epoch) =>
       SessionsCompanion.insert(
         id: session.id,
         userId: session.userId,
@@ -652,6 +708,7 @@ class Repository {
               : jsonEncode(session.recallDetail!.toJson()),
         ),
         synced: Value(session.synced),
+        epoch: Value(epoch),
       );
 
   static Map<String, double> _decodeDoubles(String json) {
@@ -665,9 +722,10 @@ class Repository {
   static Map<Domain, double>? _decodeDomains(String? json) {
     if (json == null) return null;
     final decoded = jsonDecode(json) as Map<String, dynamic>;
+    // Tests from before the areas were regrouped carry a key that no longer exists.
     return {
       for (final entry in decoded.entries)
-        Domain.fromKey(entry.key): (entry.value as num).toDouble(),
+        ?Domain.tryFromKey(entry.key): (entry.value as num).toDouble(),
     };
   }
 

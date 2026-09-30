@@ -65,6 +65,14 @@ class Users extends Table {
   IntColumn get reminderIntervalDays =>
       integer().withDefault(const Constant(2))();
 
+  /// Which baseline the user is on, counting from zero.
+  ///
+  /// Redoing the baseline adds one. Tests from earlier baselines stay in the database and
+  /// in the export, but only those of the current baseline feed the trends and the new
+  /// baseline: a test measured against a baseline that no longer exists would be
+  /// compared with nothing.
+  IntColumn get baselineEpoch => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -85,7 +93,7 @@ class Sessions extends Table {
   /// The check-in answers as JSON.
   TextColumn get checkInJson => text()();
 
-  /// The nine derived features as JSON. An empty object for an invalid session.
+  /// The derived features as JSON. An empty object for an invalid session.
   TextColumn get featuresJson => text()();
 
   BoolColumn get valid => boolean()();
@@ -103,6 +111,9 @@ class Sessions extends Table {
   TextColumn get recallDetailJson => text().nullable()();
 
   BoolColumn get synced => boolean().withDefault(const Constant(false))();
+
+  /// The user's baseline epoch when this test was taken. Local only.
+  IntColumn get epoch => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -181,10 +192,24 @@ class LocalDatabase extends _$LocalDatabase {
   factory LocalDatabase.forTesting() => LocalDatabase(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await migrator.addColumn(users, users.baselineEpoch);
+        await migrator.addColumn(sessions, sessions.epoch);
+        // Version 1 measured nine things in four areas and built its baseline from
+        // those. That baseline cannot be compared with the five measurements in three
+        // areas that replaced them, so every existing user moves to a new baseline and
+        // their earlier tests are kept, but set aside. They have already met the tasks,
+        // so the new baseline needs no practice run.
+        await customStatement('UPDATE users SET baseline_epoch = 1');
+        await customStatement('DELETE FROM baselines');
+        await customStatement('DELETE FROM engine_states');
+      }
+    },
     beforeOpen: (details) async {
       // Drift does not enable foreign keys by default; without this the
       // references declared above would be documentation rather than
