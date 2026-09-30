@@ -1,0 +1,78 @@
+# ---------- Flutter / Dart ----------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+coverage/
+doc/api/
+
+# Generated localisation output
+lib/app/l10n/generated/
+
+# ---------- Android ----------
+android/.gradle/
+android/captures/
+android/local.properties
+android/key.properties
+android/app/*.jks
+android/app/google-services.json
+*.iml
+*.jar
+*.class
+.gradle/
+local.properties
+
+# ---------- iOS / macOS ----------
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/flutter_export_environment.sh
+ios/Pods/
+ios/Podfile.lock
+ios/.symlinks/
+ios/Runner/GoogleService-Info.plist
+**/DerivedData/
+**/xcuserdata/
+*.xcworkspace/xcuserdata/
+.DS_Store
+
+# ---------- Firebase (generated, may carry project keys) ----------
+lib/firebase_options.dart
+.firebaserc
+firebase-debug.log
+
+# ---------- Python engine lab ----------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+engine_lab/out/
+
+# ---------- Editors / OS ----------
+.idea/
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+Thumbs.db
+desktop.ini
+
+# ---------- Local secrets / env ----------
+.env
+.env.*
+!.env.example
+
+# Zero-byte files a mis-quoted notification hook drops in the project root;
+# the name is a flattened Windows path, so the glob has to be loose.
+C*UsersMadhav*claude-notify-signals*
