@@ -239,7 +239,11 @@ class TestUT11SustainedDeviationAlerts:
     ) -> None:
         result = ready_engine.update(
             make_session(
-                jitter={"delayed_recall": -5.0, "pause_ratio": +3.0, "tremor_index": +2.0}
+                jitter={
+                    "delayed_recall": -5.0,
+                    "pause_ratio": +3.0,
+                    "tremor_index": +2.0,
+                }
             )
         )
         assert sum(contribution_percentages(result).values()) == 100

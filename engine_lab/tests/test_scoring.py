@@ -118,14 +118,18 @@ class TestUT7ImprovementsNeverRaiseTheIndex:
                 "tremor_index": -6.0,
             }
         )
-        index_declining = deviation_index(domain_scores_from(declining_only.features, baseline))
+        index_declining = deviation_index(
+            domain_scores_from(declining_only.features, baseline)
+        )
         index_mixed = deviation_index(domain_scores_from(mixed.features, baseline))
         assert index_mixed == pytest.approx(index_declining)
 
     def test_index_is_never_negative(self, baseline: Baseline) -> None:
         for sds in (-5.0, -2.0, 0.0, 2.0, 5.0):
             session = make_session(jitter={key: sds for key in ("delayed_recall",)})
-            assert deviation_index(domain_scores_from(session.features, baseline)) >= 0.0
+            assert (
+                deviation_index(domain_scores_from(session.features, baseline)) >= 0.0
+            )
 
     def test_index_grows_with_the_size_of_the_decline(self, baseline: Baseline) -> None:
         indices = [
@@ -180,9 +184,7 @@ class TestUT8ContributionsSumToOne:
         shares = contributions({domain: -3.0 for domain in Domain})
         assert sum(shares.values()) == pytest.approx(1.0)
 
-    def test_an_improving_domain_contributes_nothing(
-        self, baseline: Baseline
-    ) -> None:
+    def test_an_improving_domain_contributes_nothing(self, baseline: Baseline) -> None:
         session = make_session(
             jitter={"delayed_recall": -4.0, "spiral_rmse": -5.0, "tremor_index": -5.0}
         )

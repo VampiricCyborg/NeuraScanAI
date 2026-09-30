@@ -10,8 +10,8 @@ drag a mean and inflate a standard deviation enough to hide a later decline.
 from __future__ import annotations
 
 import statistics
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Iterable, Sequence
 
 from .constants import (
     MAD_TO_SIGMA,
@@ -76,7 +76,7 @@ class Baseline:
     session_count: int
 
     @classmethod
-    def fit(cls, sessions: Iterable[Session]) -> "Baseline":
+    def fit(cls, sessions: Iterable[Session]) -> Baseline:
         """Summarise *sessions* into a baseline.
 
         Callers are responsible for having already excluded familiarisation,
@@ -112,7 +112,7 @@ class Baseline:
         }
 
     @classmethod
-    def from_json(cls, data: dict[str, object]) -> "Baseline":
+    def from_json(cls, data: dict[str, object]) -> Baseline:
         """Inverse of :meth:`to_json`."""
         raw_median = data["median"]
         raw_scale = data["scale"]
