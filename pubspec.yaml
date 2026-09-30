@@ -16,7 +16,6 @@ environment:
 dependencies:
   collection: ^1.19.1
   drift: ^2.35.0
-  drift_flutter: ^0.3.1
   fl_chart: ^1.2.0
   flutter:
     sdk: flutter
@@ -32,8 +31,7 @@ dependencies:
   pdf: ^3.13.1
   printing: ^5.15.1
   share_plus: ^13.3.0
-  sqlcipher_flutter_libs: ^0.7.0+eol
-  sqlite3_flutter_libs: ^0.6.0+eol
+  sqlite3: ^3.6.0
   timezone: ^0.11.1
 
 dev_dependencies:
@@ -49,3 +47,17 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+
+# Builds the bundled SQLite as SQLCipher instead of plain SQLite, which is what
+# makes `PRAGMA key` work and therefore what encrypts the local database.
+#
+# This replaces the old sqlcipher_flutter_libs package: since package:sqlite3
+# version 3, the library is selected here and fetched by the package's build
+# hook, so there is no separate Flutter plugin and no open() override in Dart.
+#
+# SQLCipher carries its own licence and links OpenSSL on Android, Windows and
+# Linux, unlike upstream SQLite which is public domain.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlcipher
