@@ -78,11 +78,11 @@ def varied_baseline_sessions(count: int = BASELINE_SESSIONS) -> list[Session]:
     leave the extra sessions to be *scored* after the baseline froze, quietly
     giving every test an engine with history and a non-zero EWMA.
 
-    The first four offsets are symmetric about zero, so the baseline centre is
+    The first three offsets are symmetric about zero, so the baseline centre is
     the nominal value whatever the pool size -- a typical session then reads as
     typical rather than as slightly off.
     """
-    offsets = [-1.0, 0.5, -0.5, 1.0, -0.25, 0.25, -0.75, 0.75, 0.0, 1.25]
+    offsets = [-1.0, 1.0, 0.0, 0.5, -0.5, 0.25, -0.25, 0.75, -0.75, 1.25]
     sessions: list[Session] = []
     for i in range(count):
         offset = offsets[i % len(offsets)]

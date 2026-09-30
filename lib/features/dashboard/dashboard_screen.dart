@@ -36,6 +36,8 @@ class DashboardScreen extends ConsumerWidget {
     final sessions = ref.watch(sessionsProvider).value ?? const [];
     final latest = ref.watch(latestScoredSessionProvider);
     final status = ref.watch(currentStatusProvider);
+    final verdictReady = ref.watch(verdictReadyProvider);
+    final scoredCount = ref.watch(scoredSessionCountProvider);
 
     if (profile == null || engine == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -75,45 +77,11 @@ class DashboardScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 22),
 
-              if (baselineReady && latest == null)
-                // The baseline has just been set and nothing has been compared with it yet.
-                // Saying so is better than showing "building your baseline" for a baseline
-                // that is finished.
-                SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.check_circle_outline,
-                            color: context.colors.primary,
-                          ),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: Text(
-                              text.statusBaselineSet,
-                              style: context.texts.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        text.statusBaselineSetBody,
-                        style: context.texts.bodyMedium?.copyWith(height: 1.5),
-                      ),
-                      const SizedBox(height: 14),
-                      OutlinedButton.icon(
-                        onPressed: () => context.go(Routes.trends),
-                        icon: const Icon(Icons.show_chart),
-                        label: Text(text.summaryViewTrends),
-                      ),
-                    ],
-                  ),
-                )
+              if (baselineReady && !verdictReady)
+                // The baseline is set but not enough tests have followed it for a verdict.
+                // Showing a status now could rest on as few as three sessions, which is
+                // mostly noise, so the card shows progress instead.
+                _MonitoringCard(scored: scoredCount)
               else if (baselineReady)
                 _StatusCard(status: status, session: latest)
               else
@@ -134,7 +102,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 22),
 
-              if (baselineReady && latest?.domainScores != null) ...[
+              if (verdictReady && latest?.domainScores != null) ...[
                 SectionCard(
                   title: text.summaryWhatContributed,
                   child: ContributionBreakdown(
@@ -180,6 +148,57 @@ class DashboardScreen extends ConsumerWidget {
     }
     if (days == 1) return text.timeYesterday;
     return text.timeDaysAgo(days);
+  }
+}
+
+/// Progress towards the first verdict, shown once the baseline is set.
+class _MonitoringCard extends StatelessWidget {
+  const _MonitoringCard({required this.scored});
+
+  final int scored;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = AppText.of(context);
+    final justSet = scored == 0;
+
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                justSet ? Icons.check_circle_outline : Icons.hourglass_top,
+                color: context.colors.primary,
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  justSet ? text.statusBaselineSet : text.monitoringTitle,
+                  style: context.texts.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (justSet) ...[
+            Text(
+              text.statusBaselineSetBody(kMinMonitoringSessions),
+              style: context.texts.bodyMedium?.copyWith(height: 1.5),
+            ),
+            const SizedBox(height: 16),
+          ],
+          MonitoringProgress(
+            done: scored,
+            total: kMinMonitoringSessions,
+            showExplanation: !justSet,
+          ),
+        ],
+      ),
+    );
   }
 }
 

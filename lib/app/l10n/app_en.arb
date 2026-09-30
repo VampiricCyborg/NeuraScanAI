@@ -119,7 +119,7 @@
       }
     }
   },
-  "dashboardBaselineExplainer": "The first two sessions do not count, because everyone improves just by getting used to the tasks. After that, four good sessions set your baseline.",
+  "dashboardBaselineExplainer": "The first two sessions do not count, because everyone improves just by getting used to the tasks. After that, three good sessions set your baseline.",
   "dashboardBaselineRemaining": "{count, plural, =1{One more session to go} other{{count} more sessions to go}}",
   "@dashboardBaselineRemaining": {
     "placeholders": {
@@ -137,7 +137,43 @@
   "statusNotableBody": "Your measurements have stayed outside your usual range for several sessions. This is worth mentioning to a doctor. It is not a diagnosis, and there are many ordinary explanations.",
   "statusBuilding": "Building your baseline",
   "statusBaselineSet": "Your baseline is set",
-  "statusBaselineSetBody": "From now on, each session is compared with your own usual range. Your trends are ready to view.",
+  "statusBaselineSetBody": "From now on, each session is compared with your own usual range. Your first results, trends and report appear after {total} more tests.",
+  "@statusBaselineSetBody": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "monitoringTitle": "Gathering your first results",
+  "monitoringBody": "Trends, benchmarks and your report need at least {total} tests after your baseline, so that they mean something. Until then, a single result could tell you very little.",
+  "@monitoringBody": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "monitoringProgress": "{done} of {total} tests after your baseline",
+  "@monitoringProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "monitoringRemaining": "{count, plural, =1{One more test to go} other{{count} more tests to go}}",
+  "@monitoringRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monitoringSessionSaved": "This test has been added to your record.",
   "statusExcluded": "Set aside",
   "statusExcludedBody": "You told us about {reasons}, so this session is saved but left out of your trend.",
   "@statusExcludedBody": {
@@ -259,7 +295,6 @@
   "summaryWordsMissed": "Not remembered",
   "summaryWhatContributed": "What this is based on",
   "summaryViewReport": "See the full report",
-  "summaryViewTrends": "See your trends",
   "summaryBackToHome": "Back to home",
 
   "reportTitle": "Your report",

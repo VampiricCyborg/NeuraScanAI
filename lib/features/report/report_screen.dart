@@ -12,6 +12,7 @@ import '../../app/l10n/generated/app_localizations.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
+import '../../engine/constants.dart';
 import '../../engine/features.dart';
 import '../../services/pdf_report.dart';
 
@@ -77,13 +78,35 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     final latest = ref.watch(latestScoredSessionProvider);
     final status = ref.watch(currentStatusProvider);
 
-    if (scored.isEmpty || latest == null) {
+    final verdictReady = ref.watch(verdictReadyProvider);
+    final baselineReady =
+        ref.watch(engineProvider).value?.baselineReady ?? false;
+
+    // A report needs enough tests after the baseline to say something a doctor can use.
+    if (!verdictReady || scored.isEmpty || latest == null) {
       return Scaffold(
         appBar: AppBar(title: Text(text.reportTitle)),
-        body: EmptyState(
-          icon: Icons.description_outlined,
-          message: text.reportNoData,
-        ),
+        body: baselineReady
+            ? ListView(
+                padding: const EdgeInsets.all(kPagePadding),
+                children: [
+                  SectionCard(
+                    title: text.monitoringTitle,
+                    leading: Icon(
+                      Icons.hourglass_top,
+                      color: context.colors.primary,
+                    ),
+                    child: MonitoringProgress(
+                      done: ref.watch(scoredSessionCountProvider),
+                      total: kMinMonitoringSessions,
+                    ),
+                  ),
+                ],
+              )
+            : EmptyState(
+                icon: Icons.description_outlined,
+                message: text.reportNoData,
+              ),
       );
     }
 

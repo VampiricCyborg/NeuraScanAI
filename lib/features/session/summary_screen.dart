@@ -53,6 +53,11 @@ class SummaryScreen extends ConsumerWidget {
       );
     }
 
+    // A scored test that comes before the verdict is ready. Its status could rest on as few
+    // as three sessions, which is mostly noise, so it is recorded but not reported.
+    final early =
+        session.countsTowardsTrend && !ref.watch(verdictReadyProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(text.summaryTitle),
@@ -62,7 +67,7 @@ class SummaryScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(kPagePadding),
           children: [
-            _OutcomeCard(session: session),
+            _OutcomeCard(session: session, early: early),
             const SizedBox(height: 14),
 
             if (session.recallDetail != null) ...[
@@ -70,7 +75,7 @@ class SummaryScreen extends ConsumerWidget {
               const SizedBox(height: 14),
             ],
 
-            if (session.contributions != null) ...[
+            if (session.contributions != null && !early) ...[
               SectionCard(
                 title: text.summaryWhatContributed,
                 subtitle: text.reportContributionsBody,
@@ -107,19 +112,11 @@ class SummaryScreen extends ConsumerWidget {
             const NotADiagnosisNote(),
             const SizedBox(height: 20),
 
-            if (session.countsTowardsTrend)
+            if (session.countsTowardsTrend && !early)
               OutlinedButton.icon(
                 onPressed: () => context.push(Routes.report),
                 icon: const Icon(Icons.description_outlined),
                 label: Text(text.summaryViewReport),
-              )
-            else if (session.status == ScreeningStatus.buildingBaseline &&
-                ref.watch(baselineRemainingProvider) == 0)
-              // The session that completed the baseline. Trends exist now, so say where.
-              OutlinedButton.icon(
-                onPressed: () => context.go(Routes.trends),
-                icon: const Icon(Icons.show_chart),
-                label: Text(text.summaryViewTrends),
               ),
             const SizedBox(height: 10),
             PrimaryButton(
@@ -136,13 +133,50 @@ class SummaryScreen extends ConsumerWidget {
 
 /// The headline outcome.
 class _OutcomeCard extends ConsumerWidget {
-  const _OutcomeCard({required this.session});
+  const _OutcomeCard({required this.session, required this.early});
 
   final SessionRecord session;
+
+  /// True for a scored test before enough have been done for a verdict.
+  final bool early;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final text = AppText.of(context);
+
+    if (early) {
+      return SectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.hourglass_top, color: context.colors.primary),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    text.monitoringTitle,
+                    style: context.texts.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              text.monitoringSessionSaved,
+              style: context.texts.bodyMedium?.copyWith(height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            MonitoringProgress(
+              done: ref.watch(scoredSessionCountProvider),
+              total: kMinMonitoringSessions,
+            ),
+          ],
+        ),
+      );
+    }
 
     return SectionCard(
       child: Column(

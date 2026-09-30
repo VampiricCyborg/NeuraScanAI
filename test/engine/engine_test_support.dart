@@ -92,11 +92,11 @@ EngineSession makeSession({
 /// extra sessions to be *scored* after the baseline froze, quietly giving every test an
 /// engine with history and a non-zero EWMA.
 ///
-/// The first four offsets are symmetric about zero, so the baseline centre is the nominal
+/// The first three offsets are symmetric about zero, so the baseline centre is the nominal
 /// value whatever the pool size -- a typical session then reads as typical rather than as
 /// slightly off.
 List<EngineSession> variedBaselineSessions([int count = kBaselineSessions]) {
-  const offsets = [-1.0, 0.5, -0.5, 1.0, -0.25, 0.25, -0.75, 0.75, 0.0, 1.25];
+  const offsets = [-1.0, 1.0, 0.0, 0.5, -0.5, 0.25, -0.25, 0.75, -0.75, 1.25];
   return [
     for (var i = 0; i < count; i++)
       makeSession(

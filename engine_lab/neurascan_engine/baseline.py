@@ -16,10 +16,11 @@ from dataclasses import dataclass
 
 from .constants import (
     MAD_TO_SIGMA,
+    PRIOR_SCALE_FLOOR_FRACTION,
     SCALE_FLOOR_ABSOLUTE,
     SCALE_FLOOR_FRACTION,
 )
-from .features import FEATURE_KEYS, Session
+from .features import FEATURE_KEYS, SPEC_BY_KEY, Session
 
 
 def median(values: Sequence[float]) -> float:
@@ -43,18 +44,26 @@ def median_absolute_deviation(values: Sequence[float]) -> float:
     return median([abs(value - centre) for value in values])
 
 
-def robust_scale(values: Sequence[float]) -> float:
+def robust_scale(values: Sequence[float], typical_sd: float = 0.0) -> float:
     """Spread of *values* as a floored, sigma-equivalent robust scale.
 
     The MAD is rescaled by :data:`~neurascan_engine.constants.MAD_TO_SIGMA` so
     that a resulting z-score reads on the familiar standard-deviation scale,
-    then floored so that a user whose baseline happens to be perfectly
-    consistent does not get infinite z-scores forever after.
+    then floored twice.
+
+    The first floor, a small fraction of the median, is so that a user whose
+    baseline happens to be perfectly consistent does not get infinite z-scores
+    forever after.
+
+    The second, a fraction of *typical_sd* (the feature's typical day-to-day
+    variation), is so that a *small* baseline cannot understate the user's real
+    variability.  It is skipped when *typical_sd* is not given.
     """
     centre = median(values)
     scale = MAD_TO_SIGMA * median_absolute_deviation(values)
     floor = max(SCALE_FLOOR_FRACTION * abs(centre), SCALE_FLOOR_ABSOLUTE)
-    return max(scale, floor)
+    prior_floor = PRIOR_SCALE_FLOOR_FRACTION * typical_sd
+    return max(scale, floor, prior_floor)
 
 
 @dataclass(frozen=True)
@@ -96,7 +105,7 @@ class Baseline:
             if len(values) != len(pool):
                 raise ValueError(f"feature {key!r} missing from some sessions")
             medians[key] = median(values)
-            scales[key] = robust_scale(values)
+            scales[key] = robust_scale(values, SPEC_BY_KEY[key].typical_day_to_day_sd)
 
         return cls(median=medians, scale=scales, session_count=len(pool))
 

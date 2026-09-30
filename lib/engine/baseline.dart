@@ -60,7 +60,10 @@ class Baseline {
         values.add(value);
       }
       medians[key] = stats.median(values);
-      scales[key] = stats.robustScale(values);
+      scales[key] = stats.robustScale(
+        values,
+        typicalSd: kSpecByKey[key]!.typicalDaySd,
+      );
     }
 
     return Baseline(

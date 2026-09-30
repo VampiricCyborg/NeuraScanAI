@@ -28,12 +28,18 @@ A session is a check-in followed by five tasks:
 The engine then:
 
 1. discards the first two sessions (practice effect);
-2. freezes a per-feature median and MAD from the next four valid sessions (the report's
-   simulation used six; see the note in `lib/engine/constants.dart`);
+2. freezes a per-feature median and MAD from the next three valid sessions. The report's
+   simulation used six, and three is a much noisier estimate, so the spread is never allowed
+   below half of a feature's typical day-to-day variation (see the note in
+   `lib/engine/constants.dart` and `engine_lab/baseline_sensitivity.py`);
 3. converts later sessions to robust z-scores, averaged into four domains and combined with
    weights 35 / 25 / 25 / 15 %, counting only changes in the worse direction;
 4. smooths the index with an EWMA (lambda 0.3);
 5. reports a notable change only after three consecutive sessions above threshold.
+
+The baseline is only the reference point. A status, trends and a report need **eight tests
+after it** (sessions set aside as tired or unwell, and invalid ones, do not count), because a
+verdict from fewer points is mostly noise. Until then the app shows how far along the user is.
 
 Because the fusion is additive, each domain's share of the total is its exact contribution.
 

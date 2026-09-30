@@ -19,6 +19,7 @@ import '../data/local_db.dart';
 import '../data/models.dart';
 import '../data/repository.dart';
 import '../data/sync_service.dart';
+import '../engine/constants.dart';
 import '../engine/features.dart';
 import '../engine/screening_engine.dart';
 import '../services/notifications.dart';
@@ -160,6 +161,26 @@ final currentStatusProvider = Provider<ScreeningStatus>((ref) {
   }
   return ref.watch(latestScoredSessionProvider)?.status ??
       ScreeningStatus.buildingBaseline;
+});
+
+/// How many tests after the baseline have been scored.
+///
+/// The team's "actual tests". Sessions the check-in set aside, invalid ones and those that
+/// went into the baseline itself are not counted.
+final scoredSessionCountProvider = Provider<int>((ref) {
+  final sessions = ref.watch(sessionsProvider).value ?? const [];
+  return sessions.where((session) => session.countsTowardsTrend).length;
+});
+
+/// Whether enough tests have been done to give a status, trends and a report.
+///
+/// Needs the baseline *and* [kMinMonitoringSessions] tests after it. Until then a "notable
+/// change" could rest on as few as three sessions, which is mostly noise, and the app says
+/// so instead of showing it.
+final verdictReadyProvider = Provider<bool>((ref) {
+  final baselineReady = ref.watch(engineProvider).value?.baselineReady ?? false;
+  return baselineReady &&
+      ref.watch(scoredSessionCountProvider) >= kMinMonitoringSessions;
 });
 
 /// Sessions still needed before the baseline freezes.

@@ -52,6 +52,18 @@ class FeatureSpec:
     label: str
     unit: str = ""
 
+    #: How much this feature typically varies from one day to the next within a
+    #: single healthy person, in the feature's own units.  These are the
+    #: within-person SDs from Table A.2 of the report.
+    #:
+    #: They are used for one thing only: to stop a baseline's spread being
+    #: estimated as implausibly small.  With only a few baseline sessions the
+    #: MAD can come out near zero by luck, and every ordinary day then looks like
+    #: a large deviation.  A floor tied to typical variation prevents that
+    #: without pulling the *centre* of anyone's baseline towards a population
+    #: value -- the baseline stays personal.
+    typical_day_to_day_sd: float = 0.0
+
     def orient(self, z: float) -> float:
         """Flip *z* if needed so that a positive result always means worse.
 
@@ -66,6 +78,7 @@ class FeatureSpec:
 FEATURE_SPECS: tuple[FeatureSpec, ...] = (
     FeatureSpec(
         key="delayed_recall",
+        typical_day_to_day_sd=0.06,
         domain=Domain.COGNITIVE,
         direction=Direction.LOWER_IS_WORSE,
         label="Delayed recall",
@@ -73,6 +86,7 @@ FEATURE_SPECS: tuple[FeatureSpec, ...] = (
     ),
     FeatureSpec(
         key="reaction_median",
+        typical_day_to_day_sd=18.0,
         domain=Domain.COGNITIVE,
         direction=Direction.HIGHER_IS_WORSE,
         label="Reaction median",
@@ -80,12 +94,14 @@ FEATURE_SPECS: tuple[FeatureSpec, ...] = (
     ),
     FeatureSpec(
         key="reaction_cv",
+        typical_day_to_day_sd=0.02,
         domain=Domain.COGNITIVE,
         direction=Direction.HIGHER_IS_WORSE,
         label="Reaction variability",
     ),
     FeatureSpec(
         key="speaking_rate",
+        typical_day_to_day_sd=8.0,
         domain=Domain.SPEECH,
         direction=Direction.LOWER_IS_WORSE,
         label="Speaking rate",
@@ -93,12 +109,14 @@ FEATURE_SPECS: tuple[FeatureSpec, ...] = (
     ),
     FeatureSpec(
         key="pause_ratio",
+        typical_day_to_day_sd=0.025,
         domain=Domain.SPEECH,
         direction=Direction.HIGHER_IS_WORSE,
         label="Pause ratio",
     ),
     FeatureSpec(
         key="spiral_rmse",
+        typical_day_to_day_sd=0.6,
         domain=Domain.MOTOR,
         direction=Direction.HIGHER_IS_WORSE,
         label="Spiral tracing error",
@@ -106,12 +124,14 @@ FEATURE_SPECS: tuple[FeatureSpec, ...] = (
     ),
     FeatureSpec(
         key="tremor_index",
+        typical_day_to_day_sd=0.012,
         domain=Domain.MOTOR,
         direction=Direction.HIGHER_IS_WORSE,
         label="Tremor index",
     ),
     FeatureSpec(
         key="inter_key_interval",
+        typical_day_to_day_sd=15.0,
         domain=Domain.INTERACTION,
         direction=Direction.HIGHER_IS_WORSE,
         label="Inter-key interval",
@@ -119,6 +139,7 @@ FEATURE_SPECS: tuple[FeatureSpec, ...] = (
     ),
     FeatureSpec(
         key="inter_key_cv",
+        typical_day_to_day_sd=0.035,
         domain=Domain.INTERACTION,
         direction=Direction.HIGHER_IS_WORSE,
         label="Inter-key variability",

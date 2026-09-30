@@ -192,6 +192,87 @@ void main() {
     },
   );
 
+  group('a small baseline does not understate variability', () {
+    // The safeguard that makes a three-session baseline usable. The MAD of three values is
+    // the smaller of two gaps, which can be tiny by luck; left alone, an ordinary day then
+    // scores as a large deviation, and on healthy simulated users that gave about half of
+    // them a false alert (engine_lab/baseline_sensitivity.py).
+    final typical = kSpecByKey['reaction_median']!.typicalDaySd;
+    final floor = kPriorScaleFloorFraction * typical;
+
+    test('a lucky tight pair no longer gives a tiny scale', () {
+      // Two values almost coincide, so the MAD is 0.1, but the feature's ordinary
+      // day-to-day spread is 18 ms.
+      const values = [320.0, 320.1, 335.0];
+      // Without the safeguard only the 2 %-of-median floor (6.4 ms) applies.
+      expect(robustScale(values), lessThan(floor));
+      expect(
+        robustScale(values, typicalSd: typical),
+        greaterThanOrEqualTo(floor),
+      );
+    });
+
+    test('the floor is a fraction of typical variation', () {
+      expect(
+        robustScale(const [300.0, 300.0, 300.0], typicalSd: 18.0),
+        closeTo(kPriorScaleFloorFraction * 18.0, 1e-9),
+      );
+    });
+
+    test('a genuinely wide spread is left alone', () {
+      // A user who really is variable keeps their own, larger scale.
+      const values = [200.0, 320.0, 480.0];
+      expect(
+        robustScale(values, typicalSd: typical),
+        closeTo(robustScale(values), 1e-9),
+      );
+    });
+
+    test('it never moves the centre', () {
+      // Personal baselines stay personal: only the spread is regularised.
+      final sessions = [
+        for (final (i, v) in const [300.0, 300.1, 340.0].indexed)
+          makeSession(sessionId: '$i', overrides: {'reaction_median': v}),
+      ];
+      expect(
+        Baseline.fit(sessions).median['reaction_median'],
+        closeTo(300.1, 1e-9),
+      );
+    });
+
+    test('every feature has a typical spread', () {
+      for (final spec in kFeatureSpecs) {
+        expect(spec.typicalDaySd, greaterThan(0), reason: spec.key);
+      }
+    });
+
+    test('fit applies the floor to every feature', () {
+      final baseline = Baseline.fit([
+        for (var i = 0; i < kBaselineSessions; i++)
+          makeSession(sessionId: '$i'),
+      ]);
+      for (final spec in kFeatureSpecs) {
+        expect(
+          baseline.scale[spec.key],
+          greaterThanOrEqualTo(
+            kPriorScaleFloorFraction * spec.typicalDaySd - 1e-12,
+          ),
+          reason: spec.key,
+        );
+      }
+    });
+
+    test('identical sessions no longer make every deviation huge', () {
+      // Three identical baseline sessions have a MAD of zero. Previously the tiny
+      // proportional floor then made a perfectly ordinary day look enormous.
+      final baseline = Baseline.fit([
+        for (var i = 0; i < kBaselineSessions; i++)
+          makeSession(sessionId: '$i'),
+      ]);
+      expect(baseline.z('reaction_median', 320.0 + 18.0).abs(), lessThan(3.0));
+    });
+  });
+
   group('Baseline.fit contract', () {
     test('rejects an empty pool', () {
       expect(() => Baseline.fit(const []), throwsArgumentError);

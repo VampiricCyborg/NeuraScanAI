@@ -13,6 +13,8 @@ import pytest
 from neurascan_engine import (
     BASELINE_SESSIONS,
     FAMILIARISATION_SESSIONS,
+    MIN_MONITORING_SESSIONS,
+    PRIOR_SCALE_FLOOR_FRACTION,
     Baseline,
     ScreeningEngine,
     Session,
@@ -23,18 +25,26 @@ from neurascan_engine import (
     status_of,
 )
 from neurascan_engine.constants import MAD_TO_SIGMA, SCALE_FLOOR_FRACTION
+from neurascan_engine.features import SPEC_BY_KEY
 
 from .conftest import NOMINAL, make_session, varied_baseline_sessions
 
 
-def test_the_baseline_is_four_sessions_as_decided() -> None:
-    """Pinned so that changing it is deliberate, not a side effect.
+def test_the_session_counts_are_as_decided() -> None:
+    """Pinned so that changing them is deliberate, not a side effect.
 
-    The report's simulation used six.  Four is the team's decision after trying the
-    app; see the note on ``BASELINE_SESSIONS`` before changing it.
+    Three baseline sessions, and eight tests after it before the app gives a
+    verdict.  The report's simulation used six for the baseline; see the notes on
+    ``BASELINE_SESSIONS`` and ``PRIOR_SCALE_FLOOR_FRACTION`` before changing either.
     """
-    assert BASELINE_SESSIONS == 4
+    assert BASELINE_SESSIONS == 3
     assert FAMILIARISATION_SESSIONS == 2
+    assert MIN_MONITORING_SESSIONS == 8
+
+
+def test_the_verdict_needs_more_evidence_than_the_baseline() -> None:
+    """The point of separating them: the reference can be quick, the trend cannot."""
+    assert MIN_MONITORING_SESSIONS > BASELINE_SESSIONS
 
 
 class TestUT3FamiliarisationExcluded:
@@ -194,3 +204,67 @@ class TestBaselineFitting:
         baseline = Baseline.fit(varied_baseline_sessions())
         assert len(baseline.median) == 9
         assert len(baseline.scale) == 9
+
+
+class TestSmallBaselineDoesNotUnderstateVariability:
+    """The safeguard that makes a three-session baseline usable.
+
+    The MAD of three values is the smaller of two gaps, which can be tiny by luck.
+    Left alone, an ordinary day then scores as a large deviation; measured on
+    healthy simulated users that gave about half of them a false alert.
+    """
+
+    def test_a_lucky_tight_pair_no_longer_gives_a_tiny_scale(self) -> None:
+        # Two of the three values almost coincide, so the MAD is 0.1 -- but the
+        # feature's ordinary day-to-day spread is 18 ms.
+        values = [320.0, 320.1, 335.0]
+        typical = SPEC_BY_KEY["reaction_median"].typical_day_to_day_sd
+        floor = PRIOR_SCALE_FLOOR_FRACTION * typical
+        # Without the safeguard only the small proportional floor (2 % of the
+        # median, 6.4 ms) stands between this baseline and a tiny scale.
+        assert robust_scale(values) < floor
+        assert robust_scale(values, typical) >= floor
+
+    def test_the_floor_is_a_fraction_of_typical_variation(self) -> None:
+        typical = 18.0
+        assert robust_scale([300.0, 300.0, 300.0], typical) == pytest.approx(
+            PRIOR_SCALE_FLOOR_FRACTION * typical
+        )
+
+    def test_a_genuinely_wide_spread_is_left_alone(self) -> None:
+        # A user who really is variable keeps their own, larger scale.
+        values = [200.0, 320.0, 480.0]
+        typical = SPEC_BY_KEY["reaction_median"].typical_day_to_day_sd
+        assert robust_scale(values, typical) == pytest.approx(robust_scale(values))
+
+    def test_it_never_moves_the_centre(self) -> None:
+        # Personal baselines stay personal: only the spread is regularised.
+        sessions = [
+            make_session(reaction_median=v, session_id=str(i))
+            for i, v in enumerate([300.0, 300.1, 340.0])
+        ]
+        baseline = Baseline.fit(sessions)
+        assert baseline.median["reaction_median"] == pytest.approx(300.1)
+
+    def test_every_feature_has_a_typical_spread(self) -> None:
+        for spec in SPEC_BY_KEY.values():
+            assert spec.typical_day_to_day_sd > 0.0, spec.key
+
+    def test_fit_applies_it_to_every_feature(self) -> None:
+        baseline = Baseline.fit(
+            [make_session(session_id=str(i)) for i in range(BASELINE_SESSIONS)]
+        )
+        for key, spec in SPEC_BY_KEY.items():
+            assert (
+                baseline.scale[key]
+                >= (PRIOR_SCALE_FLOOR_FRACTION * spec.typical_day_to_day_sd) - 1e-12
+            ), key
+
+    def test_identical_sessions_no_longer_make_every_deviation_huge(self) -> None:
+        # Three identical baseline sessions have a MAD of zero.  Previously the tiny
+        # proportional floor then made a perfectly ordinary day look enormous.
+        baseline = Baseline.fit(
+            [make_session(session_id=str(i)) for i in range(BASELINE_SESSIONS)]
+        )
+        ordinary_day = baseline.z("reaction_median", 320.0 + 18.0)
+        assert abs(ordinary_day) < 3.0

@@ -43,6 +43,36 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen>
     final text = AppText.of(context);
     final deviation = ref.watch(deviationSeriesProvider);
     final domains = ref.watch(domainSeriesProvider);
+    final verdictReady = ref.watch(verdictReadyProvider);
+    final baselineReady =
+        ref.watch(engineProvider).value?.baselineReady ?? false;
+
+    // Charts only once there are enough tests after the baseline for a trend to mean
+    // something. Before that, a line through two or three points is mostly noise, and the
+    // user is told how far along they are rather than shown an empty screen.
+    if (!verdictReady) {
+      return Scaffold(
+        appBar: AppBar(title: Text(text.trendsTitle)),
+        body: baselineReady
+            ? ListView(
+                padding: const EdgeInsets.all(kPagePadding),
+                children: [
+                  SectionCard(
+                    title: text.monitoringTitle,
+                    leading: Icon(
+                      Icons.hourglass_top,
+                      color: context.colors.primary,
+                    ),
+                    child: MonitoringProgress(
+                      done: ref.watch(scoredSessionCountProvider),
+                      total: kMinMonitoringSessions,
+                    ),
+                  ),
+                ],
+              )
+            : EmptyState(icon: Icons.show_chart, message: text.trendsNoData),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(

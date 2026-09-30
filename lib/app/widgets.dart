@@ -8,6 +8,7 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../engine/constants.dart';
 import '../engine/features.dart';
 import '../engine/scoring.dart';
 import '../engine/screening_engine.dart';
@@ -304,7 +305,7 @@ class BaselineProgress extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           remaining == 0
-              ? text.statusBaselineSetBody
+              ? text.statusBaselineSetBody(kMinMonitoringSessions)
               : text.dashboardBaselineRemaining(remaining),
           style: context.texts.bodyMedium,
         ),
@@ -316,6 +317,62 @@ class BaselineProgress extends StatelessWidget {
             height: 1.4,
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// Progress through the tests that must follow the baseline before the app gives a verdict.
+///
+/// Shown wherever a verdict, a trend or a report would otherwise be. An empty screen there
+/// reads as broken; a count of how far along the user is reads as the app working as
+/// intended.
+class MonitoringProgress extends StatelessWidget {
+  const MonitoringProgress({
+    required this.done,
+    required this.total,
+    this.showExplanation = true,
+    super.key,
+  });
+
+  final int done;
+  final int total;
+  final bool showExplanation;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = AppText.of(context);
+    final remaining = (total - done).clamp(0, total);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          text.monitoringProgress(done.clamp(0, total), total),
+          style: context.texts.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(value: total == 0 ? 1 : done / total),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          text.monitoringRemaining(remaining),
+          style: context.texts.bodyMedium,
+        ),
+        if (showExplanation) ...[
+          const SizedBox(height: 10),
+          Text(
+            text.monitoringBody(total),
+            style: context.texts.bodySmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
       ],
     );
   }

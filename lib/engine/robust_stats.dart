@@ -40,16 +40,22 @@ double medianAbsoluteDeviation(List<double> values) {
 
 /// Spread of [values] as a floored, sigma-equivalent robust scale.
 ///
-/// The MAD is rescaled by [kMadToSigma] so that a resulting z-score reads on the
-/// familiar standard-deviation scale, then floored so that a user whose baseline
-/// happens to be perfectly consistent does not get infinite z-scores forever
-/// after.
-double robustScale(List<double> values) {
+/// The MAD is rescaled by [kMadToSigma] so that a resulting z-score reads on the familiar
+/// standard-deviation scale, then floored twice.
+///
+/// The first floor, a small fraction of the median, is so that a user whose baseline happens
+/// to be perfectly consistent does not get infinite z-scores forever after.
+///
+/// The second, a fraction of [typicalSd] (the feature's typical day-to-day variation), is so
+/// that a *small* baseline cannot understate the user's real variability. It is skipped when
+/// [typicalSd] is not given.
+double robustScale(List<double> values, {double typicalSd = 0.0}) {
   final centre = median(values);
   final scale = kMadToSigma * medianAbsoluteDeviation(values);
   final floor = math.max(
     kScaleFloorFraction * centre.abs(),
     kScaleFloorAbsolute,
   );
-  return math.max(scale, floor);
+  final priorFloor = kPriorScaleFloorFraction * typicalSd;
+  return math.max(scale, math.max(floor, priorFloor));
 }

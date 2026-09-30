@@ -56,6 +56,7 @@ class FeatureSpec {
     required this.domain,
     required this.direction,
     required this.label,
+    required this.typicalDaySd,
     this.unit = '',
   });
 
@@ -64,6 +65,17 @@ class FeatureSpec {
   final Direction direction;
   final String label;
   final String unit;
+
+  /// How much this feature typically varies from one day to the next within a single
+  /// healthy person, in the feature's own units. These are the within-person SDs from Table
+  /// A.2 of the report.
+  ///
+  /// Used for one thing only: to stop a baseline's spread being estimated as implausibly
+  /// small. With only a few baseline sessions the MAD can come out near zero by luck, and
+  /// every ordinary day then looks like a large deviation. A floor tied to typical variation
+  /// prevents that without pulling the *centre* of anyone's baseline towards a population
+  /// value -- the baseline stays personal.
+  final double typicalDaySd;
 
   /// Flips [z] if needed so that a positive result always means worse.
   ///
@@ -77,6 +89,7 @@ class FeatureSpec {
 const List<FeatureSpec> kFeatureSpecs = [
   FeatureSpec(
     key: 'delayed_recall',
+    typicalDaySd: 0.06,
     domain: Domain.cognitive,
     direction: Direction.lowerIsWorse,
     label: 'Delayed recall',
@@ -84,6 +97,7 @@ const List<FeatureSpec> kFeatureSpecs = [
   ),
   FeatureSpec(
     key: 'reaction_median',
+    typicalDaySd: 18.0,
     domain: Domain.cognitive,
     direction: Direction.higherIsWorse,
     label: 'Reaction median',
@@ -91,12 +105,14 @@ const List<FeatureSpec> kFeatureSpecs = [
   ),
   FeatureSpec(
     key: 'reaction_cv',
+    typicalDaySd: 0.02,
     domain: Domain.cognitive,
     direction: Direction.higherIsWorse,
     label: 'Reaction variability',
   ),
   FeatureSpec(
     key: 'speaking_rate',
+    typicalDaySd: 8.0,
     domain: Domain.speech,
     direction: Direction.lowerIsWorse,
     label: 'Speaking rate',
@@ -104,12 +120,14 @@ const List<FeatureSpec> kFeatureSpecs = [
   ),
   FeatureSpec(
     key: 'pause_ratio',
+    typicalDaySd: 0.025,
     domain: Domain.speech,
     direction: Direction.higherIsWorse,
     label: 'Pause ratio',
   ),
   FeatureSpec(
     key: 'spiral_rmse',
+    typicalDaySd: 0.6,
     domain: Domain.motor,
     direction: Direction.higherIsWorse,
     label: 'Spiral tracing error',
@@ -117,12 +135,14 @@ const List<FeatureSpec> kFeatureSpecs = [
   ),
   FeatureSpec(
     key: 'tremor_index',
+    typicalDaySd: 0.012,
     domain: Domain.motor,
     direction: Direction.higherIsWorse,
     label: 'Tremor index',
   ),
   FeatureSpec(
     key: 'inter_key_interval',
+    typicalDaySd: 15.0,
     domain: Domain.interaction,
     direction: Direction.higherIsWorse,
     label: 'Inter-key interval',
@@ -130,6 +150,7 @@ const List<FeatureSpec> kFeatureSpecs = [
   ),
   FeatureSpec(
     key: 'inter_key_cv',
+    typicalDaySd: 0.035,
     domain: Domain.interaction,
     direction: Direction.higherIsWorse,
     label: 'Inter-key variability',
