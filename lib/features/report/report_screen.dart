@@ -12,9 +12,9 @@ import '../../app/l10n/generated/app_localizations.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
-import '../../engine/constants.dart';
 import '../../engine/features.dart';
 import '../../services/pdf_report.dart';
+import '../trends/comparison_section.dart';
 
 /// Status, breakdown, and a PDF export.
 class ReportScreen extends ConsumerStatefulWidget {
@@ -82,7 +82,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     final baselineReady =
         ref.watch(engineProvider).value?.baselineReady ?? false;
 
-    // A report needs enough tests after the baseline to say something a doctor can use.
+    // A report needs at least one full test to compare with the baseline.
     if (!verdictReady || scored.isEmpty || latest == null) {
       return Scaffold(
         appBar: AppBar(title: Text(text.reportTitle)),
@@ -91,14 +91,14 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                 padding: const EdgeInsets.all(kPagePadding),
                 children: [
                   SectionCard(
-                    title: text.monitoringTitle,
+                    title: text.trendsFirstTestTitle,
                     leading: Icon(
-                      Icons.hourglass_top,
+                      Icons.play_circle_outline,
                       color: context.colors.primary,
                     ),
-                    child: MonitoringProgress(
-                      done: ref.watch(scoredSessionCountProvider),
-                      total: kMinMonitoringSessions,
+                    child: Text(
+                      text.reportNeedFirstTest,
+                      style: context.texts.bodyMedium?.copyWith(height: 1.5),
                     ),
                   ),
                 ],
@@ -121,6 +121,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       contributions: contributions,
       displayName: profile?.displayName,
       deviationSeries: ref.watch(deviationSeriesProvider),
+      comparison: ref.watch(comparisonProvider(null)),
     );
 
     return Scaffold(
@@ -155,6 +156,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               ),
             ),
             const SizedBox(height: 14),
+
+            if (data.comparison != null) ...[
+              ComparisonSection(comparison: data.comparison!),
+              const SizedBox(height: 14),
+            ],
 
             SectionCard(
               title: text.reportContributions,

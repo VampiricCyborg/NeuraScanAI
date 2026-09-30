@@ -134,18 +134,14 @@ void main() {
   });
 
   group('your baseline', () {
-    testWidgets('lists all nine measurements', (tester) async {
+    testWidgets('lists all five measurements', (tester) async {
       await pump(tester);
       for (final label in [
         'Words remembered',
-        'Reaction speed',
-        'Reaction steadiness',
         'Speaking pace',
         'Time spent pausing',
         'Tracing accuracy',
         'Hand steadiness',
-        'Typing pace',
-        'Typing rhythm',
       ]) {
         expect(find.text(label), findsOneWidget, reason: label);
       }
@@ -163,19 +159,19 @@ void main() {
 
     testWidgets('and how much each usually varies', (tester) async {
       await pump(tester);
-      expect(find.textContaining('usually within'), findsNWidgets(9));
+      expect(
+        find.textContaining('usually within'),
+        findsNWidgets(kFeatureSpecs.length),
+      );
     });
 
     testWidgets('different users see different baselines', (tester) async {
       baseline = Baseline.fit([
         for (var i = 0; i < kBaselineSessions; i++)
-          makeSession(
-            sessionId: '$i',
-            overrides: {'reaction_median': 512.0 + i},
-          ),
+          makeSession(sessionId: '$i', overrides: {'speaking_rate': 180.0 + i}),
       ]);
       await pump(tester);
-      expect(find.text('513 ms'), findsOneWidget);
+      expect(find.text('181/min'), findsOneWidget);
     });
   });
 
@@ -221,11 +217,6 @@ void main() {
       expect(formatFeatureValue('pause_ratio', 0.22), '22%');
     });
 
-    test('times read in milliseconds', () {
-      expect(formatFeatureValue('reaction_median', 312.4), '312 ms');
-      expect(formatFeatureValue('inter_key_interval', 260.0), '260 ms');
-    });
-
     test('speech reads as a rate', () {
       expect(formatFeatureValue('speaking_rate', 140.2), '140/min');
     });
@@ -235,12 +226,11 @@ void main() {
     });
 
     test('ratios read to two places', () {
-      expect(formatFeatureValue('reaction_cv', 0.153), '0.15');
       expect(formatFeatureValue('tremor_index', 0.104), '0.10');
     });
 
     test('a spread is a value with a plus-or-minus', () {
-      expect(formatFeatureSpread('reaction_median', 18.0), '±18 ms');
+      expect(formatFeatureSpread('speaking_rate', 8.0), '±8/min');
     });
 
     test('an unknown feature still formats rather than failing', () {

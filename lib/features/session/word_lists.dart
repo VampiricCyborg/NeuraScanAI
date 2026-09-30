@@ -110,6 +110,58 @@ const List<WordList> kEnglishWordLists = [
       'valley',
     ],
   ),
+  WordList(
+    id: 7,
+    words: [
+      'giraffe',
+      'pencil',
+      'cinnamon',
+      'feather',
+      'ladder',
+      'tractor',
+      'blossom',
+      'canyon',
+    ],
+  ),
+  WordList(
+    id: 8,
+    words: [
+      'rabbit',
+      'lemon',
+      'carpet',
+      'jacket',
+      'fountain',
+      'oyster',
+      'hammock',
+      'biscuit',
+    ],
+  ),
+  WordList(
+    id: 9,
+    words: [
+      'penguin',
+      'saucer',
+      'garlic',
+      'hornet',
+      'tulip',
+      'goblet',
+      'parrot',
+      'teapot',
+    ],
+  ),
+  WordList(
+    id: 10,
+    words: [
+      'buffalo',
+      'sandal',
+      'cherry',
+      'shovel',
+      'banner',
+      'cactus',
+      'ticket',
+      'pigeon',
+    ],
+  ),
 ];
 
 /// The Tamil lists.
@@ -170,11 +222,103 @@ const List<WordList> kTamilWordLists = [
       'மைதானம்',
     ],
   ),
+  WordList(
+    id: 105,
+    words: [
+      'குடை',
+      'கடிகாரம்',
+      'நாற்காலி',
+      'தேனீ',
+      'வாழைப்பழம்',
+      'படகு',
+      'சாவி',
+      'புத்தகம்',
+    ],
+  ),
+  WordList(
+    id: 106,
+    words: [
+      'கத்தரிக்கோல்',
+      'கண்ணாடி',
+      'சைக்கிள்',
+      'தர்பூசணி',
+      'நத்தை',
+      'பாலம்',
+      'தொப்பி',
+      'ஏணி',
+    ],
+  ),
+  WordList(
+    id: 107,
+    words: [
+      'தட்டு',
+      'கரண்டி',
+      'பூனை',
+      'நட்சத்திரம்',
+      'கோயில்',
+      'தவளை',
+      'பேனா',
+      'சாலை',
+    ],
+  ),
+  WordList(
+    id: 108,
+    words: [
+      'மேஜை',
+      'பலூன்',
+      'ஆரஞ்சு',
+      'வண்ணத்துப்பூச்சி',
+      'செருப்பு',
+      'மணி',
+      'கூடை',
+      'தேங்காய்',
+    ],
+  ),
 ];
 
 /// The lists available for [languageCode].
 List<WordList> wordListsFor(String languageCode) =>
     languageCode == 'ta' ? kTamilWordLists : kEnglishWordLists;
+
+/// Picks the [count] different lists for the test with index [testIndex].
+///
+/// An actual test learns and recalls several lists, and two of them being the same would make
+/// the second a repeat of what was just learned. A test also must not open with the list the
+/// one before it closed on. So each pick is taken from the rotation in order, skipping any
+/// list among the last [count] picks: that covers the rest of this test and the end of the
+/// previous one.
+///
+/// The choice is worked out by walking the picks from the very first test. That is cheap (a
+/// test is a handful of picks), and it is what makes the result depend only on [testIndex]
+/// and [count]: the same test always gets the same lists, however it is reached.
+List<WordList> pickWordListsForTest({
+  required int testIndex,
+  required int count,
+  String languageCode = 'en',
+}) {
+  final available = wordListsFor(languageCode).length;
+  final recent = <int>[];
+  var index = 0;
+  var latest = <WordList>[];
+
+  for (var test = 0; test <= testIndex; test++) {
+    latest = [];
+    var skipped = 0;
+    while (latest.length < count) {
+      final list = pickWordList(
+        sessionIndex: index++,
+        languageCode: languageCode,
+      );
+      // Bounded: with more lists than [count] a fresh one turns up within a cycle. If there
+      // are too few lists for that, repeating is better than never finishing.
+      if (recent.contains(list.id) && skipped++ < available * 2) continue;
+      latest.add(list);
+      recent.add(list.id);
+      if (recent.length > count) recent.removeAt(0);
+    }
+  }
+  return latest;
+}
 
 /// Picks the list for a session.
 ///

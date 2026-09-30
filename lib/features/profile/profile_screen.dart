@@ -11,6 +11,7 @@ import '../../app/router.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
 import '../../data/models.dart';
+import '../../engine/constants.dart';
 
 /// Language, hand, reminders, and the way through to privacy.
 class ProfileScreen extends ConsumerWidget {
@@ -31,6 +32,34 @@ class ProfileScreen extends ConsumerWidget {
       await repository.saveProfile(updated);
       await _applyReminder(ref, updated);
     }
+
+    Future<void> changeBaseline() async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(text.settingsBaselineConfirmTitle),
+          content: Text(text.settingsBaselineConfirmBody(kBaselineSessions)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(text.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(text.settingsBaselineConfirmAction),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      await repository.redoBaseline(profile.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(text.settingsBaselineDone)));
+      context.go(Routes.home);
+    }
+
+    final hasTests = (ref.watch(sessionsProvider).value ?? const []).isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(title: Text(text.profileTitle)),
@@ -110,6 +139,19 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 14),
+
+            if (hasTests) ...[
+              SectionCard(
+                title: text.settingsBaselineTitle,
+                subtitle: text.settingsBaselineBody,
+                child: OutlinedButton.icon(
+                  onPressed: changeBaseline,
+                  icon: const Icon(Icons.restart_alt),
+                  label: Text(text.settingsBaselineChange),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
 
             SectionCard(
               title: text.profileReminders,

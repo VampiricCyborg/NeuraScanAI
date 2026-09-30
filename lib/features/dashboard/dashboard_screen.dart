@@ -20,7 +20,6 @@ import '../../app/router.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
 import '../../data/models.dart';
-import '../../engine/constants.dart';
 import '../../engine/features.dart';
 import '../../engine/screening_engine.dart';
 
@@ -37,7 +36,7 @@ class DashboardScreen extends ConsumerWidget {
     final latest = ref.watch(latestScoredSessionProvider);
     final status = ref.watch(currentStatusProvider);
     final verdictReady = ref.watch(verdictReadyProvider);
-    final scoredCount = ref.watch(scoredSessionCountProvider);
+    final baselineProgress = ref.watch(baselineTestProgressProvider);
 
     if (profile == null || engine == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -78,28 +77,36 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 22),
 
               if (baselineReady && !verdictReady)
-                // The baseline is set but not enough tests have followed it for a verdict.
-                // Showing a status now could rest on as few as three sessions, which is
-                // mostly noise, so the card shows progress instead.
-                _MonitoringCard(scored: scoredCount)
+                // The baseline is set but no full test has been taken yet, so there is
+                // nothing to say about how the user compares with it.
+                const _BaselineSetCard()
               else if (baselineReady)
                 _StatusCard(status: status, session: latest)
               else
                 SectionCard(
                   child: BaselineProgress(
-                    collected:
-                        kBaselineSessions -
-                        ref.watch(baselineRemainingProvider),
-                    required_: kBaselineSessions,
+                    done: baselineProgress.done,
+                    total: baselineProgress.total,
+                    hasPractice: (profile.baselineEpoch) == 0,
                   ),
                 ),
               const SizedBox(height: 14),
 
               PrimaryButton(
-                label: text.dashboardStartSession,
+                label: _startLabel(text, baselineReady, baselineProgress),
                 icon: Icons.play_arrow_rounded,
                 onPressed: () => context.push(Routes.session),
               ),
+              if (baselineReady) ...[
+                const SizedBox(height: 8),
+                Text(
+                  text.dashboardFullTestNote,
+                  textAlign: TextAlign.center,
+                  style: context.texts.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
               const SizedBox(height: 22),
 
               if (verdictReady && latest?.domainScores != null) ...[
@@ -129,6 +136,17 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
+  /// The start button's wording: which baseline test is next, or a full test.
+  String _startLabel(
+    AppText text,
+    bool baselineReady,
+    BaselineTestProgress progress,
+  ) {
+    if (baselineReady) return text.dashboardStartFullTest;
+    if (progress.practicePending) return text.dashboardStartPractice;
+    return text.dashboardStartBaselineTest(progress.done + 1, progress.total);
+  }
+
   /// A short, human phrase for when a session happened.
   ///
   /// Relative rather than a date, because "two days ago" is what matters for a
@@ -151,16 +169,13 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-/// Progress towards the first verdict, shown once the baseline is set.
-class _MonitoringCard extends StatelessWidget {
-  const _MonitoringCard({required this.scored});
-
-  final int scored;
+/// Shown once the baseline is set and before the first full test.
+class _BaselineSetCard extends StatelessWidget {
+  const _BaselineSetCard();
 
   @override
   Widget build(BuildContext context) {
     final text = AppText.of(context);
-    final justSet = scored == 0;
 
     return SectionCard(
       child: Column(
@@ -168,14 +183,11 @@ class _MonitoringCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                justSet ? Icons.check_circle_outline : Icons.hourglass_top,
-                color: context.colors.primary,
-              ),
+              Icon(Icons.check_circle_outline, color: context.colors.primary),
               const SizedBox(width: 10),
               Flexible(
                 child: Text(
-                  justSet ? text.statusBaselineSet : text.monitoringTitle,
+                  text.statusBaselineSet,
                   style: context.texts.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -184,17 +196,9 @@ class _MonitoringCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          if (justSet) ...[
-            Text(
-              text.statusBaselineSetBody(kMinMonitoringSessions),
-              style: context.texts.bodyMedium?.copyWith(height: 1.5),
-            ),
-            const SizedBox(height: 16),
-          ],
-          MonitoringProgress(
-            done: scored,
-            total: kMinMonitoringSessions,
-            showExplanation: !justSet,
+          Text(
+            text.statusBaselineSetBody,
+            style: context.texts.bodyMedium?.copyWith(height: 1.5),
           ),
         ],
       ),

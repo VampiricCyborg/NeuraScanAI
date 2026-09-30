@@ -19,10 +19,12 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../data/models.dart';
+import '../engine/comparison.dart';
 import '../engine/constants.dart';
 import '../engine/features.dart';
 import '../engine/scoring.dart';
 import '../engine/screening_engine.dart';
+import '../features/trends/baseline_format.dart';
 
 /// Everything the report needs.
 class ReportData {
@@ -33,6 +35,7 @@ class ReportData {
     required this.contributions,
     this.displayName,
     this.deviationSeries = const [],
+    this.comparison,
   });
 
   final DateTime generatedAt;
@@ -46,6 +49,9 @@ class ReportData {
 
   /// The smoothed index over the period, for the sparkline.
   final List<({DateTime at, double ewma})> deviationSeries;
+
+  /// The latest full test against the baseline and the test before it, when there is one.
+  final TestComparison? comparison;
 
   DateTime get periodStart =>
       sessions.isEmpty ? generatedAt : sessions.first.completedAt;
@@ -67,7 +73,6 @@ const _domainColors = <String, PdfColor>{
   'cognitive': PdfColor.fromInt(0xFF146C7A),
   'speech': PdfColor.fromInt(0xFF7A5BA6),
   'motor': PdfColor.fromInt(0xFFB4530A),
-  'interaction': PdfColor.fromInt(0xFF5B8C3A),
 };
 
 /// Builds the PDF.
@@ -92,6 +97,10 @@ Future<Uint8List> buildReportPdf(ReportData data) async {
         pw.SizedBox(height: 18),
         _statusBlock(data),
         pw.SizedBox(height: 18),
+        if (data.comparison != null) ...[
+          _comparisonBlock(data.comparison!),
+          pw.SizedBox(height: 18),
+        ],
         if (data.deviationSeries.length >= 2) ...[
           _trendBlock(data),
           pw.SizedBox(height: 18),
@@ -154,7 +163,7 @@ pw.Widget _header(ReportData data) {
                 style: const pw.TextStyle(fontSize: 9, color: _muted),
               ),
               pw.Text(
-                '${data.sessionCount} session${data.sessionCount == 1 ? '' : 's'}',
+                '${data.sessionCount} full test${data.sessionCount == 1 ? '' : 's'}',
                 style: const pw.TextStyle(fontSize: 9, color: _muted),
               ),
             ],
@@ -208,37 +217,36 @@ pw.Widget _statusBlock(ReportData data) {
     ScreeningStatus.stable => (
       'Measurements within the usual range',
       'Across this period the smoothed deviation index stayed below the threshold. '
-          'Performance on all four measured areas remained consistent with this '
+          'Performance on all three measured areas remained consistent with this '
           'person\'s own established baseline.',
     ),
     ScreeningStatus.mildDeviation => (
       'Some movement from the usual range',
       'The smoothed deviation index rose above the informational level but did not '
-          'persist for the required number of consecutive sessions. This is common '
+          'persist for the required number of consecutive tests. This is common '
           'and frequently resolves without further change.',
     ),
     ScreeningStatus.notableDeviation => (
       'A sustained change from the usual range',
       'The smoothed deviation index remained above the threshold for '
-          '$kDefaultPersistence consecutive valid sessions, which is the condition '
+          '$kDefaultPersistence consecutive valid tests, which is the condition '
           'the app uses to distinguish a persistent shift from day-to-day variation. '
           'The contributing areas are broken down below.',
     ),
     ScreeningStatus.buildingBaseline => (
       'Baseline not yet established',
-      'Fewer than $kBaselineSessions valid sessions have been completed since the '
-          'familiarisation period, so no comparison against a personal baseline is '
-          'available yet.',
+      'The baseline tests have not all been completed, so no comparison against a '
+          'personal baseline is available yet.',
     ),
     ScreeningStatus.excludedContext => (
-      'Most recent session set aside',
-      'The most recent session was excluded from the trend because the pre-session '
+      'Most recent test set aside',
+      'The most recent test was excluded from the trend because the pre-test '
           'check-in reported poor sleep, heavy fatigue, or illness or a medication '
           'change.',
     ),
     ScreeningStatus.invalidSession => (
-      'Most recent session not counted',
-      'The most recent session did not meet the task quality checks and was excluded.',
+      'Most recent test not counted',
+      'The most recent test did not meet the task quality checks and was excluded.',
     ),
   };
 
@@ -253,6 +261,67 @@ pw.Widget _statusBlock(ReportData data) {
       ),
       pw.SizedBox(height: 6),
       pw.Text(body, style: const pw.TextStyle(fontSize: 10, lineSpacing: 1.6)),
+    ],
+  );
+}
+
+/// The latest full test against the baseline and the previous test, measurement by measurement.
+pw.Widget _comparisonBlock(TestComparison comparison) {
+  String word(Change? change) => switch (change) {
+    Change.better => 'Better',
+    Change.similar => 'About the same',
+    Change.worse => 'Worse',
+    null => '--',
+  };
+
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      _sectionTitle('Latest test compared with baseline and previous test'),
+      pw.SizedBox(height: 8),
+      pw.TableHelper.fromTextArray(
+        headers: const [
+          'Measurement',
+          'This test',
+          'Usual',
+          'Previous',
+          'Against usual',
+          'Against previous',
+        ],
+        headerStyle: const pw.TextStyle(
+          fontSize: 8.5,
+          fontWeight: pw.FontWeight.bold,
+        ),
+        cellStyle: const pw.TextStyle(fontSize: 8.5),
+        headerDecoration: const pw.BoxDecoration(
+          color: PdfColor.fromInt(0xFFF2F6F7),
+        ),
+        cellAlignments: {
+          0: pw.Alignment.centerLeft,
+          for (var i = 1; i <= 5; i++) i: pw.Alignment.centerRight,
+        },
+        border: pw.TableBorder.all(color: _rule, width: 0.5),
+        data: [
+          for (final m in comparison.measurements)
+            [
+              m.spec.label,
+              formatFeatureValue(m.spec.key, m.value),
+              formatFeatureValue(m.spec.key, m.baselineMedian),
+              m.previous == null
+                  ? '--'
+                  : formatFeatureValue(m.spec.key, m.previous!),
+              word(m.vsBaseline),
+              word(m.vsPrevious),
+            ],
+        ],
+      ),
+      pw.SizedBox(height: 6),
+      pw.Text(
+        'Better and worse are judged against how much each measurement usually varies '
+        'for this person: a change of less than one usual spread is reported as about '
+        'the same.',
+        style: const pw.TextStyle(fontSize: 8, color: _muted, lineSpacing: 1.4),
+      ),
     ],
   );
 }
@@ -311,8 +380,8 @@ pw.Widget _trendBlock(ReportData data) {
       pw.SizedBox(height: 6),
       pw.Text(
         'Solid line: smoothed deviation index. Dashed line: the level treated as '
-        'notable. Horizontal axis is session number, not calendar time, because '
-        'sessions are not evenly spaced.',
+        'notable. Horizontal axis is test number, not calendar time, because '
+        'tests are not evenly spaced.',
         style: const pw.TextStyle(fontSize: 8, color: _muted, lineSpacing: 1.4),
       ),
     ],
@@ -331,7 +400,7 @@ pw.Widget _contributionBlock(ReportData data) {
         'These shares are exact rather than estimated: the deviation index is a '
         'weighted sum, so each area\'s share of the total is its contribution. They '
         'sum to 100%. A change in one area often shows up in others, which is why all '
-        'four are reported.',
+        'three are reported.',
         style: const pw.TextStyle(fontSize: 9, color: _muted, lineSpacing: 1.5),
       ),
       pw.SizedBox(height: 12),
@@ -404,27 +473,31 @@ pw.Widget _methodBlock() {
       _sectionTitle('How these measurements were taken'),
       pw.SizedBox(height: 8),
       pw.Text(
-        'Each session consists of five short tasks on the person\'s own smartphone: '
-        'recall of an eight-word list after a delay of roughly three minutes, ten '
-        'reaction-time trials with a randomised foreperiod, twenty seconds of spoken '
-        'picture description, and tracing a three-turn guide spiral. Typing rhythm is '
-        'measured within the app\'s own text fields. Nine features are extracted on '
-        'the device.\n\n'
-        'The first two sessions are discarded to reduce the practice effect. The next '
-        '$kBaselineSessions valid sessions fix a median and a median absolute '
-        'deviation for each feature, which are then frozen as that person\'s baseline. '
-        'Because a spread estimated from so few sessions is unreliable, it is never '
-        'allowed to fall below half of the feature\'s typical day-to-day variation. '
-        'No status, trend or report is produced until $kMinMonitoringSessions further '
-        'valid tests have been completed after the baseline. '
-        'Later sessions are expressed as robust z-scores against that baseline, '
-        'averaged within four areas, weighted (cognitive 35%, speech 25%, motor 25%, '
-        'interaction 15%) and summed, counting only changes in the worse direction.\n\n'
+        'Every test is made of three kinds of step on the person\'s own smartphone: '
+        'recall of an eight-word list after other steps, twenty seconds of spoken '
+        'picture description, and tracing a three-turn guide spiral. Five features '
+        'are extracted on the device: the share of words recalled, speaking rate, '
+        'the share of time spent pausing, tracing error and a tremor index.\n\n'
+        'The baseline is set by four short tests of three steps each. The first is a '
+        'practice run and is discarded to reduce the practice effect; the next '
+        '$kBaselineSessions fix a median and a median absolute deviation for each '
+        'feature, which are then frozen as that person\'s baseline. Because a spread '
+        'estimated from so few tests is unreliable, it is never allowed to fall below '
+        'half of the feature\'s typical day-to-day variation. The baseline can be set '
+        'again by the user; earlier tests are kept but no longer counted.\n\n'
+        'A full test has eight steps: three word lists, three picture descriptions and '
+        'two spiral tracings. Each feature is measured several times in a test and the '
+        'test\'s value is the median of those repeats, so one unusual step cannot define '
+        'the result. Each full test is expressed as robust z-scores against the '
+        'baseline, averaged within three areas, weighted (cognitive 40%, speech 30%, '
+        'motor 30%) and summed, counting only changes in the worse direction. It is '
+        'also compared with the previous full test.\n\n'
         'The result is smoothed with an exponentially weighted moving average and a '
         'sustained change is reported only after $kDefaultPersistence consecutive '
-        'valid sessions above threshold. Sessions where a pre-session check-in '
-        'reported poor sleep, heavy fatigue, or illness or a medication change are '
-        'recorded but excluded from both the baseline and the trend.\n\n'
+        'valid tests above threshold, so a single test does not raise it. Tests where '
+        'a pre-test check-in reported poor sleep, heavy fatigue, or illness or a '
+        'medication change are recorded but excluded from both the baseline and the '
+        'trend.\n\n'
         'Audio is analysed on the device and deleted immediately afterwards; no '
         'recording, touch trace or typed text is stored or transmitted.',
         style: const pw.TextStyle(fontSize: 9, lineSpacing: 1.6),
@@ -443,17 +516,10 @@ pw.Widget _sessionTable(ReportData data) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
-      _sectionTitle('Recent sessions'),
+      _sectionTitle('Recent full tests'),
       pw.SizedBox(height: 8),
       pw.TableHelper.fromTextArray(
-        headers: const [
-          'Date',
-          'Cognitive',
-          'Speech',
-          'Motor',
-          'Interaction',
-          'Smoothed',
-        ],
+        headers: const ['Date', 'Cognitive', 'Speech', 'Motor', 'Smoothed'],
         headerStyle: const pw.TextStyle(
           fontSize: 9,
           fontWeight: pw.FontWeight.bold,
@@ -464,7 +530,7 @@ pw.Widget _sessionTable(ReportData data) {
         ),
         cellAlignments: {
           0: pw.Alignment.centerLeft,
-          for (var i = 1; i <= 5; i++) i: pw.Alignment.centerRight,
+          for (var i = 1; i <= 4; i++) i: pw.Alignment.centerRight,
         },
         border: pw.TableBorder.all(color: _rule, width: 0.5),
         data: [
@@ -474,7 +540,6 @@ pw.Widget _sessionTable(ReportData data) {
               _formatScore(session.domainScores?[Domain.cognitive]),
               _formatScore(session.domainScores?[Domain.speech]),
               _formatScore(session.domainScores?[Domain.motor]),
-              _formatScore(session.domainScores?[Domain.interaction]),
               session.ewma?.toStringAsFixed(2) ?? '--',
             ],
         ],
@@ -482,7 +547,7 @@ pw.Widget _sessionTable(ReportData data) {
       pw.SizedBox(height: 6),
       pw.Text(
         'Area figures are robust z-scores against this person\'s own baseline: 0 is '
-        'their usual level, positive is worse, negative is better. Only sessions '
+        'their usual level, positive is worse, negative is better. Only tests '
         'included in the trend are listed.',
         style: const pw.TextStyle(fontSize: 8, color: _muted, lineSpacing: 1.4),
       ),

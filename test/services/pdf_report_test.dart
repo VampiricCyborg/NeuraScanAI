@@ -8,6 +8,8 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:neurascan_ai/data/models.dart';
+import 'package:neurascan_ai/engine/baseline.dart';
+import 'package:neurascan_ai/engine/comparison.dart';
 import 'package:neurascan_ai/engine/features.dart';
 import 'package:neurascan_ai/engine/screening_engine.dart';
 import 'package:neurascan_ai/services/pdf_report.dart';
@@ -56,10 +58,9 @@ void main() {
       contributions:
           contributions ??
           const {
-            Domain.cognitive: 0.47,
-            Domain.speech: 0.39,
+            Domain.cognitive: 0.55,
+            Domain.speech: 0.45,
             Domain.motor: 0.0,
-            Domain.interaction: 0.14,
           },
       displayName: displayName,
       deviationSeries: series,
@@ -175,7 +176,6 @@ void main() {
           Domain.cognitive: 1.0,
           Domain.speech: 0.0,
           Domain.motor: 0.0,
-          Domain.interaction: 0.0,
         },
       );
       expect(data.contributions[Domain.motor], 0.0);
@@ -185,6 +185,47 @@ void main() {
       final data = reportWith();
       final total = data.contributions.values.reduce((a, b) => a + b);
       expect(total, closeTo(1.0, 1e-9));
+    });
+  });
+
+  group('the comparison', () {
+    // The latest full test against the baseline and the one before it, measurement by
+    // measurement. Built from the same numbers the app shows on screen.
+    ReportData withComparison({bool hasPrevious = true}) {
+      final baseline = Baseline.fit(variedBaselineSessions());
+      final latest = makeSession(jitter: {'delayed_recall': -3.0}).features;
+      final previous = makeSession().features;
+      final base = reportWith();
+      return ReportData(
+        generatedAt: base.generatedAt,
+        sessions: base.sessions,
+        status: base.status,
+        contributions: base.contributions,
+        displayName: base.displayName,
+        deviationSeries: base.deviationSeries,
+        comparison: compareTests(
+          latest: latest,
+          previous: hasPrevious ? previous : null,
+          baseline: baseline,
+        ),
+      );
+    }
+
+    test('builds with a comparison', () async {
+      final bytes = await buildReportPdf(withComparison());
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+      expect(bytes.length, greaterThan(2000));
+    });
+
+    test('builds for a first full test, which has no previous one', () async {
+      final bytes = await buildReportPdf(withComparison(hasPrevious: false));
+      expect(bytes, isNotEmpty);
+    });
+
+    test('the comparison makes the document longer', () async {
+      final without = await buildReportPdf(reportWith());
+      final with_ = await buildReportPdf(withComparison());
+      expect(with_.length, greaterThan(without.length));
     });
   });
 }

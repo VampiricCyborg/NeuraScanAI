@@ -9,10 +9,9 @@ library;
 String formatFeatureValue(String key, double value) => switch (key) {
   // Shares are shown as percentages.
   'delayed_recall' || 'pause_ratio' => '${(value * 100).round()}%',
-  'reaction_median' || 'inter_key_interval' => '${value.round()} ms',
   'speaking_rate' => '${value.round()}/min',
   'spiral_rmse' => '${value.toStringAsFixed(1)} dp',
-  // Dimensionless ratios have no natural unit.
+  // Dimensionless indices have no natural unit.
   _ => value.toStringAsFixed(2),
 };
 

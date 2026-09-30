@@ -8,7 +8,6 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../engine/constants.dart';
 import '../engine/features.dart';
 import '../engine/scoring.dart';
 import '../engine/screening_engine.dart';
@@ -23,20 +22,15 @@ String domainLabel(AppText text, Domain domain) => switch (domain) {
   Domain.cognitive => text.domainCognitive,
   Domain.speech => text.domainSpeech,
   Domain.motor => text.domainMotor,
-  Domain.interaction => text.domainInteraction,
 };
 
 /// The localised name of a feature.
 String featureLabel(AppText text, String featureKey) => switch (featureKey) {
   'delayed_recall' => text.featureDelayedRecall,
-  'reaction_median' => text.featureReactionMedian,
-  'reaction_cv' => text.featureReactionCv,
   'speaking_rate' => text.featureSpeakingRate,
   'pause_ratio' => text.featurePauseRatio,
   'spiral_rmse' => text.featureSpiralRmse,
   'tremor_index' => text.featureTremorIndex,
-  'inter_key_interval' => text.featureInterKeyInterval,
-  'inter_key_cv' => text.featureInterKeyCv,
   _ => featureKey,
 };
 
@@ -270,74 +264,22 @@ class ContributionBreakdown extends StatelessWidget {
   }
 }
 
-/// Progress towards a frozen baseline.
+/// Progress towards a frozen baseline, counted in tests.
+///
+/// [done] includes the practice test, so the bar and the "x of y" agree with what the user
+/// has actually sat through. [hasPractice] only changes the explanation: the first baseline
+/// opens with a practice run, a later one does not.
 class BaselineProgress extends StatelessWidget {
   const BaselineProgress({
-    required this.collected,
-    required this.required_,
-    super.key,
-  });
-
-  final int collected;
-  final int required_;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = AppText.of(context);
-    final remaining = (required_ - collected).clamp(0, required_);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          text.dashboardBaselineProgress(collected, required_),
-          style: context.texts.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: LinearProgressIndicator(
-            value: required_ == 0 ? 1 : collected / required_,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          remaining == 0
-              ? text.statusBaselineSetBody(kMinMonitoringSessions)
-              : text.dashboardBaselineRemaining(remaining),
-          style: context.texts.bodyMedium,
-        ),
-        const SizedBox(height: 10),
-        Text(
-          text.dashboardBaselineExplainer,
-          style: context.texts.bodySmall?.copyWith(
-            color: context.colors.onSurfaceVariant,
-            height: 1.4,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Progress through the tests that must follow the baseline before the app gives a verdict.
-///
-/// Shown wherever a verdict, a trend or a report would otherwise be. An empty screen there
-/// reads as broken; a count of how far along the user is reads as the app working as
-/// intended.
-class MonitoringProgress extends StatelessWidget {
-  const MonitoringProgress({
     required this.done,
     required this.total,
-    this.showExplanation = true,
+    this.hasPractice = true,
     super.key,
   });
 
   final int done;
   final int total;
-  final bool showExplanation;
+  final bool hasPractice;
 
   @override
   Widget build(BuildContext context) {
@@ -348,7 +290,7 @@ class MonitoringProgress extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          text.monitoringProgress(done.clamp(0, total), total),
+          text.dashboardBaselineProgress(done, total),
           style: context.texts.titleSmall?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -360,19 +302,21 @@ class MonitoringProgress extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          text.monitoringRemaining(remaining),
+          remaining == 0
+              ? text.statusBaselineSetBody
+              : text.dashboardBaselineRemaining(remaining),
           style: context.texts.bodyMedium,
         ),
-        if (showExplanation) ...[
-          const SizedBox(height: 10),
-          Text(
-            text.monitoringBody(total),
-            style: context.texts.bodySmall?.copyWith(
-              color: context.colors.onSurfaceVariant,
-              height: 1.4,
-            ),
+        const SizedBox(height: 10),
+        Text(
+          hasPractice
+              ? text.dashboardBaselineExplainer
+              : text.dashboardBaselineExplainerAgain,
+          style: context.texts.bodySmall?.copyWith(
+            color: context.colors.onSurfaceVariant,
+            height: 1.4,
           ),
-        ],
+        ),
       ],
     );
   }

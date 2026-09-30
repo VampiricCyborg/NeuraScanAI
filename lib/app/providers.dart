@@ -19,6 +19,7 @@ import '../data/local_db.dart';
 import '../data/models.dart';
 import '../data/repository.dart';
 import '../data/sync_service.dart';
+import '../engine/comparison.dart';
 import '../engine/constants.dart';
 import '../engine/features.dart';
 import '../engine/screening_engine.dart';
@@ -163,30 +164,81 @@ final currentStatusProvider = Provider<ScreeningStatus>((ref) {
       ScreeningStatus.buildingBaseline;
 });
 
-/// How many tests after the baseline have been scored.
+/// The full tests taken after the baseline that were scored, oldest first.
 ///
-/// The team's "actual tests". Sessions the check-in set aside, invalid ones and those that
-/// went into the baseline itself are not counted.
-final scoredSessionCountProvider = Provider<int>((ref) {
+/// Tests the check-in set aside, and those that went into the baseline itself, are not
+/// included. Each of these was compared with the baseline, so each is a point on the trend
+/// and something to compare the next test with.
+final actualTestsProvider = Provider<List<SessionRecord>>((ref) {
   final sessions = ref.watch(sessionsProvider).value ?? const [];
-  return sessions.where((session) => session.countsTowardsTrend).length;
+  return [
+    for (final session in sessions)
+      if (session.countsTowardsTrend) session,
+  ];
 });
 
-/// Whether enough tests have been done to give a status, trends and a report.
+/// How many full tests have been scored.
+final scoredSessionCountProvider = Provider<int>(
+  (ref) => ref.watch(actualTestsProvider).length,
+);
+
+/// Whether there is a result to show: a status, a comparison and a report.
 ///
-/// Needs the baseline *and* [kMinMonitoringSessions] tests after it. Until then a "notable
-/// change" could rest on as few as three sessions, which is mostly noise, and the app says
-/// so instead of showing it.
+/// True from the first full test. Each of those tests is eight steps with every measurement
+/// taken several times, so a single one is a measurement in its own right, and the app does
+/// not make the user wait for a run of them. What it does not do is call a change "notable"
+/// from one test: that needs the smoothed score to stay above the line for
+/// [kDefaultPersistence] tests, so the first results are honest about being early.
 final verdictReadyProvider = Provider<bool>((ref) {
   final baselineReady = ref.watch(engineProvider).value?.baselineReady ?? false;
-  return baselineReady &&
-      ref.watch(scoredSessionCountProvider) >= kMinMonitoringSessions;
+  return baselineReady && ref.watch(scoredSessionCountProvider) >= 1;
 });
 
-/// Sessions still needed before the baseline freezes.
-final baselineRemainingProvider = Provider<int>((ref) {
+/// One full test laid out against the baseline and the full test before it.
+///
+/// Keyed by session id; null gives the latest. Null when there is no baseline yet or no such
+/// test. The first full test has no earlier one, so its comparison has only the baseline.
+final comparisonProvider = Provider.family<TestComparison?, String?>((
+  ref,
+  sessionId,
+) {
+  final baseline = ref.watch(engineProvider).value?.baseline;
+  final tests = ref.watch(actualTestsProvider);
+  if (baseline == null || tests.isEmpty) return null;
+
+  final index = sessionId == null
+      ? tests.length - 1
+      : tests.indexWhere((test) => test.id == sessionId);
+  if (index < 0) return null;
+
+  return compareTests(
+    latest: tests[index].features,
+    previous: index > 0 ? tests[index - 1].features : null,
+    baseline: baseline,
+  );
+});
+
+/// How far the baseline is: tests done, out of how many.
+///
+/// The first baseline is four tests, the first a practice run; a later one is three, because
+/// the user has already met the tasks.
+typedef BaselineTestProgress = ({int done, int total, bool practicePending});
+
+final baselineTestProgressProvider = Provider<BaselineTestProgress>((ref) {
   final sessions = ref.watch(sessionsProvider).value ?? const [];
-  return ref.watch(repositoryProvider).baselineSessionsRemaining(sessions);
+  final hasPractice =
+      (ref.watch(profileProvider).value?.baselineEpoch ?? 0) == 0;
+  final remaining = ref
+      .watch(repositoryProvider)
+      .baselineSessionsRemaining(sessions);
+  final practiceDone = hasPractice && sessions.isNotEmpty;
+  final total = hasPractice ? kBaselineTests : kBaselineSessions;
+  final done = (kBaselineSessions - remaining) + (practiceDone ? 1 : 0);
+  return (
+    done: done.clamp(0, total),
+    total: total,
+    practicePending: hasPractice && !practiceDone,
+  );
 });
 
 /// The smoothed deviation history for the main trend chart.

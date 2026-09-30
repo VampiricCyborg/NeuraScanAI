@@ -101,9 +101,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 36),
 
                 if (_registering) ...[
-                  // Not a MeasuredTextField: typing here is not recorded. The
-                  // interaction features come from the recall task inside a session,
-                  // where there is a session to attribute them to.
                   TextFormField(
                     controller: _name,
                     textCapitalization: TextCapitalization.words,

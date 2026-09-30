@@ -36,11 +36,11 @@
   "share": "Share",
   "loading": "Loading",
 
-  "onboardingTitle1": "A four-minute check",
-  "onboardingBody1": "Five short tasks measure your memory, reaction speed, speech and steadiness of hand. Most people finish in about four minutes.",
+  "onboardingTitle1": "A few short tests",
+  "onboardingBody1": "Short tests measure your memory, your speech and the steadiness of your hand. Each one takes a few minutes.",
 
   "onboardingTitle2": "Compared with you, not a population",
-  "onboardingBody2": "The first sessions build a picture of what is normal for you. After that, the app watches for changes from your own baseline rather than from an average.",
+  "onboardingBody2": "The first tests build a picture of what is normal for you. After that, each full test is compared with your own baseline rather than with an average.",
 
   "onboardingTitle3": "Private by design",
   "onboardingBody3": "Your recording, your finger movements and the words you type stay on this phone. Only the measurements are kept, and only you decide whether they are backed up.",
@@ -68,7 +68,7 @@
 
   "consentTitle": "Before you begin",
   "consentWhatItDoes": "What this app does",
-  "consentWhatItDoesBody": "It asks you to do five short tasks every couple of days, measures nine things about how you did them, and tells you when those measurements drift away from your own usual range.",
+  "consentWhatItDoesBody": "It asks you to do short tests every couple of days, measures five things about how you did them, and tells you when those measurements drift away from your own usual range.",
   "consentWhatItDoesNot": "What it does not do",
   "consentWhatItDoesNotBody": "It does not diagnose Alzheimer's disease, Parkinson's disease, or anything else. It does not replace a doctor. A notable change is a reason to have a conversation, not a result.",
   "consentDataTitle": "Your data",
@@ -77,7 +77,21 @@
   "consentMustAgree": "Please confirm you understand before continuing.",
 
   "settingsHandTitle": "Which hand will you use?",
-  "settingsHandBody": "The tracing and typing tasks depend on this. If you change hands later, the app will need to learn your baseline again.",
+  "settingsHandBody": "The tracing task depends on this. If you change hands later, you should set your baseline again.",
+  "settingsBaselineTitle": "Your baseline",
+  "settingsBaselineBody": "Your baseline is what every full test is compared with. Set it again if something real has changed, such as your dominant hand or your phone.",
+  "settingsBaselineChange": "Change my baseline",
+  "settingsBaselineConfirmTitle": "Set a new baseline?",
+  "settingsBaselineConfirmBody": "You will do {count} short baseline tests to set it again. Your earlier tests are kept in your export, but they will no longer count towards your trends or your new baseline. This cannot be undone.",
+  "@settingsBaselineConfirmBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsBaselineConfirmAction": "Start a new baseline",
+  "settingsBaselineDone": "Your baseline has been reset. Take your first baseline test whenever you are ready.",
   "handRight": "Right hand",
   "handLeft": "Left hand",
 
@@ -86,7 +100,7 @@
   "languageTamil": "Tamil",
 
   "settingsSyncTitle": "Back up your measurements",
-  "settingsSyncBody": "Off by default. If you turn this on, only the nine measurements and your scores are uploaded. Your recording, your finger movements and your typing never leave this phone.",
+  "settingsSyncBody": "Off by default. If you turn this on, only the five measurements and your scores are uploaded. Your recording and your finger movements never leave this phone.",
   "settingsSyncOn": "Back up my measurements",
   "settingsSyncOff": "Keep everything on this phone only",
 
@@ -98,8 +112,21 @@
       }
     }
   },
-  "dashboardStartSession": "Start a session",
   "dashboardNoSessionsYet": "You have not done a session yet.",
+  "dashboardFullTestNote": "Eight short steps, about six minutes. Take one whenever you like.",
+  "dashboardStartFullTest": "Take a full test",
+  "dashboardStartPractice": "Start the practice test",
+  "dashboardStartBaselineTest": "Start baseline test {number} of {total}",
+  "@dashboardStartBaselineTest": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "dashboardLastSession": "Last session {when}",
   "@dashboardLastSession": {
     "placeholders": {
@@ -108,7 +135,7 @@
       }
     }
   },
-  "dashboardBaselineProgress": "Building your baseline: {done} of {total} sessions",
+  "dashboardBaselineProgress": "Building your baseline: {done} of {total} tests",
   "@dashboardBaselineProgress": {
     "placeholders": {
       "done": {
@@ -119,8 +146,9 @@
       }
     }
   },
-  "dashboardBaselineExplainer": "The first two sessions do not count, because everyone improves just by getting used to the tasks. After that, three good sessions set your baseline.",
-  "dashboardBaselineRemaining": "{count, plural, =1{One more session to go} other{{count} more sessions to go}}",
+  "dashboardBaselineExplainer": "Each baseline test has three short steps: words, speech and tracing. The first one is only practice and does not count, because everyone improves just by getting used to the tasks. The next three set your baseline.",
+  "dashboardBaselineExplainerAgain": "Three baseline tests, each with three short steps, set your new baseline. Your earlier tests are kept, but they no longer count towards your trends.",
+  "dashboardBaselineRemaining": "{count, plural, =1{One more test to go} other{{count} more tests to go}}",
   "@dashboardBaselineRemaining": {
     "placeholders": {
       "count": {
@@ -137,43 +165,7 @@
   "statusNotableBody": "Your measurements have stayed outside your usual range for several sessions. This is worth mentioning to a doctor. It is not a diagnosis, and there are many ordinary explanations.",
   "statusBuilding": "Building your baseline",
   "statusBaselineSet": "Your baseline is set",
-  "statusBaselineSetBody": "From now on, each session is compared with your own usual range. Your first results, trends and report appear after {total} more tests.",
-  "@statusBaselineSetBody": {
-    "placeholders": {
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "monitoringTitle": "Gathering your first results",
-  "monitoringBody": "Trends, benchmarks and your report need at least {total} tests after your baseline, so that they mean something. Until then, a single result could tell you very little.",
-  "@monitoringBody": {
-    "placeholders": {
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "monitoringProgress": "{done} of {total} tests after your baseline",
-  "@monitoringProgress": {
-    "placeholders": {
-      "done": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "monitoringRemaining": "{count, plural, =1{One more test to go} other{{count} more tests to go}}",
-  "@monitoringRemaining": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "monitoringSessionSaved": "This test has been added to your record.",
+  "statusBaselineSetBody": "From now on, take a full test whenever you like. Each one is compared with your baseline and with your last test, and added to your trends.",
   "statusExcluded": "Set aside",
   "statusExcludedBody": "You told us about {reasons}, so this session is saved but left out of your trend.",
   "@statusExcludedBody": {
@@ -202,32 +194,9 @@
   "checkInWillBeExcluded": "Thank you. This session will be saved but kept out of your trend.",
 
   "taskMemoryTitle": "Remember these words",
-  "taskMemoryBody": "Read them aloud if that helps. You will be asked for them at the end of the session.",
+  "taskMemoryBody": "Read them aloud if that helps. You will be asked for them later in this test.",
   "taskMemoryReady": "I have them",
 
-  "taskReactionTitle": "Tap as soon as the circle turns green",
-  "taskReactionBody": "There will be {count} turns. The wait before each one is different on purpose, so do not try to guess.",
-  "@taskReactionBody": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "taskReactionWait": "Wait",
-  "taskReactionTapNow": "Tap",
-  "taskReactionTooEarly": "That was before the circle changed. Wait for green.",
-  "taskReactionTrialProgress": "{done} of {total}",
-  "@taskReactionTrialProgress": {
-    "placeholders": {
-      "done": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
 
   "taskSpeechTitle": "Describe what you see",
   "taskSpeechBody": "Talk about the picture for {seconds} seconds. Say whatever you notice. There is no right answer, and nobody will hear the recording.",
@@ -274,10 +243,39 @@
       }
     }
   },
-  "sessionQuitTitle": "Leave this session?",
-  "sessionQuitBody": "Nothing from this session will be saved. You can start again whenever you like.",
+  "sessionQuitTitle": "Leave this test?",
+  "sessionQuitBody": "Nothing from this test will be saved. You can start again whenever you like.",
   "sessionQuitConfirm": "Leave",
   "sessionQuitStay": "Keep going",
+  "sessionFinalPart": "Final part",
+  "sessionStepWords": "Words",
+  "sessionStepSpeech": "Speech",
+  "sessionStepPrecision": "Precision",
+  "sessionKindPractice": "Practice test",
+  "sessionKindBaseline": "Baseline test {number} of {total}",
+  "@sessionKindBaseline": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionKindActual": "Full test",
+  "taskSpiralTryAgain": "That tracing did not cover enough of the spiral to count. Please trace it again, all the way out.",
+  "taskRecallListLabel": "Word list {number} of {total}",
+  "@taskRecallListLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
 
   "summaryTitle": "Your session",
   "summaryRecallResult": "You remembered {recalled} of {total} words.",
@@ -318,7 +316,7 @@
     }
   },
   "reportContributions": "Where the change is coming from",
-  "reportContributionsBody": "These add up to everything the app noticed. A change in thinking often shows up in speech and typing too, which is why all four are shown.",
+  "reportContributionsBody": "These add up to everything the app noticed. A change in thinking can show up in speech too, which is why all three areas are shown.",
   "reportTalkToDoctor": "Talk to a doctor",
   "reportTalkToDoctorBody": "Take this report with you. It shows months of measurements rather than a single test, which is more use to a doctor than a one-off score.",
   "reportExport": "Save or share this report",
@@ -328,21 +326,34 @@
   "domainCognitive": "Thinking",
   "domainSpeech": "Speech",
   "domainMotor": "Movement",
-  "domainInteraction": "Typing",
 
   "featureDelayedRecall": "Words remembered",
-  "featureReactionMedian": "Reaction speed",
-  "featureReactionCv": "Reaction steadiness",
   "featureSpeakingRate": "Speaking pace",
   "featurePauseRatio": "Time spent pausing",
   "featureSpiralRmse": "Tracing accuracy",
   "featureTremorIndex": "Hand steadiness",
-  "featureInterKeyInterval": "Typing pace",
-  "featureInterKeyCv": "Typing rhythm",
 
   "trendsTitle": "Your trends",
   "trendsOverall": "Overall",
   "trendsByDomain": "By area",
+  "trendsCompare": "Compare",
+  "trendsFirstTestTitle": "Take your first full test",
+  "trendsFirstTestBody": "Your baseline is set. Once you have taken a full test, this page compares it with your baseline and with your later tests, and draws your trends. Until then, here is an example of how it works.",
+  "trendsExampleToggle": "How trends work: an example",
+  "comparisonTitle": "How this test compares",
+  "comparisonIntro": "Each measurement is set against your usual value and against your last full test.",
+  "comparisonThisTest": "This test",
+  "comparisonUsual": "Your usual",
+  "comparisonLastTest": "Last test",
+  "comparisonVsUsual": "Against your usual",
+  "comparisonVsLast": "Against last test",
+  "comparisonBetter": "Better",
+  "comparisonSimilar": "About the same",
+  "comparisonWorse": "Worse",
+  "comparisonFirstTest": "This is your first full test, so there is no earlier test to compare it with yet. From your next test on, you will see how each measurement moved.",
+  "comparisonExplain": "Better and worse are judged against how much each measurement usually varies for you. About the same means the change is within that ordinary variation.",
+  "summaryEarlyNote": "This is an early result. A notable change is only reported when it stays up over several tests, so one test on its own will not raise it.",
+  "reportNeedFirstTest": "Your report is ready after your first full test.",
   "trendsNoData": "Your trends will appear once your baseline is set.",
   "trendsExcludedNote": "Sessions you marked as tired or unwell are not shown here.",
   "trendsHigherIsWorse": "Higher means further from your usual range.",
@@ -380,7 +391,7 @@
   },
   "howTitle": "How the numbers are worked out",
   "howStep1": "Each measurement is compared with your own baseline, in units of how much it usually varies for you.",
-  "howStep2": "The nine measurements are grouped into four areas: thinking, speech, movement and typing.",
+  "howStep2": "The five measurements are grouped into three areas: thinking, speech and movement.",
   "howStep3": "Only changes for the worse count. Doing better than usual never hides a decline somewhere else.",
   "howStep4": "The result is smoothed, so one bad day barely moves it.",
   "howStep5": "A notable change is reported only when the smoothed score stays above the dashed line for {count} tests in a row.",
@@ -404,13 +415,13 @@
     }
   },
   "profileRemindersOff": "No reminders",
-  "profileRemindersBody": "A session every two to three days gives the app enough to see a trend.",
+  "profileRemindersBody": "A full test every two to three days gives the app enough to see a trend.",
 
   "privacyTitle": "Privacy and your data",
   "privacyOnDeviceTitle": "What stays on this phone",
   "privacyOnDeviceBody": "Your voice recording, deleted as soon as it is measured. Your finger movements. The words you type. None of these are ever stored or sent.",
   "privacyStoredTitle": "What is stored",
-  "privacyStoredBody": "Nine measurements per session and the scores worked out from them, in an encrypted database on this phone.",
+  "privacyStoredBody": "Five measurements per test and the scores worked out from them, in an encrypted database on this phone.",
   "privacySyncTitle": "Backup",
   "privacySyncPending": "{count, plural, =0{Everything is backed up} =1{One session waiting to be backed up} other{{count} sessions waiting to be backed up}}",
   "@privacySyncPending": {
@@ -468,8 +479,8 @@
     }
   },
 
-  "reminderTitle": "Time for a session",
-  "reminderBody": "A four-minute check keeps your trend up to date.",
+  "reminderTitle": "Time for a test",
+  "reminderBody": "A full test, about six minutes, keeps your trend up to date.",
 
   "aboutTitle": "About NeuraScan AI",
   "aboutVersion": "Version {version}",

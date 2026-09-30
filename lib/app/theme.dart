@@ -96,7 +96,6 @@ const Map<String, Color> kDomainColors = {
   'cognitive': Color(0xFF146C7A),
   'speech': Color(0xFF7A5BA6),
   'motor': Color(0xFFB4530A),
-  'interaction': Color(0xFF5B8C3A),
 };
 
 /// Builds the app theme for [brightness].
@@ -138,7 +137,7 @@ ThemeData buildTheme(Brightness brightness) {
     ),
 
     // Buttons are deliberately taller than Material's default: they are pressed
-    // under time pressure during the reaction task, and by users who may not
+    // under time pressure during the spiral, and by users who may not
     // have a steady aim.
     //
     // The minimum width is finite on purpose. This was Size.fromHeight(52), whose

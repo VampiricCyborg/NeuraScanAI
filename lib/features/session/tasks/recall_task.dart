@@ -1,16 +1,13 @@
 /// The delayed-recall step.
 ///
-/// The user types back the words shown at the start of the session, with about three
-/// minutes of other tasks in between. That gap is what makes this a delayed recall
-/// measurement, and it is why this step is last rather than second.
+/// The user types back a word list shown earlier in the test, with other steps in between.
+/// That gap is what makes this a delayed recall measurement rather than a test of how many
+/// words can be held in mind for a few seconds.
 ///
 /// Words are added one at a time rather than typed into a single box. A comma-separated
 /// list would be split on punctuation the user may not use consistently, and a wrong split
 /// would score as a missed word -- turning a formatting difference into an apparent memory
 /// failure.
-///
-/// This is also the screen where the typing-rhythm features get their data, which is why
-/// the field is a [MeasuredTextField].
 library;
 
 import 'package:flutter/material.dart';
@@ -18,11 +15,13 @@ import 'package:flutter/material.dart';
 import '../../../app/l10n/generated/app_localizations.dart';
 import '../../../app/theme.dart';
 import '../../../app/widgets.dart';
-import '../keystroke_recorder.dart';
 
 /// Collects the words the user remembers.
 class RecallTask extends StatefulWidget {
-  const RecallTask({required this.onFinished, super.key});
+  const RecallTask({required this.onFinished, this.listLabel, super.key});
+
+  /// Which list this is, for tests with several ("Word list 2 of 3"). Null for a single one.
+  final String? listLabel;
 
   /// Receives the words in the order they were entered.
   final ValueChanged<List<String>> onFinished;
@@ -57,6 +56,16 @@ class _RecallTaskState extends State<RecallTask> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.listLabel != null) ...[
+          Text(
+            widget.listLabel!,
+            style: context.texts.labelLarge?.copyWith(
+              color: context.colors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+        ],
         Text(
           text.taskRecallTitle,
           style: context.texts.headlineSmall?.copyWith(
@@ -77,7 +86,7 @@ class _RecallTaskState extends State<RecallTask> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: MeasuredTextField(
+              child: TextField(
                 controller: _controller,
                 autofocus: true,
                 textInputAction: TextInputAction.done,

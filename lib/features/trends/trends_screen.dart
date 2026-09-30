@@ -1,8 +1,12 @@
 /// The trend charts.
 ///
-/// Two views: the smoothed overall deviation, and the four domains separately. The overall
-/// chart is what the status is based on; the per-domain charts are where an improvement is
-/// visible, since the overall index is one-sided and cannot go below zero.
+/// Three views once there is a full test: how the latest one compares with the baseline and
+/// the test before it, the smoothed overall deviation, and the three areas separately. The
+/// overall chart is what the status is based on; the per-area charts are where an improvement
+/// is visible, since the overall index is one-sided and cannot go below zero.
+///
+/// Before the first full test there is nothing of the user's own to chart, so the screen shows
+/// a prompt to take one, and an example built from their real baseline.
 ///
 /// Only scored sessions are plotted. A session the check-in set aside was deliberately
 /// excluded from the trend, and drawing it as a point on the line would show the user a
@@ -10,15 +14,21 @@
 library;
 
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
+// Flutter has its own Baseline widget, which would clash with the engine's.
+import 'package:flutter/material.dart' hide Baseline;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../app/l10n/generated/app_localizations.dart';
 import '../../app/providers.dart';
+import '../../app/router.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
+import '../../engine/baseline.dart';
+import '../../engine/comparison.dart';
 import '../../engine/constants.dart';
 import '../../engine/features.dart';
+import 'comparison_section.dart';
 import 'example_trends.dart';
 
 /// Overall and per-domain history.
@@ -31,7 +41,7 @@ class TrendsScreen extends ConsumerStatefulWidget {
 
 class _TrendsScreenState extends ConsumerState<TrendsScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabs = TabController(length: 2, vsync: this);
+  late final TabController _tabs = TabController(length: 3, vsync: this);
 
   @override
   void dispose() {
@@ -48,9 +58,8 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen>
     final baseline = ref.watch(engineProvider).value?.baseline;
     final baselineReady = baseline != null;
 
-    // Charts only once there are enough tests after the baseline for a trend to mean
-    // something. Before that, a line through two or three points is mostly noise, and the
-    // user is told how far along they are rather than shown an empty screen.
+    // Charts and the comparison start with the first full test. Before it the user is
+    // invited to take one, and shown an example so the screen is not empty.
     if (!verdictReady) {
       return Scaffold(
         appBar: AppBar(title: Text(text.trendsTitle)),
@@ -59,14 +68,27 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen>
                 padding: const EdgeInsets.all(kPagePadding),
                 children: [
                   SectionCard(
-                    title: text.monitoringTitle,
+                    title: text.trendsFirstTestTitle,
                     leading: Icon(
-                      Icons.hourglass_top,
+                      Icons.play_circle_outline,
                       color: context.colors.primary,
                     ),
-                    child: MonitoringProgress(
-                      done: ref.watch(scoredSessionCountProvider),
-                      total: kMinMonitoringSessions,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          text.trendsFirstTestBody,
+                          style: context.texts.bodyMedium?.copyWith(
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        PrimaryButton(
+                          label: text.dashboardStartFullTest,
+                          icon: Icons.play_arrow_rounded,
+                          onPressed: () => context.push(Routes.session),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 22),
@@ -80,12 +102,15 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen>
       );
     }
 
+    final comparison = ref.watch(comparisonProvider(null));
+
     return Scaffold(
       appBar: AppBar(
         title: Text(text.trendsTitle),
         bottom: TabBar(
           controller: _tabs,
           tabs: [
+            Tab(text: text.trendsCompare),
             Tab(text: text.trendsOverall),
             Tab(text: text.trendsByDomain),
           ],
@@ -96,10 +121,56 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen>
           : TabBarView(
               controller: _tabs,
               children: [
+                _CompareTab(comparison: comparison, baseline: baseline),
                 _OverallTab(series: deviation),
                 _DomainsTab(series: domains),
               ],
             ),
+    );
+  }
+}
+
+/// The latest test against the baseline and the test before it, and the worked example.
+class _CompareTab extends StatelessWidget {
+  const _CompareTab({required this.comparison, required this.baseline});
+
+  final TestComparison? comparison;
+  final Baseline? baseline;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = AppText.of(context);
+
+    return ListView(
+      padding: const EdgeInsets.all(kPagePadding),
+      children: [
+        if (comparison != null) ...[
+          ComparisonSection(comparison: comparison!),
+          const SizedBox(height: 14),
+        ],
+        if (baseline != null)
+          SectionCard(
+            child: Theme(
+              // The expansion tile draws its own dividers, which sit oddly inside a card.
+              data: Theme.of(context)
+                  .copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: const EdgeInsets.only(top: 8),
+                title: Text(
+                  text.trendsExampleToggle,
+                  style: context.texts.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                children: [ExampleTrendsSection(baseline: baseline!)],
+              ),
+            ),
+          ),
+        const SizedBox(height: 14),
+        const NotADiagnosisNote(),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }

@@ -1,13 +1,13 @@
-/// What the user sees immediately after a session.
+/// What the user sees immediately after a test.
 ///
-/// Three different screens in one, depending on what happened: a scored result, a session
-/// the check-in set aside, or one a quality gate rejected. All three say plainly which case
-/// this is, because a user who is not told why a session did not count will assume the app
-/// is broken.
+/// Different screens in one, depending on what happened: a baseline test, a scored full test
+/// with its comparison against the baseline and the previous test, or a test the check-in set
+/// aside. Each says plainly which case this is, because a user who is not told why a test did
+/// not count will assume the app is broken.
 ///
-/// The recall words are shown here and only here. They are the one part of a session a user
-/// can check for themselves, and seeing "you remembered six of eight, these were the two you
-/// missed" is far more meaningful than a fraction.
+/// The recall words are shown here and only here. They are the one part of a test a user can
+/// check for themselves, and seeing "you remembered nineteen of twenty-four, these were the
+/// ones you missed" is far more meaningful than a fraction.
 library;
 
 import 'package:flutter/material.dart';
@@ -20,8 +20,8 @@ import '../../app/router.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
 import '../../data/models.dart';
-import '../../engine/constants.dart';
 import '../../engine/screening_engine.dart';
+import '../trends/comparison_section.dart';
 
 /// The result of the session just completed.
 class SummaryScreen extends ConsumerWidget {
@@ -53,10 +53,14 @@ class SummaryScreen extends ConsumerWidget {
       );
     }
 
-    // A scored test that comes before the verdict is ready. Its status could rest on as few
-    // as three sessions, which is mostly noise, so it is recorded but not reported.
-    final early =
-        session.countsTowardsTrend && !ref.watch(verdictReadyProvider);
+    final comparison = session.countsTowardsTrend
+        ? ref.watch(comparisonProvider(session.id))
+        : null;
+    // The first full test has a result straight away, but a status from one test is an early
+    // one, and the screen says so.
+    final first =
+        session.countsTowardsTrend &&
+        ref.watch(scoredSessionCountProvider) == 1;
 
     return Scaffold(
       appBar: AppBar(
@@ -67,7 +71,7 @@ class SummaryScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(kPagePadding),
           children: [
-            _OutcomeCard(session: session, early: early),
+            _OutcomeCard(session: session, early: first),
             const SizedBox(height: 14),
 
             if (session.recallDetail != null) ...[
@@ -75,7 +79,13 @@ class SummaryScreen extends ConsumerWidget {
               const SizedBox(height: 14),
             ],
 
-            if (session.contributions != null && !early) ...[
+            if (comparison != null) ...[
+              ComparisonSection(comparison: comparison),
+              const SizedBox(height: 14),
+            ],
+
+            if (session.contributions != null &&
+                session.countsTowardsTrend) ...[
               SectionCard(
                 title: text.summaryWhatContributed,
                 subtitle: text.reportContributionsBody,
@@ -112,7 +122,7 @@ class SummaryScreen extends ConsumerWidget {
             const NotADiagnosisNote(),
             const SizedBox(height: 20),
 
-            if (session.countsTowardsTrend && !early)
+            if (session.countsTowardsTrend)
               OutlinedButton.icon(
                 onPressed: () => context.push(Routes.report),
                 icon: const Icon(Icons.description_outlined),
@@ -137,46 +147,12 @@ class _OutcomeCard extends ConsumerWidget {
 
   final SessionRecord session;
 
-  /// True for a scored test before enough have been done for a verdict.
+  /// True for the first scored full test, whose status is an early one.
   final bool early;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final text = AppText.of(context);
-
-    if (early) {
-      return SectionCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.hourglass_top, color: context.colors.primary),
-                const SizedBox(width: 10),
-                Flexible(
-                  child: Text(
-                    text.monitoringTitle,
-                    style: context.texts.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              text.monitoringSessionSaved,
-              style: context.texts.bodyMedium?.copyWith(height: 1.5),
-            ),
-            const SizedBox(height: 16),
-            MonitoringProgress(
-              done: ref.watch(scoredSessionCountProvider),
-              total: kMinMonitoringSessions,
-            ),
-          ],
-        ),
-      );
-    }
 
     return SectionCard(
       child: Column(
@@ -188,16 +164,33 @@ class _OutcomeCard extends ConsumerWidget {
             _body(text, ref),
             style: context.texts.bodyMedium?.copyWith(height: 1.5),
           ),
+          if (early) ...[
+            const SizedBox(height: 12),
+            Text(
+              text.summaryEarlyNote,
+              style: context.texts.bodySmall?.copyWith(
+                color: context.colors.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ],
           if (session.status == ScreeningStatus.buildingBaseline) ...[
             const SizedBox(height: 18),
-            BaselineProgress(
-              collected:
-                  kBaselineSessions - ref.watch(baselineRemainingProvider),
-              required_: kBaselineSessions,
-            ),
+            _baselineProgress(ref),
           ],
         ],
       ),
+    );
+  }
+
+  Widget _baselineProgress(WidgetRef ref) {
+    final progress = ref.watch(baselineTestProgressProvider);
+    final hasPractice =
+        (ref.watch(profileProvider).value?.baselineEpoch ?? 0) == 0;
+    return BaselineProgress(
+      done: progress.done,
+      total: progress.total,
+      hasPractice: hasPractice,
     );
   }
 

@@ -158,4 +158,95 @@ void main() {
       );
     });
   });
+
+  group('the lists for one test', () {
+    // A full test learns and recalls three lists. Two of them being the same would make the
+    // second a repeat of what was just learned, and a list returning too soon would be
+    // recalled from practice rather than from memory.
+    for (final language in ['en', 'ta']) {
+      test('a full test never has the same list twice ($language)', () {
+        for (var test = 0; test < 60; test++) {
+          final lists = pickWordListsForTest(
+            testIndex: test,
+            count: kActualWordSteps,
+            languageCode: language,
+          );
+          expect(lists, hasLength(kActualWordSteps));
+          expect(
+            {for (final list in lists) list.id},
+            hasLength(kActualWordSteps),
+            reason: 'test $test',
+          );
+        }
+      });
+
+      test(
+        'the next test does not open with the list the last one closed on ($language)',
+        () {
+          var previous = pickWordListsForTest(
+            testIndex: 0,
+            count: kActualWordSteps,
+            languageCode: language,
+          );
+          for (var test = 1; test < 60; test++) {
+            final next = pickWordListsForTest(
+              testIndex: test,
+              count: kActualWordSteps,
+              languageCode: language,
+            );
+            expect(
+              next.first.id,
+              isNot(previous.last.id),
+              reason: 'test $test',
+            );
+            previous = next;
+          }
+        },
+      );
+
+      test('a baseline test never repeats the list before it ($language)', () {
+        var previous = pickWordListsForTest(
+          testIndex: 0,
+          count: 1,
+          languageCode: language,
+        ).single;
+        for (var test = 1; test < 60; test++) {
+          final next = pickWordListsForTest(
+            testIndex: test,
+            count: 1,
+            languageCode: language,
+          ).single;
+          expect(next.id, isNot(previous.id), reason: 'test $test');
+          previous = next;
+        }
+      });
+
+      test('the same test always gets the same lists ($language)', () {
+        List<int> ids(int test) => [
+          for (final list in pickWordListsForTest(
+            testIndex: test,
+            count: kActualWordSteps,
+            languageCode: language,
+          ))
+            list.id,
+        ];
+        for (var test = 0; test < 20; test++) {
+          expect(ids(test), ids(test));
+        }
+      });
+    }
+
+    test('there are enough lists that a full test does not use most of them', () {
+      // Three lists a test out of a small pool would bring each one back within a couple of
+      // tests. Twice the number a test needs is the least that spaces them out.
+      expect(
+        kEnglishWordLists.length,
+        greaterThanOrEqualTo(kActualWordSteps * 3),
+      );
+      expect(
+        kTamilWordLists.length,
+        greaterThanOrEqualTo(kActualWordSteps * 2),
+      );
+    });
+  });
 }

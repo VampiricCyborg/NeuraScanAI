@@ -1,89 +1,35 @@
-/// What the user sees from the first session to the first verdict.
+/// What the user sees from the first test to the results of each full test.
 ///
-/// The baseline is three sessions after two of familiarisation, and it only sets the
-/// reference point. A status, trends and a report then wait for eight more tests, because a
-/// verdict from fewer points is mostly noise. Until then the app shows how far along the user
-/// is instead.
+/// The baseline is four short tests of three steps, the first a practice run that does not
+/// count. After it, the user takes full tests of eight steps whenever they like, and each one
+/// is compared with the baseline and with the test before it straight away. Before the first
+/// full test the app shows how the measurements work instead of a result.
 library;
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:neurascan_ai/app/router.dart';
-import 'package:neurascan_ai/data/models.dart';
 import 'package:neurascan_ai/engine/constants.dart';
-import 'package:neurascan_ai/engine/features.dart' show EngineSession;
-import 'package:neurascan_ai/engine/screening_engine.dart';
 import 'package:neurascan_ai/features/dashboard/dashboard_screen.dart';
 
-import '../engine/engine_test_support.dart';
+import 'seed_history.dart';
 import 'test_harness.dart';
 
 void main() {
-  test('the session counts are as decided', () {
+  test('the test counts are as decided', () {
     // Pinned so that changing them is a deliberate act, not something a refactor does
-    // quietly. See the notes on kBaselineSessions and kMinMonitoringSessions.
+    // quietly.
+    expect(kFamiliarisationSessions, 1);
     expect(kBaselineSessions, 3);
-    expect(kFamiliarisationSessions, 2);
-    expect(kMinMonitoringSessions, 8);
+    expect(kBaselineTests, 4);
+    expect(kBaselineTestSteps, 3);
+    expect(kActualTestSteps, 8);
   });
 
-  test('the verdict needs more evidence than the baseline does', () {
-    // The reference point can be quick to set; the trend built on it cannot.
-    expect(kMinMonitoringSessions, greaterThan(kBaselineSessions));
+  test('a full test is more thorough than a baseline test', () {
+    // The reference point can be quick to set; the tests compared with it cannot.
+    expect(kActualTestSteps, greaterThan(kBaselineTestSteps));
   });
-
-  /// Sessions that make up a user's history, in order: familiarisation, the baseline, then
-  /// [monitoring] tests. Entries in [setAside] are reported as tired on the check-in.
-  List<({EngineSession session, bool setAside})> history({
-    required int monitoring,
-    Set<int> setAside = const {},
-  }) => [
-    for (var i = 0; i < kFamiliarisationSessions; i++)
-      (session: makeSession(), setAside: false),
-    for (final s in variedBaselineSessions()) (session: s, setAside: false),
-    for (var i = 0; i < monitoring; i++)
-      (
-        session: makeSession(confounded: setAside.contains(i)),
-        setAside: setAside.contains(i),
-      ),
-  ];
-
-  /// Stores [plan] for the signed-in user, driving a real engine so the stored statuses are
-  /// the ones the app would have produced.
-  Future<void> seed(
-    TestApp app,
-    List<({EngineSession session, bool setAside})> plan,
-  ) async {
-    final engine = ScreeningEngine();
-    for (var i = 0; i < plan.length; i++) {
-      final at = DateTime.now().subtract(Duration(days: (plan.length - i) * 2));
-      final result = engine.update(plan[i].session);
-      await app.repository.saveSession(
-        session: SessionRecord(
-          id: 'seed-$i',
-          userId: 'user-1',
-          startedAt: at,
-          completedAt: at.add(const Duration(minutes: 4)),
-          checkIn: plan[i].setAside
-              ? CheckIn(
-                  sleep: SleepQuality.poor,
-                  fatigue: FatigueLevel.none,
-                  illnessOrMedicationChange: false,
-                  answeredAt: at,
-                )
-              : CheckIn.unremarkable(at),
-          features: plan[i].session.features,
-          valid: true,
-          status: result.status,
-          index: result.index,
-          ewma: result.ewma,
-          run: result.run,
-          domainScores: result.domains,
-          contributions: result.contributions,
-        ),
-        engine: engine,
-      );
-    }
-  }
 
   Future<TestApp> dashboard(WidgetTester tester) async {
     final app = await pumpApp(tester, signedIn: consentPendingAccount);
@@ -93,109 +39,97 @@ void main() {
     return app;
   }
 
-  group('the baseline', () {
-    testWidgets('one session in: still building', (tester) async {
-      final app = await dashboard(tester);
-      await seed(app, history(monitoring: 0).take(1).toList());
-      await tester.pumpAndSettle();
+  const firstFullTest = kFamiliarisationSessions + kBaselineSessions;
 
-      expect(find.textContaining('Building your baseline'), findsOneWidget);
-      expect(find.text('Your baseline is set'), findsNothing);
+  group('the baseline', () {
+    testWidgets('no test yet: the practice test is offered', (tester) async {
+      await dashboard(tester);
+
+      expect(
+        find.text('Building your baseline: 0 of $kBaselineTests tests'),
+        findsOneWidget,
+      );
+      expect(find.text('Start the practice test'), findsOneWidget);
     });
 
-    testWidgets('the countdown is out of the pool size, not more', (
-      tester,
-    ) async {
+    testWidgets('the practice test counts towards the four', (tester) async {
       final app = await dashboard(tester);
-      // Two familiarisation and one pooled.
-      await seed(app, history(monitoring: 0).take(3).toList());
+      await seed(app, history(actual: 0).take(1).toList());
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining(
-          'Building your baseline: 1 of $kBaselineSessions sessions',
-        ),
+        find.text('Building your baseline: 1 of $kBaselineTests tests'),
+        findsOneWidget,
+      );
+      expect(find.text('Your baseline is set'), findsNothing);
+      expect(
+        find.text('Start baseline test 2 of $kBaselineTests'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the countdown is out of four, not more', (tester) async {
+      final app = await dashboard(tester);
+      // The practice test and one pooled.
+      await seed(app, history(actual: 0).take(2).toList());
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Building your baseline: 2 of $kBaselineTests tests'),
         findsOneWidget,
       );
     });
 
     testWidgets('one short of the end: not set yet', (tester) async {
       final app = await dashboard(tester);
-      await seed(
-        app,
-        history(monitoring: 0)
-            .take(kFamiliarisationSessions + kBaselineSessions - 1)
-            .toList(),
-      );
+      await seed(app, history(actual: 0).take(firstFullTest - 1).toList());
       await tester.pumpAndSettle();
 
       expect(find.text('Your baseline is set'), findsNothing);
+      expect(find.text('One more test to go'), findsOneWidget);
     });
 
     testWidgets('the moment it is complete, the dashboard says so', (
       tester,
     ) async {
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: 0));
+      await seed(app, history(actual: 0));
       await tester.pumpAndSettle();
 
       expect(find.text('Your baseline is set'), findsOneWidget);
       expect(find.textContaining('Building your baseline'), findsNothing);
     });
 
-    testWidgets('and says how many more tests are needed', (tester) async {
+    testWidgets('and offers a full test to take whenever the user likes', (
+      tester,
+    ) async {
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: 0));
+      await seed(app, history(actual: 0));
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('$kMinMonitoringSessions more tests'),
-        findsWidgets,
-      );
-      expect(
-        find.text('0 of $kMinMonitoringSessions tests after your baseline'),
-        findsOneWidget,
-      );
+      expect(find.text('Take a full test'), findsOneWidget);
+      expect(find.textContaining('Eight short steps'), findsOneWidget);
     });
   });
 
-  group('before eight tests', () {
-    testWidgets('trends show progress, not a chart', (tester) async {
-      final app = await dashboard(tester);
-      await seed(app, history(monitoring: 3));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Trends'));
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('3 of $kMinMonitoringSessions tests after your baseline'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('close to zero by design'), findsNothing);
-    });
-
-    testWidgets('trends show the user\'s baseline and labelled examples', (
+  group('before the first full test', () {
+    testWidgets('trends invite a first test and show labelled examples', (
       tester,
     ) async {
       // Right after the baseline the user has no results, so the tab shows how the
       // measurements work: their real baseline, and simulated runs scored against it.
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: 0));
+      await seed(app, history(actual: 0));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Trends'));
       await tester.pumpAndSettle();
 
+      expect(find.text('Take your first full test'), findsOneWidget);
       expect(find.text('Your baseline'), findsWidgets);
       expect(find.text('Example, not your data'), findsWidgets);
       expect(
         find.textContaining('simulated from your own baseline'),
-        findsOneWidget,
-      );
-      // The real progress is still there above the examples.
-      expect(
-        find.text('0 of $kMinMonitoringSessions tests after your baseline'),
         findsOneWidget,
       );
     });
@@ -204,7 +138,7 @@ void main() {
       tester,
     ) async {
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: 0).take(2).toList());
+      await seed(app, history(actual: 0).take(2).toList());
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Trends'));
@@ -213,189 +147,226 @@ void main() {
       expect(find.text('Example, not your data'), findsNothing);
     });
 
-    testWidgets('the dashboard shows progress and no status', (tester) async {
+    testWidgets('the dashboard shows no status yet', (tester) async {
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: 3));
+      await seed(app, history(actual: 0));
       await tester.pumpAndSettle();
 
-      expect(find.text('Gathering your first results'), findsOneWidget);
-      expect(
-        find.text('3 of $kMinMonitoringSessions tests after your baseline'),
-        findsOneWidget,
-      );
-      // A verdict from three tests could be mostly noise, so none is shown.
       expect(find.text('Stable'), findsNothing);
       expect(find.text('Worth watching'), findsNothing);
       expect(find.text('A notable change'), findsNothing);
       expect(find.text('See the full report'), findsNothing);
     });
 
-    testWidgets('seven tests is still not enough', (tester) async {
+    testWidgets('the report waits for the first full test', (tester) async {
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: kMinMonitoringSessions - 1));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Gathering your first results'), findsOneWidget);
-      expect(find.text('Stable'), findsNothing);
-    });
-
-    testWidgets('the report is withheld too', (tester) async {
-      final app = await dashboard(tester);
-      await seed(app, history(monitoring: 5));
+      await seed(app, history(actual: 0));
       await tester.pumpAndSettle();
 
       app.container.read(routerProvider).go(Routes.report);
       await tester.pumpAndSettle();
 
       expect(
-        find.text('5 of $kMinMonitoringSessions tests after your baseline'),
+        find.text('Your report is ready after your first full test.'),
         findsOneWidget,
       );
       expect(find.text('Save or share this report'), findsNothing);
     });
 
-    testWidgets('a scored test is recorded without a verdict', (tester) async {
+    testWidgets('a test set aside does not count as the first', (tester) async {
+      // Reported as tired on the check-in, so it is stored but not scored.
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: 2));
+      await seed(app, history(actual: 1, setAside: {0}));
       await tester.pumpAndSettle();
 
-      app.container
-          .read(routerProvider)
-          .go(
-            '${Routes.summary}?sessionId=seed-${kFamiliarisationSessions + kBaselineSessions + 1}',
-          );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('This test has been added to your record.'),
-        findsOneWidget,
-      );
+      expect(find.text('Your baseline is set'), findsOneWidget);
       expect(find.text('Stable'), findsNothing);
-      expect(find.text('See the full report'), findsNothing);
-    });
-
-    testWidgets('sessions set aside do not count towards the eight', (
-      tester,
-    ) async {
-      // Eight tests were taken, but three were reported as tired, so only five count.
-      final app = await dashboard(tester);
-      await seed(
-        app,
-        history(monitoring: kMinMonitoringSessions, setAside: {1, 3, 5}),
-      );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('5 of $kMinMonitoringSessions tests after your baseline'),
-        findsOneWidget,
-      );
-      expect(find.text('Stable'), findsNothing);
-    });
-
-    testWidgets('the baseline sessions themselves do not count either', (
-      tester,
-    ) async {
-      final app = await dashboard(tester);
-      await seed(app, history(monitoring: 0));
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('0 of $kMinMonitoringSessions tests after your baseline'),
-        findsOneWidget,
-      );
     });
   });
 
-  group('at eight tests', () {
-    testWidgets('the verdict appears', (tester) async {
+  group('straight after the first full test', () {
+    testWidgets('the dashboard shows the status', (tester) async {
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: kMinMonitoringSessions));
+      await seed(app, history(actual: 1));
       await tester.pumpAndSettle();
 
-      expect(find.text('Gathering your first results'), findsNothing);
+      expect(find.text('Your baseline is set'), findsNothing);
       expect(find.text('Stable'), findsOneWidget);
     });
 
-    testWidgets('and the report becomes available', (tester) async {
+    testWidgets('and the report is available', (tester) async {
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: kMinMonitoringSessions));
+      await seed(app, history(actual: 1));
       await tester.pumpAndSettle();
 
       expect(find.text('See the full report'), findsOneWidget);
     });
 
-    testWidgets('and trends appear, from the user\'s own data', (tester) async {
+    testWidgets('and trends show a comparison instead of the invitation', (
+      tester,
+    ) async {
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: kMinMonitoringSessions));
+      await seed(app, history(actual: 1));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Trends'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('tests after your baseline'), findsNothing);
-      expect(find.textContaining('close to zero by design'), findsOneWidget);
+      expect(find.text('Take your first full test'), findsNothing);
+      expect(find.text('How this test compares'), findsOneWidget);
+      // Nothing earlier to compare with, and it says so.
+      expect(
+        find.textContaining('your first full test, so there is no earlier'),
+        findsOneWidget,
+      );
+      expect(find.text('Against last test'), findsNothing);
     });
 
-    testWidgets('one test set aside in the middle delays it by one', (
+    testWidgets('the summary shows an early status and the comparison', (
       tester,
     ) async {
       final app = await dashboard(tester);
-      // Nine taken, one set aside: eight count.
-      await seed(
-        app,
-        history(monitoring: kMinMonitoringSessions + 1, setAside: {4}),
-      );
+      await seed(app, history(actual: 1));
       await tester.pumpAndSettle();
 
-      expect(find.text('Stable'), findsOneWidget);
-    });
-
-    testWidgets('the eighth test\'s summary shows its status', (tester) async {
-      final app = await dashboard(tester);
-      await seed(app, history(monitoring: kMinMonitoringSessions));
-      await tester.pumpAndSettle();
-
-      const last =
-          kFamiliarisationSessions +
-          kBaselineSessions +
-          kMinMonitoringSessions -
-          1;
       app.container
           .read(routerProvider)
-          .go('${Routes.summary}?sessionId=seed-$last');
+          .go('${Routes.summary}?sessionId=seed-$firstFullTest');
       await tester.pumpAndSettle();
 
       expect(find.text('Stable'), findsOneWidget);
-      expect(
-        find.text('This test has been added to your record.'),
-        findsNothing,
-      );
+      expect(find.textContaining('This is an early result'), findsOneWidget);
+      expect(find.text('How this test compares'), findsOneWidget);
       expect(find.text('See the full report'), findsOneWidget);
     });
 
-    testWidgets('all four areas are broken down on the summary', (
+    testWidgets('all three areas are broken down on the summary', (
       tester,
     ) async {
       final app = await dashboard(tester);
-      await seed(app, history(monitoring: kMinMonitoringSessions));
+      await seed(app, history(actual: 1));
       await tester.pumpAndSettle();
 
-      const last =
-          kFamiliarisationSessions +
-          kBaselineSessions +
-          kMinMonitoringSessions -
-          1;
       app.container
           .read(routerProvider)
-          .go('${Routes.summary}?sessionId=seed-$last');
+          .go('${Routes.summary}?sessionId=seed-$firstFullTest');
       await tester.pumpAndSettle();
 
-      // All four, including any that contributed nothing: a breakdown that hid the quiet
+      // All three, including any that contributed nothing: a breakdown that hid the quiet
       // areas would make a single-area change look like the only thing measured.
-      for (final label in ['Thinking', 'Speech', 'Movement', 'Typing']) {
-        expect(find.text(label), findsOneWidget, reason: label);
+      for (final label in ['Thinking', 'Speech', 'Movement']) {
+        expect(find.text(label), findsWidgets, reason: label);
       }
+      expect(find.text('Typing'), findsNothing);
       expect(find.text('What this is based on'), findsOneWidget);
+    });
+  });
+
+  group('after each further full test', () {
+    testWidgets('the second is compared with the first', (tester) async {
+      final app = await dashboard(tester);
+      await seed(app, history(actual: 2));
+      await tester.pumpAndSettle();
+
+      app.container
+          .read(routerProvider)
+          .go('${Routes.summary}?sessionId=seed-${firstFullTest + 1}');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Against last test'), findsWidgets);
+      expect(find.textContaining('no earlier test'), findsNothing);
+      // No longer the first, so no early-result note.
+      expect(find.textContaining('This is an early result'), findsNothing);
+    });
+
+    testWidgets('trends compare the latest test with the one before', (
+      tester,
+    ) async {
+      final app = await dashboard(tester);
+      await seed(app, history(actual: 3));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Trends'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Against your usual'), findsWidgets);
+      expect(find.text('Against last test'), findsWidgets);
+      expect(find.text('Overall'), findsOneWidget);
+    });
+
+    testWidgets('a test set aside in the middle is left out of the count', (
+      tester,
+    ) async {
+      final app = await dashboard(tester);
+      await seed(app, history(actual: 3, setAside: {1}));
+      await tester.pumpAndSettle();
+
+      // The tired one is stored, but it is not scored.
+      final sessions = await app.repository.loadSessions('user-1');
+      expect(sessions, hasLength(firstFullTest + 3));
+      expect(sessions.where((s) => s.countsTowardsTrend), hasLength(2));
+    });
+  });
+
+  group('changing the baseline', () {
+    testWidgets('sends the user back to building it', (tester) async {
+      final app = await dashboard(tester);
+      await seed(app, history(actual: 2));
+      await tester.pumpAndSettle();
+      expect(find.text('Stable'), findsOneWidget);
+
+      await tester.tap(find.text('You'));
+      await tester.pumpAndSettle();
+      await tester.dragUntilVisible(
+        find.text('Change my baseline'),
+        find.byType(Scrollable).first,
+        const Offset(0, -200),
+      );
+      await tester.tap(find.text('Change my baseline'));
+      await tester.pumpAndSettle();
+
+      // Asked first, and told what happens to the earlier tests.
+      expect(find.text('Set a new baseline?'), findsOneWidget);
+      expect(find.textContaining('kept in your export'), findsOneWidget);
+      await tester.tap(find.text('Start a new baseline'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DashboardScreen), findsOneWidget);
+      // A later baseline has no practice test: three tests, not four.
+      expect(
+        find.text('Building your baseline: 0 of $kBaselineSessions tests'),
+        findsOneWidget,
+      );
+      expect(find.text('Stable'), findsNothing);
+    });
+
+    testWidgets('keeps the earlier tests but stops counting them', (
+      tester,
+    ) async {
+      final app = await dashboard(tester);
+      await seed(app, history(actual: 2));
+      await tester.pumpAndSettle();
+
+      await app.repository.redoBaseline('user-1');
+      await tester.pumpAndSettle();
+
+      expect(await app.repository.loadSessions('user-1'), isEmpty);
+      final export = await app.repository.exportEverything('user-1');
+      expect(
+        (export['sessions']! as List).length,
+        kFamiliarisationSessions + kBaselineSessions + 2,
+      );
+    });
+
+    testWidgets('is not offered before any test has been taken', (
+      tester,
+    ) async {
+      await dashboard(tester);
+
+      await tester.tap(find.text('You'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Change my baseline'), findsNothing);
     });
   });
 }

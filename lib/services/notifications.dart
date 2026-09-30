@@ -23,7 +23,7 @@ const String kReminderChannelId = 'neurascan_reminders';
 
 /// Hour of the day reminders fire.
 ///
-/// Late morning: reaction time and recall both vary through the day, and a baseline
+/// Late morning: recall and speech both vary through the day, and a baseline
 /// built from sessions at scattered hours has that variation folded into it as if it
 /// were the user's own noise. A consistent time makes the baseline tighter and so
 /// makes a real change easier to see.

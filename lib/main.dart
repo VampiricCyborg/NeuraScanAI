@@ -48,9 +48,9 @@ class NeuraScanApp extends ConsumerWidget {
 ///
 /// The app targets adults over 45 and the non-functional requirements call for text
 /// scaling to 200 %, so the scale must be honoured rather than clamped to something
-/// small. It is capped at 2.0 because the timed task screens have to fit a stimulus
-/// and a countdown on one screen at once; past that point the reaction task stops
-/// being a fair measurement, which is worse for the user than a smaller font.
+/// small. It is capped at 2.0 because the task screens have to fit a picture or a spiral
+/// and their controls on one screen at once; past that point the spiral cannot be drawn
+/// properly, which is worse for the user than a smaller font.
 class _AccessibleTextScale extends StatelessWidget {
   const _AccessibleTextScale({required this.child});
 
