@@ -70,8 +70,8 @@ def robust_scale(values: Sequence[float], typical_sd: float = 0.0) -> float:
 class Baseline:
     """A frozen per-feature centre and spread for one user on one device.
 
-    Twenty numbers in total -- a median and a scale for each of the nine
-    features, plus the session count -- which is what makes the baseline cheap
+    Eleven numbers in total -- a median and a scale for each of the five
+    features, plus the test count -- which is what makes the baseline cheap
     enough to hold in memory, store locally and sync as a single document.
     """
 

@@ -9,34 +9,31 @@ from __future__ import annotations
 
 import pytest
 
-from neurascan_engine import BASELINE_SESSIONS, Domain, Session
+from neurascan_engine import (
+    BASELINE_SESSIONS,
+    FAMILIARISATION_SESSIONS,
+    Domain,
+    Session,
+)
 
 #: Nominal feature values for an average user having an average day. Tests
 #: perturb individual features away from these to create a targeted deviation.
 NOMINAL: dict[str, float] = {
     "delayed_recall": 0.75,
-    "reaction_median": 320.0,
-    "reaction_cv": 0.15,
     "speaking_rate": 140.0,
     "pause_ratio": 0.22,
     "spiral_rmse": 6.0,
     "tremor_index": 0.10,
-    "inter_key_interval": 260.0,
-    "inter_key_cv": 0.35,
 }
 
 #: Within-person day-to-day spread of each feature, from Table A.2 of the
 #: report. Used to express a perturbation in units the engine will recognise.
 WITHIN_SD: dict[str, float] = {
     "delayed_recall": 0.06,
-    "reaction_median": 18.0,
-    "reaction_cv": 0.02,
     "speaking_rate": 8.0,
     "pause_ratio": 0.025,
     "spiral_rmse": 0.6,
     "tremor_index": 0.012,
-    "inter_key_interval": 15.0,
-    "inter_key_cv": 0.035,
 }
 
 
@@ -98,11 +95,11 @@ def varied_baseline_sessions(count: int = BASELINE_SESSIONS) -> list[Session]:
 def feed_baseline(engine, sessions: list[Session] | None = None) -> None:
     """Drive *engine* through familiarisation and baseline building.
 
-    Sends two familiarisation sessions first, because the engine discards that
-    many before it starts pooling, then the baseline sessions themselves.
+    Sends the practice run first, because the engine discards that many tests
+    before it starts pooling, then the baseline tests themselves.
     """
-    engine.update(make_session(session_id="familiarisation-1"))
-    engine.update(make_session(session_id="familiarisation-2"))
+    for i in range(FAMILIARISATION_SESSIONS):
+        engine.update(make_session(session_id=f"familiarisation-{i + 1}"))
     for session in sessions if sessions is not None else varied_baseline_sessions():
         engine.update(session)
 

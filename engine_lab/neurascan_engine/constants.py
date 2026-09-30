@@ -11,35 +11,25 @@ from __future__ import annotations
 
 # --- Baseline construction -------------------------------------------------
 
-#: Sessions discarded before the baseline pool starts collecting.  The first
-#: couple of runs are dominated by the practice effect: people get faster and
-#: recall more simply because they have seen the tasks before, and folding
-#: that improvement into "normal" would make every later session look like a
-#: decline.
-FAMILIARISATION_SESSIONS = 2
+#: Baseline tests discarded before the baseline pool starts collecting.  The
+#: first run is dominated by the practice effect: people do better simply
+#: because they have seen the tasks before, and folding that improvement into
+#: "normal" would make every later test look like a decline.
+#:
+#: One, not the report's two: the project team's baseline is four tests in all,
+#: and a practice run is the first of them, leaving three that count.
+FAMILIARISATION_SESSIONS = 1
 
-#: Valid, unconfounded sessions summarised into the frozen baseline.  Three, which
-#: is the project team's decision after trying the app: the baseline is only the
-#: reference point, so it should be quick to set.  The evidence that a trend
-#: means something is gathered afterwards -- see ``MIN_MONITORING_SESSIONS``.
+#: Valid, unconfounded baseline tests summarised into the frozen baseline.
+#: Three, after the practice run: four baseline tests in all, each of three steps
+#: (words, speech and a precision tracing).
 #:
 #: The trade-off is worth knowing.  A median and a MAD from three observations
 #: are very noisy: the MAD of three values is just the smaller of two gaps, which
-#: can be tiny by luck.  Unprotected, that gave roughly half of healthy simulated
-#: users a false "notable change" (``baseline_sensitivity.py``).  The safeguard
-#: below (``PRIOR_SCALE_FLOOR_FRACTION``) brings a three-session baseline back to
-#: about the behaviour the report's six-session baseline had.
+#: can be tiny by luck.  Unprotected, that gave a large share of healthy
+#: simulated users a false "notable change" (``baseline_sensitivity.py``).  The
+#: safeguard below (``PRIOR_SCALE_FLOOR_FRACTION``) is what makes it usable.
 BASELINE_SESSIONS = 3
-
-#: Tests after the baseline that must be completed before the app gives a verdict,
-#: trends or a report -- "the actual tests", as the team calls them.
-#:
-#: A trend from fewer points is mostly noise: with the persistence rule alone the
-#: app could call a change "notable" three sessions after the baseline.  Eight
-#: gives the smoothed index time to settle and gives a person, and a doctor
-#: reading a report, more than a couple of points to look at.  Sessions the
-#: check-in set aside, and invalid ones, do not count towards it.
-MIN_MONITORING_SESSIONS = 8
 
 #: Consistency constant that rescales a median absolute deviation so that it
 #: estimates the standard deviation of a normal distribution.
@@ -62,19 +52,23 @@ SCALE_FLOOR_ABSOLUTE = 1e-9
 #: deviation.
 #:
 #: The value was chosen with ``baseline_sensitivity.py``, on healthy and
-#: gradually-declining simulated users built from the report's Table A.2.  With a
-#: three-session baseline and a threshold of 1.0:
+#: gradually-declining simulated users built from the report's Table A.2, with the
+#: app's real structure: a practice run and three counted baseline tests, each
+#: measured once, then actual tests that repeat every measurement.  At a
+#: threshold of 1.0 (false alerts on healthy users / cognitive declines caught /
+#: motor declines caught):
 #:
-#:   floor 0    -> 47 % false alerts, 60 % of declines caught
-#:   floor 0.5  -> 14 % false alerts, 83 % of declines caught
-#:   floor 0.75 ->  2 % false alerts, 69 % of declines caught
-#:   floor 1.0  ->  0 % false alerts, 38 % of declines caught
+#:   six counted tests, no floor   15 % / 72 % / 66 %   (the report's design)
+#:   three counted, floor 0        41 % / 48 % / 52 %
+#:   three counted, floor 0.5      14 % / 63 % / 63 %
+#:   three counted, floor 0.75      4 % / 63 % / 45 %
+#:   three counted, floor 1.0       1 % / 43 % / 22 %
 #:
-#: For comparison the six-session baseline with no floor gave 13 % and 85 %, so 0.5
-#: restores the behaviour the report's design had.  Higher floors buy fewer false
-#: alerts by missing real declines.  These figures come from a quick
-#: re-implementation of the report's simulation, not the report's own cohort, and
-#: are only reliable as a comparison between the rows.
+#: So 0.5 restores the false-alert rate the six-test design had, at the cost of
+#: catching somewhat fewer of the simulated declines.  Higher floors buy fewer
+#: false alerts by missing real declines, motor ones especially.  These figures
+#: come from a quick re-implementation of the report's simulation, not the
+#: report's own cohort, and are only reliable as a comparison between the rows.
 #:
 #: The floor is a fraction of a *spread*, never a value the centre is pulled
 #: towards, so a baseline stays personal.
@@ -104,23 +98,16 @@ DEFAULT_PERSISTENCE = 3
 MILD_FRACTION = 0.6
 
 # --- Quality gates ---------------------------------------------------------
-
-#: Taps landing before the stimulus appears.  Up to two are treated as
-#: ordinary impatience and the trials are simply discarded; a third suggests
-#: the user is tapping rhythmically rather than reacting, which would make
-#: the reaction features meaningless.
-MAX_ANTICIPATIONS = 2
+#
+# These apply to a single step.  A step that fails is done again, so one quiet
+# room or one slipped finger does not cost the user a whole test.
 
 #: Voiced seconds required from the twenty-second picture description.  Below
 #: this the speaking-rate and pause-ratio estimates rest on too little
 #: speech to be comparable with the baseline.
 MIN_VOICED_SECONDS = 8.0
 
-#: Share of the guide spiral the trace must cover before the task counts.  A
+#: Share of the guide spiral the trace must cover before the step counts.  A
 #: partial trace biases the radial-error statistics towards whichever part of
 #: the spiral was drawn.
 MIN_SPIRAL_COVERAGE = 0.70
-
-#: Reaction trials that must survive discarding to compute a median and a
-#: coefficient of variation.
-MIN_VALID_REACTION_TRIALS = 6

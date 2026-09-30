@@ -13,7 +13,6 @@ import pytest
 from neurascan_engine import (
     BASELINE_SESSIONS,
     FAMILIARISATION_SESSIONS,
-    MIN_MONITORING_SESSIONS,
     PRIOR_SCALE_FLOOR_FRACTION,
     Baseline,
     ScreeningEngine,
@@ -33,18 +32,13 @@ from .conftest import NOMINAL, make_session, varied_baseline_sessions
 def test_the_session_counts_are_as_decided() -> None:
     """Pinned so that changing them is deliberate, not a side effect.
 
-    Three baseline sessions, and eight tests after it before the app gives a
-    verdict.  The report's simulation used six for the baseline; see the notes on
+    Four baseline tests in all: one practice run, then three that count.  The
+    report's simulation used six for the baseline; see the notes on
     ``BASELINE_SESSIONS`` and ``PRIOR_SCALE_FLOOR_FRACTION`` before changing either.
     """
     assert BASELINE_SESSIONS == 3
-    assert FAMILIARISATION_SESSIONS == 2
-    assert MIN_MONITORING_SESSIONS == 8
-
-
-def test_the_verdict_needs_more_evidence_than_the_baseline() -> None:
-    """The point of separating them: the reference can be quick, the trend cannot."""
-    assert MIN_MONITORING_SESSIONS > BASELINE_SESSIONS
+    assert FAMILIARISATION_SESSIONS == 1
+    assert FAMILIARISATION_SESSIONS + BASELINE_SESSIONS == 4
 
 
 class TestUT3FamiliarisationExcluded:
@@ -58,7 +52,7 @@ class TestUT3FamiliarisationExcluded:
         assert not engine.baseline_ready
 
     def test_baseline_freezes_after_familiarisation_plus_the_pool(self) -> None:
-        """Test case TC7: two familiarisation plus four pooled sessions."""
+        """Test case TC7: one practice run plus three pooled tests."""
         engine = ScreeningEngine()
         for i in range(FAMILIARISATION_SESSIONS + BASELINE_SESSIONS):
             engine.update(make_session(session_id=str(i)))
@@ -67,10 +61,10 @@ class TestUT3FamiliarisationExcluded:
         assert engine.baseline.session_count == BASELINE_SESSIONS
 
     def test_familiarisation_values_do_not_reach_the_baseline(self) -> None:
-        """A wildly different first two sessions must not move the medians."""
+        """A wildly different practice run must not move the medians."""
         engine = ScreeningEngine()
-        engine.update(make_session(delayed_recall=0.10, session_id="practice-1"))
-        engine.update(make_session(delayed_recall=0.10, session_id="practice-2"))
+        for i in range(FAMILIARISATION_SESSIONS):
+            engine.update(make_session(delayed_recall=0.10, session_id=f"practice-{i}"))
         for i in range(BASELINE_SESSIONS):
             engine.update(make_session(delayed_recall=0.80, session_id=f"real-{i}"))
 
@@ -79,8 +73,8 @@ class TestUT3FamiliarisationExcluded:
 
     def test_progress_climbs_from_zero_to_one(self) -> None:
         engine = ScreeningEngine()
-        engine.update(make_session())
-        engine.update(make_session())
+        for _ in range(FAMILIARISATION_SESSIONS):
+            engine.update(make_session())
         assert engine.baseline_progress == 0.0
 
         seen = []
@@ -95,8 +89,8 @@ class TestUT3FamiliarisationExcluded:
     def test_confounded_sessions_do_not_enter_the_baseline(self) -> None:
         """A tired day must not define what normal looks like."""
         engine = ScreeningEngine()
-        engine.update(make_session())
-        engine.update(make_session())
+        for _ in range(FAMILIARISATION_SESSIONS):
+            engine.update(make_session())
         for i in range(BASELINE_SESSIONS):
             engine.update(
                 make_session(confounded=True, delayed_recall=0.3, session_id=str(i))
@@ -126,11 +120,11 @@ class TestUT4MedianResistsOutliers:
 
     def test_baseline_median_survives_one_bad_session(self) -> None:
         sessions = [
-            make_session(reaction_median=v, session_id=str(i))
+            make_session(speaking_rate=v, session_id=str(i))
             for i, v in enumerate([300.0, 310.0, 320.0, 330.0, 340.0, 5000.0])
         ]
         baseline = Baseline.fit(sessions)
-        assert baseline.median["reaction_median"] == pytest.approx(325.0)
+        assert baseline.median["speaking_rate"] == pytest.approx(325.0)
 
     def test_mad_is_the_median_of_absolute_deviations(self) -> None:
         values = [1.0, 2.0, 3.0, 4.0, 100.0]
@@ -199,11 +193,11 @@ class TestBaselineFitting:
         assert restored.scale == pytest.approx(baseline.scale)
         assert restored.session_count == baseline.session_count
 
-    def test_baseline_holds_twenty_odd_numbers(self) -> None:
+    def test_baseline_holds_eleven_numbers(self) -> None:
         """The state is small enough to sync as one document."""
         baseline = Baseline.fit(varied_baseline_sessions())
-        assert len(baseline.median) == 9
-        assert len(baseline.scale) == 9
+        assert len(baseline.median) == 5
+        assert len(baseline.scale) == 5
 
 
 class TestSmallBaselineDoesNotUnderstateVariability:
@@ -216,12 +210,12 @@ class TestSmallBaselineDoesNotUnderstateVariability:
 
     def test_a_lucky_tight_pair_no_longer_gives_a_tiny_scale(self) -> None:
         # Two of the three values almost coincide, so the MAD is 0.1 -- but the
-        # feature's ordinary day-to-day spread is 18 ms.
-        values = [320.0, 320.1, 335.0]
-        typical = SPEC_BY_KEY["reaction_median"].typical_day_to_day_sd
+        # feature's ordinary day-to-day spread is 8 syllables a minute.
+        values = [140.0, 140.1, 149.0]
+        typical = SPEC_BY_KEY["speaking_rate"].typical_day_to_day_sd
         floor = PRIOR_SCALE_FLOOR_FRACTION * typical
         # Without the safeguard only the small proportional floor (2 % of the
-        # median, 6.4 ms) stands between this baseline and a tiny scale.
+        # median, 2.8) stands between this baseline and a tiny scale.
         assert robust_scale(values) < floor
         assert robust_scale(values, typical) >= floor
 
@@ -233,18 +227,18 @@ class TestSmallBaselineDoesNotUnderstateVariability:
 
     def test_a_genuinely_wide_spread_is_left_alone(self) -> None:
         # A user who really is variable keeps their own, larger scale.
-        values = [200.0, 320.0, 480.0]
-        typical = SPEC_BY_KEY["reaction_median"].typical_day_to_day_sd
+        values = [100.0, 140.0, 190.0]
+        typical = SPEC_BY_KEY["speaking_rate"].typical_day_to_day_sd
         assert robust_scale(values, typical) == pytest.approx(robust_scale(values))
 
     def test_it_never_moves_the_centre(self) -> None:
         # Personal baselines stay personal: only the spread is regularised.
         sessions = [
-            make_session(reaction_median=v, session_id=str(i))
+            make_session(speaking_rate=v, session_id=str(i))
             for i, v in enumerate([300.0, 300.1, 340.0])
         ]
         baseline = Baseline.fit(sessions)
-        assert baseline.median["reaction_median"] == pytest.approx(300.1)
+        assert baseline.median["speaking_rate"] == pytest.approx(300.1)
 
     def test_every_feature_has_a_typical_spread(self) -> None:
         for spec in SPEC_BY_KEY.values():
@@ -266,5 +260,5 @@ class TestSmallBaselineDoesNotUnderstateVariability:
         baseline = Baseline.fit(
             [make_session(session_id=str(i)) for i in range(BASELINE_SESSIONS)]
         )
-        ordinary_day = baseline.z("reaction_median", 320.0 + 18.0)
+        ordinary_day = baseline.z("speaking_rate", 140.0 + 8.0)
         assert abs(ordinary_day) < 3.0

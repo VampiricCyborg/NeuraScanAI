@@ -1,9 +1,16 @@
-"""The nine behavioural features and the four domains that group them.
+"""The five behavioural features and the three domains that group them.
 
 A feature is described by three things: which domain it belongs to, which
 direction counts as worse, and what it is called.  Keeping that description in
 one place means the scoring code never has to special-case a feature, and
-adding a tenth feature is a one-line change here plus a weight review.
+adding a sixth feature is a one-line change here plus a weight review.
+
+The app measures three things -- words, speech and a precision (spiral)
+tracing -- and each yields one or two features.  An earlier design also had a
+reaction-time task and a typing-rhythm measurement (nine features, four
+domains).  Both were dropped when the tests were restructured around the three
+steps, because a step in an actual test has to be something the baseline also
+measured, or there is nothing to compare it with.
 """
 
 from __future__ import annotations
@@ -13,30 +20,29 @@ from enum import Enum
 
 
 class Domain(Enum):
-    """The four behavioural domains fused into a single deviation index."""
+    """The three behavioural domains fused into a single deviation index."""
 
     COGNITIVE = "cognitive"
     SPEECH = "speech"
     MOTOR = "motor"
-    INTERACTION = "interaction"
 
 
 #: Weight of each domain in the deviation index.  Cognition carries the most
 #: weight because delayed recall is the best-established early signal in the
-#: literature; interaction carries the least because passive typing is the
-#: noisiest and the most confounded by what the user happens to be typing.
+#: literature.  The report's original weights were 35 / 25 / 25 / 15 with a
+#: fourth, typing domain; with that domain gone the remaining three keep their
+#: relative sizes (35 : 25 : 25) and are rounded to 40 / 30 / 30.
 DOMAIN_WEIGHTS: dict[Domain, float] = {
-    Domain.COGNITIVE: 0.35,
-    Domain.SPEECH: 0.25,
-    Domain.MOTOR: 0.25,
-    Domain.INTERACTION: 0.15,
+    Domain.COGNITIVE: 0.40,
+    Domain.SPEECH: 0.30,
+    Domain.MOTOR: 0.30,
 }
 
 
 class Direction(Enum):
     """Which way a feature moves when the user is doing worse."""
 
-    #: Worse when the value rises, e.g. reaction time.
+    #: Worse when the value rises, e.g. tracing error.
     HIGHER_IS_WORSE = "higher"
     #: Worse when the value falls, e.g. words recalled.
     LOWER_IS_WORSE = "lower"
@@ -74,7 +80,7 @@ class FeatureSpec:
         return z if self.direction is Direction.HIGHER_IS_WORSE else -z
 
 
-#: The nine features, in the order they appear in the report.
+#: The five features, in the order they are measured.
 FEATURE_SPECS: tuple[FeatureSpec, ...] = (
     FeatureSpec(
         key="delayed_recall",
@@ -83,21 +89,6 @@ FEATURE_SPECS: tuple[FeatureSpec, ...] = (
         direction=Direction.LOWER_IS_WORSE,
         label="Delayed recall",
         unit="fraction",
-    ),
-    FeatureSpec(
-        key="reaction_median",
-        typical_day_to_day_sd=18.0,
-        domain=Domain.COGNITIVE,
-        direction=Direction.HIGHER_IS_WORSE,
-        label="Reaction median",
-        unit="ms",
-    ),
-    FeatureSpec(
-        key="reaction_cv",
-        typical_day_to_day_sd=0.02,
-        domain=Domain.COGNITIVE,
-        direction=Direction.HIGHER_IS_WORSE,
-        label="Reaction variability",
     ),
     FeatureSpec(
         key="speaking_rate",
@@ -129,49 +120,38 @@ FEATURE_SPECS: tuple[FeatureSpec, ...] = (
         direction=Direction.HIGHER_IS_WORSE,
         label="Tremor index",
     ),
-    FeatureSpec(
-        key="inter_key_interval",
-        typical_day_to_day_sd=15.0,
-        domain=Domain.INTERACTION,
-        direction=Direction.HIGHER_IS_WORSE,
-        label="Inter-key interval",
-        unit="ms",
-    ),
-    FeatureSpec(
-        key="inter_key_cv",
-        typical_day_to_day_sd=0.035,
-        domain=Domain.INTERACTION,
-        direction=Direction.HIGHER_IS_WORSE,
-        label="Inter-key variability",
-    ),
 )
 
 #: Lookup by feature key.
 SPEC_BY_KEY: dict[str, FeatureSpec] = {spec.key: spec for spec in FEATURE_SPECS}
 
-#: Feature keys, in report order.
+#: Feature keys, in measurement order.
 FEATURE_KEYS: tuple[str, ...] = tuple(spec.key for spec in FEATURE_SPECS)
 
 
 def specs_for(domain: Domain) -> tuple[FeatureSpec, ...]:
-    """Return the features belonging to *domain*, in report order."""
+    """Return the features belonging to *domain*, in measurement order."""
     return tuple(spec for spec in FEATURE_SPECS if spec.domain is domain)
 
 
 @dataclass
 class Session:
-    """One screening session as the engine sees it.
+    """One test as the engine sees it.
 
-    The engine deals only in extracted features.  Raw touch coordinates, audio
-    and keystroke timings never reach it -- they are reduced to these nine
-    numbers on the device and then discarded, which is what lets the app claim
-    that raw signals never leave the phone.
+    The engine deals only in extracted features.  Raw touch coordinates and
+    audio never reach it -- they are reduced to these five numbers on the device
+    and then discarded, which is what lets the app claim that raw signals never
+    leave the phone.
+
+    An actual test repeats each measurement several times; the features here
+    are the median of those repeats, so a single unusual step cannot define the
+    test.
     """
 
     #: Feature key to value.  Missing keys make the session unusable.
     features: dict[str, float] = field(default_factory=dict)
 
-    #: False when a quality gate rejected one of the tasks.
+    #: False when the test could not be scored.
     valid: bool = True
 
     #: True when the context check-in reported poor sleep, heavy fatigue, or

@@ -42,12 +42,6 @@ class TestUT6OrientationRaisesTheRightScore:
         scores = domain_scores_from(better.features, baseline)
         assert scores[Domain.COGNITIVE] < 0.0
 
-    def test_slower_reaction_raises_the_cognitive_score(
-        self, baseline: Baseline
-    ) -> None:
-        worse = make_session(jitter={"reaction_median": +3.0})
-        assert domain_scores_from(worse.features, baseline)[Domain.COGNITIVE] > 0.0
-
     def test_slower_speech_raises_the_speech_score(self, baseline: Baseline) -> None:
         """Speaking rate is lower-is-worse, pause ratio is higher-is-worse."""
         worse = make_session(
@@ -59,13 +53,13 @@ class TestUT6OrientationRaisesTheRightScore:
         worse = make_session(jitter={"spiral_rmse": +3.0, "tremor_index": +3.0})
         assert domain_scores_from(worse.features, baseline)[Domain.MOTOR] > 0.0
 
-    def test_slower_typing_raises_the_interaction_score(
-        self, baseline: Baseline
-    ) -> None:
-        worse = make_session(
-            jitter={"inter_key_interval": +3.0, "inter_key_cv": +3.0},
-        )
-        assert domain_scores_from(worse.features, baseline)[Domain.INTERACTION] > 0.0
+    def test_there_are_three_areas_and_no_typing_one(self) -> None:
+        """Reaction and typing were dropped, and the typing area went with them."""
+        assert {domain.value for domain in Domain} == {"cognitive", "speech", "motor"}
+
+    def test_every_area_has_at_least_one_measurement(self) -> None:
+        for domain in Domain:
+            assert any(spec.domain is domain for spec in FEATURE_SPECS)
 
     def test_a_typical_session_scores_near_zero(self, baseline: Baseline) -> None:
         scores = domain_scores_from(make_session().features, baseline)
@@ -92,14 +86,10 @@ class TestUT7ImprovementsNeverRaiseTheIndex:
         better = make_session(
             jitter={
                 "delayed_recall": +2.0,
-                "reaction_median": -2.0,
-                "reaction_cv": -2.0,
                 "speaking_rate": +2.0,
                 "pause_ratio": -2.0,
                 "spiral_rmse": -2.0,
                 "tremor_index": -2.0,
-                "inter_key_interval": -2.0,
-                "inter_key_cv": -2.0,
             }
         )
         scores = domain_scores_from(better.features, baseline)
@@ -109,7 +99,7 @@ class TestUT7ImprovementsNeverRaiseTheIndex:
     def test_improving_one_domain_cannot_mask_another_declining(
         self, baseline: Baseline
     ) -> None:
-        """The core of the clamp: a fast tapper who is forgetting still shows up."""
+        """The core of the clamp: a steady hand who is forgetting still shows up."""
         declining_only = make_session(jitter={"delayed_recall": -4.0})
         mixed = make_session(
             jitter={
@@ -168,7 +158,7 @@ class TestUT8ContributionsSumToOne:
             jitter={
                 "delayed_recall": -3.0,
                 "speaking_rate": -2.0,
-                "inter_key_interval": +2.0,
+                "spiral_rmse": +2.0,
             }
         )
         shares = contributions(domain_scores_from(session.features, baseline))

@@ -25,14 +25,10 @@ from .conftest import feed_baseline, make_session
 #: A deviation large enough to push the index above the threshold on its own.
 SEVERE = {
     "delayed_recall": -9.0,
-    "reaction_median": +9.0,
-    "reaction_cv": +9.0,
     "speaking_rate": -9.0,
     "pause_ratio": +9.0,
     "spiral_rmse": +9.0,
     "tremor_index": +9.0,
-    "inter_key_interval": +9.0,
-    "inter_key_cv": +9.0,
 }
 
 
@@ -220,11 +216,7 @@ class TestUT11SustainedDeviationAlerts:
     def test_an_alert_explains_which_domains_contributed(
         self, ready_engine: ScreeningEngine
     ) -> None:
-        cognitive_decline = {
-            "delayed_recall": -9.0,
-            "reaction_median": +9.0,
-            "reaction_cv": +9.0,
-        }
+        cognitive_decline = {"delayed_recall": -9.0}
         for _ in range(8):
             result = ready_engine.update(make_session(jitter=cognitive_decline))
             if status_of(result) is Status.NOTABLE_DEVIATION:

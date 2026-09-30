@@ -25,7 +25,6 @@ from .constants import (
     EWMA_LAMBDA,
     FAMILIARISATION_SESSIONS,
     MILD_FRACTION,
-    MIN_MONITORING_SESSIONS,
     PRIOR_SCALE_FLOOR_FRACTION,
 )
 from .engine import (
@@ -66,7 +65,6 @@ __all__ = [
     "FEATURE_KEYS",
     "FEATURE_SPECS",
     "MILD_FRACTION",
-    "MIN_MONITORING_SESSIONS",
     "PRIOR_SCALE_FLOOR_FRACTION",
     "SPEC_BY_KEY",
     "Baseline",

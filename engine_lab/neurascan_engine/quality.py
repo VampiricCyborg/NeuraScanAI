@@ -1,11 +1,15 @@
-"""Task-level quality gates.
+"""Step-level quality gates.
 
-A session that was not performed properly is worse than no session at all: it
-enters the baseline as if it were normal behaviour, or it produces a deviation
-that has nothing to do with the user's neurology.  These gates catch the failure
-modes we can detect mechanically -- tapping ahead of the stimulus, saying almost
-nothing during the speech task, abandoning the spiral part-way -- and mark the
-session invalid so the engine ignores it entirely.
+A step that was not performed properly is worse than no step at all: it enters a
+baseline as if it were normal behaviour, or it produces a deviation that has
+nothing to do with the user's neurology.  These gates catch the failure modes we
+can detect mechanically -- saying almost nothing during the speech step,
+abandoning the spiral part-way.
+
+The gates apply to a single step, not to a whole test.  A step that fails is
+simply done again, so one quiet room or one slipped finger does not throw away a
+test the user has spent minutes on.  (Earlier the gates invalidated the whole
+session; with eight steps to a test that would have been far too costly.)
 
 The gates deliberately do not try to detect a user who is simply not trying.
 That is what the context check-in is for, and it is handled separately as a
@@ -16,27 +20,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .constants import (
-    MAX_ANTICIPATIONS,
-    MIN_SPIRAL_COVERAGE,
-    MIN_VALID_REACTION_TRIALS,
-    MIN_VOICED_SECONDS,
-)
+from .constants import MIN_SPIRAL_COVERAGE, MIN_VOICED_SECONDS
 
 
 @dataclass(frozen=True)
 class TaskMetrics:
-    """The few raw numbers the gates need, per session.
+    """The few raw numbers the gates need, per step.
 
-    Everything else about the tasks -- the actual trace, the audio, the trial
-    times -- has already been reduced to features by the time the gates run.
+    Everything else about the steps -- the actual trace, the audio -- has
+    already been reduced to features by the time the gates run.  The defaults sit
+    exactly on each limit, so the default instance is the boundary case.
     """
-
-    #: Taps that landed before the reaction stimulus appeared.
-    anticipations: int = 0
-
-    #: Reaction trials that produced a usable time.
-    valid_reaction_trials: int = MIN_VALID_REACTION_TRIALS
 
     #: Seconds of voiced speech detected in the picture description.
     voiced_seconds: float = MIN_VOICED_SECONDS
@@ -47,7 +41,7 @@ class TaskMetrics:
 
 @dataclass(frozen=True)
 class QualityReport:
-    """Outcome of the gates: whether the session counts, and why not."""
+    """Outcome of the gates: whether the step counts, and why not."""
 
     valid: bool
     failures: tuple[str, ...] = field(default=())
@@ -55,25 +49,13 @@ class QualityReport:
     def reason(self) -> str:
         """Human-readable summary, for the retry prompt shown to the user."""
         if self.valid:
-            return "All tasks met the quality checks."
+            return "The step met the quality checks."
         return "; ".join(self.failures)
 
 
 def evaluate_quality(metrics: TaskMetrics) -> QualityReport:
     """Apply every gate to *metrics* and report the combined result."""
     failures: list[str] = []
-
-    if metrics.anticipations > MAX_ANTICIPATIONS:
-        failures.append(
-            f"{metrics.anticipations} taps came before the stimulus "
-            f"(at most {MAX_ANTICIPATIONS} allowed)"
-        )
-
-    if metrics.valid_reaction_trials < MIN_VALID_REACTION_TRIALS:
-        failures.append(
-            f"only {metrics.valid_reaction_trials} usable reaction trials "
-            f"(at least {MIN_VALID_REACTION_TRIALS} needed)"
-        )
 
     if metrics.voiced_seconds < MIN_VOICED_SECONDS:
         failures.append(

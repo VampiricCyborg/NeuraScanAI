@@ -1,4 +1,4 @@
-"""Turning nine features into one deviation index, and explaining the result.
+"""Turning five features into one deviation index, and explaining the result.
 
 The fusion is deliberately additive: the index is a weighted sum of
 worsening-only domain scores.  That choice costs some expressive power against a
@@ -54,9 +54,9 @@ def deviation_index(scores: dict[Domain, float]) -> float:
     """Weighted sum of the worsening part of each domain score.
 
     Clamping at zero before weighting is what makes the index one-sided: a user
-    who gets faster at the reaction task does not earn credit that masks a
-    decline in recall.  Improvements are still visible in the per-domain
-    trends, they just cannot pull the overall index down.
+    who traces faster does not earn credit that masks a decline in recall.
+    Improvements are still visible in the per-domain trends, they just cannot
+    pull the overall index down.
     """
     return sum(
         weight * max(0.0, scores.get(domain, 0.0))
