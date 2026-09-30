@@ -113,7 +113,7 @@ void main() {
         for (var i = 0; i < kBaselineSessions; i++)
           makeSession(
             sessionId: '$i',
-            overrides: {'reaction_median': 480.0 + i * 25},
+            overrides: {'speaking_rate': 100.0 - i * 10},
           ),
       ]);
       final mine = run(SimulationScenario.steady);

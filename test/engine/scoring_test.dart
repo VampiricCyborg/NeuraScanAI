@@ -41,13 +41,6 @@ void main() {
       );
     });
 
-    test('a slower reaction raises the cognitive score', () {
-      expect(
-        scoresFor({'reaction_median': 3.0})[Domain.cognitive],
-        greaterThan(0.0),
-      );
-    });
-
     test('slower, more halting speech raises the speech score', () {
       final scores = scoresFor({'speaking_rate': -3.0, 'pause_ratio': 3.0});
       expect(scores[Domain.speech], greaterThan(0.0));
@@ -56,14 +49,6 @@ void main() {
     test('shakier tracing raises the motor score', () {
       final scores = scoresFor({'spiral_rmse': 3.0, 'tremor_index': 3.0});
       expect(scores[Domain.motor], greaterThan(0.0));
-    });
-
-    test('slower, more erratic typing raises the interaction score', () {
-      final scores = scoresFor({
-        'inter_key_interval': 3.0,
-        'inter_key_cv': 3.0,
-      });
-      expect(scores[Domain.interaction], greaterThan(0.0));
     });
 
     test('a typical session scores near zero in every domain', () {
@@ -107,14 +92,10 @@ void main() {
       test('an all-round improvement gives a zero index', () {
         final scores = scoresFor({
           'delayed_recall': 2.0,
-          'reaction_median': -2.0,
-          'reaction_cv': -2.0,
           'speaking_rate': 2.0,
           'pause_ratio': -2.0,
           'spiral_rmse': -2.0,
           'tremor_index': -2.0,
-          'inter_key_interval': -2.0,
-          'inter_key_cv': -2.0,
         });
         expect(scores.values.every((score) => score < 0.0), isTrue);
         expect(deviationIndex(scores), 0.0);
@@ -171,7 +152,7 @@ void main() {
           scoresFor({
             'delayed_recall': -3.0,
             'speaking_rate': -2.0,
-            'inter_key_interval': 2.0,
+            'spiral_rmse': 2.0,
           }),
         );
         expect(shares.values.reduce((a, b) => a + b), closeTo(1.0, 1e-12));
@@ -243,20 +224,22 @@ void main() {
         expect(percentages.values.reduce((a, b) => a + b), 100);
       });
 
-      test('percentages of an even four-way split still total one hundred', () {
-        final shares = {for (final domain in Domain.values) domain: 0.25};
-        expect(
-          contributionPercentages(shares).values.reduce((a, b) => a + b),
-          100,
-        );
-      });
+      test(
+        'percentages of an even three-way split still total one hundred',
+        () {
+          final shares = {for (final domain in Domain.values) domain: 1 / 3};
+          expect(
+            contributionPercentages(shares).values.reduce((a, b) => a + b),
+            100,
+          );
+        },
+      );
 
-      test('percentages of a three-way split still total one hundred', () {
+      test('percentages of an uneven split still total one hundred', () {
         final shares = {
-          Domain.cognitive: 1 / 3,
-          Domain.speech: 1 / 3,
-          Domain.motor: 1 / 3,
-          Domain.interaction: 0.0,
+          Domain.cognitive: 0.5,
+          Domain.speech: 0.3,
+          Domain.motor: 0.2,
         };
         expect(
           contributionPercentages(shares).values.reduce((a, b) => a + b),

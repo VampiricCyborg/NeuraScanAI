@@ -88,12 +88,11 @@ const int kSimulatedOnset = 6;
 const int kExampleSeed = 12;
 
 /// The size of the change, in the user's own units of spread, by the end of the run, per
-/// area. Cognitive changes most, and speech and typing follow more gently, as in the report:
-/// a change in thinking tends to show up in speech and typing too.
+/// area. Cognitive changes most and speech follows more gently, as in the report: a change
+/// in thinking tends to show up in speech too. Movement is left alone.
 const Map<Domain, double> kSimulatedChangeSds = {
   Domain.cognitive: 3.0,
   Domain.speech: 1.5,
-  Domain.interaction: 1.0,
 };
 
 /// Runs [scenario] against [baseline] and scores it with the real engine.

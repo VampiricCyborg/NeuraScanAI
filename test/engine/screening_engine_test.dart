@@ -189,11 +189,7 @@ void main() {
 
     test('an alert explains which domains contributed', () {
       final engine = readyEngine();
-      const cognitiveDecline = {
-        'delayed_recall': -9.0,
-        'reaction_median': 9.0,
-        'reaction_cv': 9.0,
-      };
+      const cognitiveDecline = {'delayed_recall': -9.0};
       for (var i = 0; i < 8; i++) {
         final result = engine.update(makeSession(jitter: cognitiveDecline));
         if (result.status == ScreeningStatus.notableDeviation) {
@@ -256,8 +252,7 @@ void main() {
 
     test('it is not pooled into the baseline', () {
       final engine = ScreeningEngine();
-      engine.update(makeSession());
-      engine.update(makeSession());
+      practise(engine);
       for (var i = 0; i < 6; i++) {
         engine.update(makeSession(valid: false));
       }
@@ -330,8 +325,7 @@ void main() {
 
     test('a building result round-trips through JSON', () {
       final engine = ScreeningEngine();
-      engine.update(makeSession());
-      engine.update(makeSession());
+      practise(engine);
       final result = engine.update(makeSession(sessionId: 'first-pooled'));
       final restored = SessionResult.fromJson(result.toJson());
 

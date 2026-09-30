@@ -16,41 +16,29 @@ import 'package:neurascan_ai/engine/screening_engine.dart';
 /// deviation.
 const Map<String, double> kNominal = {
   'delayed_recall': 0.75,
-  'reaction_median': 320.0,
-  'reaction_cv': 0.15,
   'speaking_rate': 140.0,
   'pause_ratio': 0.22,
   'spiral_rmse': 6.0,
   'tremor_index': 0.10,
-  'inter_key_interval': 260.0,
-  'inter_key_cv': 0.35,
 };
 
 /// Within-person day-to-day spread of each feature, from Table A.2 of the
 /// report. Used to express a perturbation in units the engine will recognise.
 const Map<String, double> kWithinSd = {
   'delayed_recall': 0.06,
-  'reaction_median': 18.0,
-  'reaction_cv': 0.02,
   'speaking_rate': 8.0,
   'pause_ratio': 0.025,
   'spiral_rmse': 0.6,
   'tremor_index': 0.012,
-  'inter_key_interval': 15.0,
-  'inter_key_cv': 0.035,
 };
 
 /// A deviation large enough to push the index above the threshold on its own.
 const Map<String, double> kSevere = {
   'delayed_recall': -9.0,
-  'reaction_median': 9.0,
-  'reaction_cv': 9.0,
   'speaking_rate': -9.0,
   'pause_ratio': 9.0,
   'spiral_rmse': 9.0,
   'tremor_index': 9.0,
-  'inter_key_interval': 9.0,
-  'inter_key_cv': 9.0,
 };
 
 /// Builds a session from the nominal values.
@@ -110,13 +98,24 @@ List<EngineSession> variedBaselineSessions([int count = kBaselineSessions]) {
 
 /// Drives [engine] through familiarisation and baseline building.
 ///
-/// Sends two familiarisation sessions first, because the engine discards that
-/// many before it starts pooling, then the baseline sessions themselves.
+/// Sends the practice run first, because the engine discards that many tests before it
+/// starts pooling, then the baseline tests themselves.
 void feedBaseline(ScreeningEngine engine, [List<EngineSession>? sessions]) {
-  engine.update(makeSession(sessionId: 'familiarisation-1'));
-  engine.update(makeSession(sessionId: 'familiarisation-2'));
+  for (var i = 0; i < kFamiliarisationSessions; i++) {
+    engine.update(makeSession(sessionId: 'familiarisation-${i + 1}'));
+  }
   for (final session in sessions ?? variedBaselineSessions()) {
     engine.update(session);
+  }
+}
+
+/// Sends the practice run alone, for tests that go on to build a baseline themselves.
+///
+/// [overrides] lets a test make the practice run unlike the tests that follow, to show
+/// that it is discarded.
+void practise(ScreeningEngine engine, {Map<String, double>? overrides}) {
+  for (var i = 0; i < kFamiliarisationSessions; i++) {
+    engine.update(makeSession(overrides: overrides));
   }
 }
 

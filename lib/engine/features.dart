@@ -1,19 +1,24 @@
-/// The nine behavioural features and the four domains that group them.
+/// The five behavioural features and the three domains that group them.
 ///
 /// A feature is described by three things: which domain it belongs to, which
 /// direction counts as worse, and what it is called. Keeping that description
 /// in one place means the scoring code never has to special-case a feature, and
-/// adding a tenth feature is a one-line change here plus a weight review.
+/// adding a sixth feature is a one-line change here plus a weight review.
+///
+/// The app measures three things -- words, speech and a precision (spiral) tracing --
+/// and each yields one or two features. An earlier design also had a reaction-time task and
+/// a typing-rhythm measurement (nine features, four domains). Both were dropped when the
+/// tests were restructured around the three steps, because a step in an actual test has to
+/// be something the baseline also measured, or there is nothing to compare it with.
 ///
 /// Mirrors `engine_lab/neurascan_engine/features.py`.
 library;
 
-/// The four behavioural domains fused into a single deviation index.
+/// The three behavioural domains fused into a single deviation index.
 enum Domain {
   cognitive('cognitive', 'Cognitive'),
   speech('speech', 'Speech'),
-  motor('motor', 'Motor'),
-  interaction('interaction', 'Interaction');
+  motor('motor', 'Motor');
 
   const Domain(this.key, this.label);
 
@@ -25,19 +30,29 @@ enum Domain {
 
   static Domain fromKey(String key) =>
       Domain.values.firstWhere((domain) => domain.key == key);
+
+  /// The domain for [key], or null for one that no longer exists.
+  ///
+  /// Records stored before the typing area was dropped still carry an "interaction" score.
+  /// Reading them must not fail, so decoders use this and skip what they do not recognise.
+  static Domain? tryFromKey(String key) {
+    for (final domain in Domain.values) {
+      if (domain.key == key) return domain;
+    }
+    return null;
+  }
 }
 
 /// Weight of each domain in the deviation index.
 ///
-/// Cognition carries the most weight because delayed recall is the
-/// best-established early signal in the literature; interaction carries the
-/// least because passive typing is the noisiest and the most confounded by what
-/// the user happens to be typing.
+/// Cognition carries the most weight because delayed recall is the best-established early
+/// signal in the literature. The report's original weights were 35 / 25 / 25 / 15 with a
+/// fourth, typing area; with that area gone the remaining three keep their relative sizes
+/// (35 : 25 : 25) and are rounded to 40 / 30 / 30.
 const Map<Domain, double> kDomainWeights = {
-  Domain.cognitive: 0.35,
-  Domain.speech: 0.25,
-  Domain.motor: 0.25,
-  Domain.interaction: 0.15,
+  Domain.cognitive: 0.40,
+  Domain.speech: 0.30,
+  Domain.motor: 0.30,
 };
 
 /// Which way a feature moves when the user is doing worse.
@@ -85,7 +100,7 @@ class FeatureSpec {
   double orient(double z) => direction == Direction.higherIsWorse ? z : -z;
 }
 
-/// The nine features, in the order they appear in the project report.
+/// The five features, in the order they are measured.
 const List<FeatureSpec> kFeatureSpecs = [
   FeatureSpec(
     key: 'delayed_recall',
@@ -94,21 +109,6 @@ const List<FeatureSpec> kFeatureSpecs = [
     direction: Direction.lowerIsWorse,
     label: 'Delayed recall',
     unit: 'fraction',
-  ),
-  FeatureSpec(
-    key: 'reaction_median',
-    typicalDaySd: 18.0,
-    domain: Domain.cognitive,
-    direction: Direction.higherIsWorse,
-    label: 'Reaction median',
-    unit: 'ms',
-  ),
-  FeatureSpec(
-    key: 'reaction_cv',
-    typicalDaySd: 0.02,
-    domain: Domain.cognitive,
-    direction: Direction.higherIsWorse,
-    label: 'Reaction variability',
   ),
   FeatureSpec(
     key: 'speaking_rate',
@@ -140,21 +140,6 @@ const List<FeatureSpec> kFeatureSpecs = [
     direction: Direction.higherIsWorse,
     label: 'Tremor index',
   ),
-  FeatureSpec(
-    key: 'inter_key_interval',
-    typicalDaySd: 15.0,
-    domain: Domain.interaction,
-    direction: Direction.higherIsWorse,
-    label: 'Inter-key interval',
-    unit: 'ms',
-  ),
-  FeatureSpec(
-    key: 'inter_key_cv',
-    typicalDaySd: 0.035,
-    domain: Domain.interaction,
-    direction: Direction.higherIsWorse,
-    label: 'Inter-key variability',
-  ),
 ];
 
 /// Lookup by feature key.
@@ -162,20 +147,22 @@ final Map<String, FeatureSpec> kSpecByKey = {
   for (final spec in kFeatureSpecs) spec.key: spec,
 };
 
-/// Feature keys, in report order.
+/// Feature keys, in measurement order.
 final List<String> kFeatureKeys = [for (final spec in kFeatureSpecs) spec.key];
 
-/// The features belonging to [domain], in report order.
+/// The features belonging to [domain], in measurement order.
 List<FeatureSpec> specsFor(Domain domain) => kFeatureSpecs
     .where((spec) => spec.domain == domain)
     .toList(growable: false);
 
-/// One screening session as the engine sees it.
+/// One test as the engine sees it.
 ///
-/// The engine deals only in extracted features. Raw touch coordinates, audio
-/// and keystroke timings never reach it -- they are reduced to these nine
-/// numbers on the device and then discarded, which is what lets the app claim
-/// that raw signals never leave the phone.
+/// The engine deals only in extracted features. Raw touch coordinates and audio never reach
+/// it -- they are reduced to these five numbers on the device and then discarded, which is
+/// what lets the app claim that raw signals never leave the phone.
+///
+/// An actual test repeats each measurement several times; the features here are the median
+/// of those repeats, so a single unusual step cannot define the test.
 class EngineSession {
   const EngineSession({
     required this.features,
@@ -187,7 +174,7 @@ class EngineSession {
   /// Feature key to value. Missing keys make the session unusable.
   final Map<String, double> features;
 
-  /// False when a quality gate rejected one of the tasks.
+  /// False when the test could not be scored.
   final bool valid;
 
   /// True when the context check-in reported poor sleep, heavy fatigue, or

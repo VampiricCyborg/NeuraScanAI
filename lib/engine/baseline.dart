@@ -17,7 +17,7 @@ export 'robust_stats.dart' show median, medianAbsoluteDeviation, robustScale;
 
 /// A frozen per-feature centre and spread for one user on one device.
 ///
-/// Twenty numbers in total -- a median and a scale for each of the nine
+/// Eleven numbers in total -- a median and a scale for each of the five
 /// features, plus the session count -- which is what makes the baseline cheap
 /// enough to hold in memory, store locally and sync as a single document.
 class Baseline {

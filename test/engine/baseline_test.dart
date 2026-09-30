@@ -48,8 +48,7 @@ void main() {
 
       test('familiarisation values never reach the baseline medians', () {
         final engine = ScreeningEngine();
-        engine.update(makeSession(overrides: {'delayed_recall': 0.10}));
-        engine.update(makeSession(overrides: {'delayed_recall': 0.10}));
+        practise(engine, overrides: {'delayed_recall': 0.10});
         for (var i = 0; i < kBaselineSessions; i++) {
           engine.update(makeSession(overrides: {'delayed_recall': 0.80}));
         }
@@ -58,8 +57,7 @@ void main() {
 
       test('progress climbs from zero to one', () {
         final engine = ScreeningEngine();
-        engine.update(makeSession());
-        engine.update(makeSession());
+        practise(engine);
         expect(engine.baselineProgress, 0.0);
 
         final seen = <double>[];
@@ -76,8 +74,7 @@ void main() {
 
       test('a tired day must not define what normal looks like', () {
         final engine = ScreeningEngine();
-        engine.update(makeSession());
-        engine.update(makeSession());
+        practise(engine);
         for (var i = 0; i < kBaselineSessions; i++) {
           engine.update(
             makeSession(confounded: true, overrides: {'delayed_recall': 0.3}),
@@ -116,11 +113,11 @@ void main() {
           for (var i = 0; i < values.length; i++)
             makeSession(
               sessionId: '$i',
-              overrides: {'reaction_median': values[i]},
+              overrides: {'speaking_rate': values[i]},
             ),
         ];
         expect(
-          Baseline.fit(sessions).median['reaction_median'],
+          Baseline.fit(sessions).median['speaking_rate'],
           closeTo(325.0, 1e-9),
         );
       });
@@ -178,8 +175,7 @@ void main() {
 
       test('the engine never divides by zero with a flat baseline', () {
         final engine = ScreeningEngine();
-        engine.update(makeSession());
-        engine.update(makeSession());
+        practise(engine);
         for (var i = 0; i < kBaselineSessions; i++) {
           engine.update(makeSession(sessionId: '$i'));
         }
@@ -197,14 +193,14 @@ void main() {
     // the smaller of two gaps, which can be tiny by luck; left alone, an ordinary day then
     // scores as a large deviation, and on healthy simulated users that gave about half of
     // them a false alert (engine_lab/baseline_sensitivity.py).
-    final typical = kSpecByKey['reaction_median']!.typicalDaySd;
+    final typical = kSpecByKey['speaking_rate']!.typicalDaySd;
     final floor = kPriorScaleFloorFraction * typical;
 
     test('a lucky tight pair no longer gives a tiny scale', () {
       // Two values almost coincide, so the MAD is 0.1, but the feature's ordinary
-      // day-to-day spread is 18 ms.
-      const values = [320.0, 320.1, 335.0];
-      // Without the safeguard only the 2 %-of-median floor (6.4 ms) applies.
+      // day-to-day spread is 8 syllables a minute.
+      const values = [140.0, 140.1, 147.0];
+      // Without the safeguard only the 2 %-of-median floor (2.8) applies.
       expect(robustScale(values), lessThan(floor));
       expect(
         robustScale(values, typicalSd: typical),
@@ -232,10 +228,10 @@ void main() {
       // Personal baselines stay personal: only the spread is regularised.
       final sessions = [
         for (final (i, v) in const [300.0, 300.1, 340.0].indexed)
-          makeSession(sessionId: '$i', overrides: {'reaction_median': v}),
+          makeSession(sessionId: '$i', overrides: {'speaking_rate': v}),
       ];
       expect(
-        Baseline.fit(sessions).median['reaction_median'],
+        Baseline.fit(sessions).median['speaking_rate'],
         closeTo(300.1, 1e-9),
       );
     });
@@ -269,7 +265,7 @@ void main() {
         for (var i = 0; i < kBaselineSessions; i++)
           makeSession(sessionId: '$i'),
       ]);
-      expect(baseline.z('reaction_median', 320.0 + 18.0).abs(), lessThan(3.0));
+      expect(baseline.z('speaking_rate', 140.0 + 8.0).abs(), lessThan(3.0));
     });
   });
 
@@ -298,10 +294,10 @@ void main() {
       expect(restored.sessionCount, baseline.sessionCount);
     });
 
-    test('holds twenty-odd numbers, small enough to sync as one document', () {
+    test('holds eleven numbers, small enough to sync as one document', () {
       final baseline = Baseline.fit(variedBaselineSessions());
-      expect(baseline.median, hasLength(9));
-      expect(baseline.scale, hasLength(9));
+      expect(baseline.median, hasLength(kFeatureKeys.length));
+      expect(baseline.scale, hasLength(kFeatureKeys.length));
     });
 
     test('a session reports the features it is missing', () {

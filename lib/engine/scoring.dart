@@ -1,4 +1,4 @@
-/// Turning nine features into one deviation index, and explaining the result.
+/// Turning five features into one deviation index, and explaining the result.
 ///
 /// The fusion is deliberately additive: the index is a weighted sum of
 /// worsening-only domain scores. That choice costs some expressive power against
@@ -53,8 +53,7 @@ Map<Domain, double> domainScoresFrom(
 /// Weighted sum of the worsening part of each domain score.
 ///
 /// Clamping at zero before weighting is what makes the index one-sided: a user
-/// who gets faster at the reaction task does not earn credit that masks a decline
-/// in recall. Improvements are still visible in the per-domain trends, they just
+/// who traces faster does not earn credit that masks a decline in recall. Improvements are still visible in the per-domain trends, they just
 /// cannot pull the overall index down.
 double deviationIndex(Map<Domain, double> scores) {
   var total = 0.0;
@@ -85,8 +84,7 @@ Map<Domain, double> contributions(Map<Domain, double> scores) {
 /// Domain with the largest share of the index.
 ///
 /// Used for the one-line summary on the report screen; the full breakdown is
-/// always shown alongside it, because a cognitive decline routinely shows up in
-/// speech and typing too.
+/// always shown alongside it, because a cognitive decline can show up in speech too.
 Domain topContributor(Map<Domain, double> scores) {
   final shares = contributions(scores);
   var best = Domain.values.first;
