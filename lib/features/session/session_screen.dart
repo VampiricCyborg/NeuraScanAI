@@ -14,13 +14,20 @@ import '../../app/l10n/generated/app_localizations.dart';
 import '../../app/router.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
+import '../../engine/constants.dart';
 import '../checkin/checkin_step.dart';
+import 'keystroke_recorder.dart';
 import 'session_controller.dart';
 import 'session_plan.dart';
+import 'tasks/fluency_task.dart';
 import 'tasks/memory_task.dart';
+import 'tasks/reaction_task.dart';
 import 'tasks/recall_task.dart';
 import 'tasks/speech_task.dart';
 import 'tasks/spiral_task.dart';
+import 'tasks/tapping_task.dart';
+import 'tasks/trail_task.dart';
+import 'tasks/typing_note.dart';
 
 /// Runs one test from the check-in to the stored result.
 class SessionScreen extends ConsumerStatefulWidget {
@@ -126,10 +133,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 )
               : null,
         ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(kPagePadding),
-            child: _StepView(state: state, controller: controller),
+        // Every text box inside a test records its typing rhythm into this test's log.
+        body: KeystrokeScope(
+          log: controller.keystrokes,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(kPagePadding),
+              child: _StepView(state: state, controller: controller),
+            ),
           ),
         ),
       ),
@@ -151,8 +162,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   static String _stepName(AppText text, PlannedScreen screen) =>
       switch (screen.step) {
         StepKind.words => text.sessionStepWords,
+        StepKind.reaction => text.sessionStepReaction,
         StepKind.speech => text.sessionStepSpeech,
         StepKind.precision => text.sessionStepPrecision,
+        StepKind.typing => text.sessionStepTyping,
+        StepKind.trail => text.sessionStepTrail,
+        StepKind.tapping => text.sessionStepTapping,
+        StepKind.fluency => text.sessionStepFluency,
       };
 }
 
@@ -216,7 +232,6 @@ class _StepView extends ConsumerWidget {
   /// The widget for one screen. Keyed by position and attempt so that a step asked for
   /// again starts clean instead of inheriting the state of the attempt that failed.
   Widget _screenFor(BuildContext context, WidgetRef ref, PlannedScreen screen) {
-    final text = AppText.of(context);
     final key = ValueKey(
       '${screen.kind.name}-${state.screenIndex}-${state.attempt}',
     );
@@ -224,24 +239,48 @@ class _StepView extends ConsumerWidget {
     return switch (screen.kind) {
       ScreenKind.learnWords => MemoryTask(
         key: key,
-        wordList: state.wordLists[screen.index],
+        wordList: state.wordList,
         onReady: controller.finishLearn,
+      ),
+      ScreenKind.immediateRecall => RecallTask(
+        key: key,
+        kind: RecallKind.immediate,
+        onFinished: controller.finishImmediateRecall,
+      ),
+      ScreenKind.reaction => ReactionTask(
+        key: key,
+        trialCount: kReactionTrials,
+        onTrial: controller.recordReactionTrial,
+        onFinished: controller.finishReaction,
       ),
       ScreenKind.speech => SpeechTask(
         key: key,
         capture: ref.watch(audioCaptureProvider),
-        sceneIndex: state.sceneIndexes[screen.index],
+        sceneIndex: state.sceneIndex,
         onFinished: controller.finishSpeech,
       ),
       ScreenKind.precision => SpiralTask(
         key: key,
         onFinished: controller.finishPrecision,
       ),
+      ScreenKind.typingNote => TypingNote(
+        key: key,
+        onContinue: controller.finishTypingNote,
+      ),
+      ScreenKind.trail => TrailTask(
+        key: key,
+        onFinished: controller.finishTrail,
+      ),
+      ScreenKind.tapping => TappingTask(
+        key: key,
+        onFinished: controller.finishTapping,
+      ),
+      ScreenKind.fluency => FluencyTask(
+        key: key,
+        onFinished: controller.finishFluency,
+      ),
       ScreenKind.recallWords => RecallTask(
         key: key,
-        listLabel: state.plan.wordLists > 1
-            ? text.taskRecallListLabel(screen.index + 1, state.plan.wordLists)
-            : null,
         onFinished: controller.finishRecall,
       ),
     };
@@ -260,6 +299,8 @@ class _RetryBanner extends StatelessWidget {
     final message = switch (reason) {
       StepRetry.speechTooQuiet => text.taskSpeechTooQuiet,
       StepRetry.spiralIncomplete => text.taskSpiralTryAgain,
+      StepRetry.reactionUnusable => text.taskReactionRetry,
+      StepRetry.tappingTooFew => text.taskTappingRetry,
     };
 
     return Container(

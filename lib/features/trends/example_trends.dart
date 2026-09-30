@@ -15,6 +15,7 @@ import '../../app/l10n/generated/app_localizations.dart';
 import '../../app/theme.dart';
 import '../../app/widgets.dart';
 import '../../engine/baseline.dart';
+import '../../engine/constants.dart';
 import '../../engine/features.dart';
 import '../../engine/simulation.dart';
 import 'baseline_format.dart';
@@ -179,12 +180,16 @@ class YourBaselineCard extends StatelessWidget {
                           style: context.texts.bodyMedium,
                         ),
                         Text(
-                          text.baselineRowSpread(
-                            formatFeatureSpread(
-                              spec.key,
-                              baseline.scale[spec.key]!,
-                            ),
-                          ),
+                          // A measurement that only a full test makes has no baseline until
+                          // the first few full tests have been taken.
+                          baseline.median.containsKey(spec.key)
+                              ? text.baselineRowSpread(
+                                  formatFeatureSpread(
+                                    spec.key,
+                                    baseline.scale[spec.key]!,
+                                  ),
+                                )
+                              : text.baselineRowCalibrating(kExtensionTests),
                           style: context.texts.bodySmall?.copyWith(
                             color: context.colors.onSurfaceVariant,
                           ),
@@ -194,7 +199,12 @@ class YourBaselineCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    formatFeatureValue(spec.key, baseline.median[spec.key]!),
+                    baseline.median.containsKey(spec.key)
+                        ? formatFeatureValue(
+                            spec.key,
+                            baseline.median[spec.key]!,
+                          )
+                        : '—',
                     style: context.texts.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),

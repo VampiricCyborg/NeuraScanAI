@@ -145,7 +145,7 @@ class Repository {
     )..where((table) => table.userId.equals(userId))).getSingleOrNull();
 
     if (baselineRow != null) {
-      return ScreeningEngine(
+      final engine = ScreeningEngine(
         baseline: Baseline(
           median: _decodeDoubles(baselineRow.medianJson),
           scale: _decodeDoubles(baselineRow.scaleJson),
@@ -155,6 +155,17 @@ class Repository {
         run: stateRow?.runLength ?? 0,
         seen: stateRow?.sessionsSeen ?? 0,
       );
+      // Some measurements may still be waiting for a baseline: the baseline tests are three
+      // steps, and the rest calibrate from the first full tests. Those tests are in the
+      // database, so the engine is told about them again rather than the pool being stored.
+      // Scored tests are exactly the ones that came after the baseline and counted.
+      if (!engine.baseline!.isComplete) {
+        engine.calibrateFrom([
+          for (final session in await loadSessions(userId))
+            if (session.countsTowardsTrend) _toEngineSession(session),
+        ]);
+      }
+      return engine;
     }
 
     // A baseline after the first opens without a practice test, so the engine starts as if
@@ -217,22 +228,38 @@ class Repository {
     final baseline = engine.baseline;
     if (baseline == null) return;
 
-    final alreadyStored = await (_db.select(
+    final stored = await (_db.select(
       _db.baselines,
     )..where((table) => table.userId.equals(userId))).getSingleOrNull();
-    if (alreadyStored != null) return;
 
-    await _db
-        .into(_db.baselines)
-        .insert(
-          BaselinesCompanion.insert(
-            userId: userId,
-            frozenAt: DateTime.now(),
-            medianJson: jsonEncode(baseline.median),
-            scaleJson: jsonEncode(baseline.scale),
-            sessionCount: baseline.sessionCount,
-          ),
-        );
+    final medianJson = jsonEncode(baseline.median);
+    final scaleJson = jsonEncode(baseline.scale);
+    if (stored == null) {
+      await _db
+          .into(_db.baselines)
+          .insert(
+            BaselinesCompanion.insert(
+              userId: userId,
+              frozenAt: DateTime.now(),
+              medianJson: medianJson,
+              scaleJson: scaleJson,
+              sessionCount: baseline.sessionCount,
+            ),
+          );
+    } else if (stored.medianJson != medianJson) {
+      // The baseline has grown: a measurement that was calibrating now has one. The entries
+      // already there are never changed, only added to, so the date it was frozen stays.
+      await (_db.update(
+        _db.baselines,
+      )..where((table) => table.userId.equals(userId))).write(
+        BaselinesCompanion(
+          medianJson: Value(medianJson),
+          scaleJson: Value(scaleJson),
+        ),
+      );
+    } else {
+      return;
+    }
 
     final profile = await loadProfile(userId);
     if (profile?.syncEnabled ?? false) {

@@ -108,7 +108,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Take a full test'), findsOneWidget);
-      expect(find.textContaining('Eight short steps'), findsOneWidget);
+      expect(find.textContaining('Eight different steps'), findsOneWidget);
     });
   });
 
@@ -240,7 +240,7 @@ void main() {
       expect(find.text('See the full report'), findsOneWidget);
     });
 
-    testWidgets('all three areas are broken down on the summary', (
+    testWidgets('all four areas are broken down on the summary', (
       tester,
     ) async {
       final app = await dashboard(tester);
@@ -254,10 +254,9 @@ void main() {
 
       // All three, including any that contributed nothing: a breakdown that hid the quiet
       // areas would make a single-area change look like the only thing measured.
-      for (final label in ['Thinking', 'Speech', 'Movement']) {
+      for (final label in ['Thinking', 'Speech', 'Movement', 'Typing']) {
         expect(find.text(label), findsWidgets, reason: label);
       }
-      expect(find.text('Typing'), findsNothing);
       expect(find.text('What this is based on'), findsOneWidget);
     });
   });

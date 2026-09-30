@@ -1,12 +1,14 @@
 /// The state machine that runs one test.
 ///
 /// A test is a plan of screens (see session_plan.dart). This walks through it, scores each
-/// step the moment it finishes, and at the end combines the repeats into one value per
-/// measurement, hands that to the engine, and stores the result.
+/// step the moment it finishes, and at the end gathers the steps' measurements, hands them to
+/// the engine, and stores the result.
 ///
 /// Raw data is held for as short a time as it can be. Audio goes to the feature extractor as
-/// soon as the speech step ends and the touch trace as soon as the spiral does; only the
-/// resulting numbers are kept for the rest of the test. Nothing raw is ever stored.
+/// soon as the speech step ends, the touch trace as soon as the spiral does, the taps as soon
+/// as the tapping step does; only the resulting numbers are kept for the rest of the test.
+/// Keystroke timings are kept until the test ends, because the typing measurement needs the
+/// typing from several steps, and they hold no letters. Nothing raw is ever stored.
 library;
 
 import 'dart:math';
@@ -17,15 +19,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../data/models.dart';
 import '../../engine/constants.dart';
+import '../../engine/extractors/fluency_extractor.dart';
 import '../../engine/extractors/memory_extractor.dart';
+import '../../engine/extractors/reaction_extractor.dart';
 import '../../engine/extractors/speech_extractor.dart';
 import '../../engine/extractors/spiral_extractor.dart';
+import '../../engine/extractors/tapping_extractor.dart';
+import '../../engine/extractors/trail_extractor.dart';
 import '../../engine/features.dart';
 import '../../engine/quality.dart';
-import '../../engine/robust_stats.dart';
 import '../../engine/screening_engine.dart';
 import '../../services/audio_capture.dart';
 import '../../services/record_audio_capture.dart';
+import 'keystroke_recorder.dart';
 import 'session_plan.dart';
 import 'tasks/scenes.dart';
 import 'word_lists.dart';
@@ -47,18 +53,24 @@ enum SessionPhase {
 /// Why a step is being asked for again.
 ///
 /// A closed set rather than a message so the screen decides the wording and can translate it.
-enum StepRetry { speechTooQuiet, spiralIncomplete }
+enum StepRetry {
+  speechTooQuiet,
+  spiralIncomplete,
+  reactionUnusable,
+  tappingTooFew,
+}
 
 /// The test's state, as the screens see it.
 class SessionState {
   const SessionState({
     required this.plan,
     required this.startedAt,
-    required this.wordLists,
-    required this.sceneIndexes,
+    required this.wordList,
+    required this.sceneIndex,
     required this.testNumber,
     required this.baselineTotal,
     required this.isPractice,
+    required this.languageCode,
     this.phase = SessionPhase.checkIn,
     this.screenIndex = 0,
     this.checkIn,
@@ -73,11 +85,11 @@ class SessionState {
   final TestPlan plan;
   final DateTime startedAt;
 
-  /// The word lists for this test: one for a baseline test, three for an actual one.
-  final List<WordList> wordLists;
+  /// The word list for this test. One word-memory step, recalled twice in a full test.
+  final WordList wordList;
 
-  /// The picture for each speech step.
-  final List<int> sceneIndexes;
+  /// The picture for the speech step.
+  final int sceneIndex;
 
   /// Which test this is, counting from one, among those taken so far.
   final int testNumber;
@@ -87,6 +99,9 @@ class SessionState {
 
   /// True for the first baseline test, which is a practice run and does not count.
   final bool isPractice;
+
+  /// 'en' or 'ta': the language the fluency step is scored in.
+  final String languageCode;
 
   final SessionPhase phase;
   final int screenIndex;
@@ -138,11 +153,12 @@ class SessionState {
   }) => SessionState(
     plan: plan,
     startedAt: startedAt,
-    wordLists: wordLists,
-    sceneIndexes: sceneIndexes,
+    wordList: wordList,
+    sceneIndex: sceneIndex,
     testNumber: testNumber,
     baselineTotal: baselineTotal,
     isPractice: isPractice,
+    languageCode: languageCode,
     phase: phase ?? this.phase,
     screenIndex: screenIndex ?? this.screenIndex,
     checkIn: checkIn ?? this.checkIn,
@@ -157,10 +173,23 @@ class SessionState {
 
 /// Runs a test and stores its result.
 class SessionController extends Notifier<SessionState> {
-  // What each step produced. Only numbers are kept, never the audio or the trace.
-  final _recalls = <RecallResult>[];
-  final _speech = <SpeechResult>[];
-  final _spirals = <SpiralResult>[];
+  /// Timing of every key press in the app's own text boxes during this test.
+  ///
+  /// Owned here, so it cannot outlive the test and carry one test's typing into the next.
+  final keystrokes = KeystrokeLog();
+
+  // What each step produced. Only numbers, never the audio, the trace or the taps.
+  RecallResult? _immediateRecall;
+  RecallResult? _delayedRecall;
+  ReactionResult? _reaction;
+  SpeechResult? _speech;
+  SpiralResult? _spiral;
+  TrailResult? _trail;
+  TappingResult? _tapping;
+  FluencyResult? _fluency;
+
+  /// Reaction trials of the attempt in progress. Cleared when the step is asked for again.
+  final _reactionTrials = <ReactionTrial>[];
 
   @override
   SessionState build() {
@@ -169,14 +198,13 @@ class SessionController extends Notifier<SessionState> {
     final baselineReady =
         ref.read(engineProvider).value?.baselineReady ?? false;
     final kind = baselineReady ? TestKind.actual : TestKind.baseline;
-    final plan = TestPlan.of(kind);
     final profile = ref.read(profileProvider).value;
     final language = profile?.languageCode ?? 'en';
     // Only the first baseline opens with a practice test.
     final hasPractice = (profile?.baselineEpoch ?? 0) == 0;
 
     return SessionState(
-      plan: plan,
+      plan: TestPlan.of(kind),
       startedAt: DateTime.now(),
       testNumber: testsTaken + 1,
       baselineTotal: hasPractice ? kBaselineTests : kBaselineSessions,
@@ -184,18 +212,15 @@ class SessionController extends Notifier<SessionState> {
           kind == TestKind.baseline &&
           hasPractice &&
           testsTaken < kFamiliarisationSessions,
-      // The same list twice in a row would be learned rather than recalled, so the choices
-      // follow the count of tests and rotate. Each test uses its own run of consecutive
-      // lists and pictures, so an actual test does not reuse what the last one showed.
-      wordLists: pickWordListsForTest(
+      languageCode: language,
+      // The same list or picture twice in a row would be learned rather than recalled or
+      // described afresh, so the choices follow the count of tests and rotate.
+      wordList: pickWordListsForTest(
         testIndex: testsTaken,
-        count: plan.wordLists,
+        count: 1,
         languageCode: language,
-      ),
-      sceneIndexes: [
-        for (var i = 0; i < plan.speechSteps; i++)
-          sceneIndexFor(testsTaken * kActualSpeechSteps + i),
-      ],
+      ).single,
+      sceneIndex: sceneIndexFor(testsTaken),
     );
   }
 
@@ -214,6 +239,40 @@ class SessionController extends Notifier<SessionState> {
   /// The user has read the words.
   void finishLearn() => _advance();
 
+  /// Scores the recall straight after the words were shown.
+  void finishImmediateRecall(List<String> typedWords) {
+    _immediateRecall = scoreRecall(
+      presented: state.wordList.words,
+      typed: typedWords,
+    );
+    _advance();
+  }
+
+  /// Notes one reaction trial. The step is judged when it finishes.
+  void recordReactionTrial(ReactionTrial trial) => _reactionTrials.add(trial);
+
+  /// Judges the reaction trials, asking for the step again if they are not usable.
+  ///
+  /// More than two taps before the circle changed, or too few trials that gave a plausible time,
+  /// mean the user was guessing or not attending, and the median would measure that.
+  void finishReaction() {
+    final trials = List<ReactionTrial>.of(_reactionTrials);
+    _reactionTrials.clear();
+    final result = extractReactionFeatures(trials);
+    final quality = evaluateQuality(
+      TaskMetrics(
+        anticipations: result.anticipations,
+        validReactionTrials: result.usableTrials,
+      ),
+    );
+    if (!quality.valid) {
+      _retry(StepRetry.reactionUnusable);
+      return;
+    }
+    _reaction = result;
+    _advance();
+  }
+
   /// Measures the speech step from [samples], which are dropped once measured.
   ///
   /// A step that did not get enough speech is asked for again rather than counted: a quiet
@@ -227,7 +286,7 @@ class SessionController extends Notifier<SessionState> {
       _retry(StepRetry.speechTooQuiet);
       return;
     }
-    _speech.add(result);
+    _speech = result;
     _advance();
   }
 
@@ -244,37 +303,68 @@ class SessionController extends Notifier<SessionState> {
       _retry(StepRetry.spiralIncomplete);
       return;
     }
-    _spirals.add(result);
+    _spiral = result;
     _advance();
   }
 
-  /// Scores the recall of the current screen's word list.
+  /// The passive typing step has been read.
+  void finishTypingNote() => _advance();
+
+  /// Scores the trail-making step. Every circle was reached by the time this is called.
+  void finishTrail({required TrailPartLog partA, required TrailPartLog partB}) {
+    _trail = extractTrailFeatures(partA: partA, partB: partB);
+    _advance();
+  }
+
+  /// Scores the tapping step from [taps], which are dropped once measured.
   ///
-  /// The closing recall also ends the test: it is the last screen of every plan.
-  Future<void> finishRecall(List<String> typedWords) async {
-    final screen = state.screen;
-    if (screen == null) return;
-
-    _recalls.add(
-      scoreRecall(
-        presented: state.wordLists[screen.index].words,
-        typed: typedWords,
-      ),
-    );
-
-    if (screen.isFinalPart || state.screenIndex + 1 >= state.plan.length) {
-      state = state.copyWith(phase: SessionPhase.computing);
-      await _computeAndSave();
-    } else {
-      _advance();
+  /// Too few taps that alternated means the user hammered one button or barely tapped, and the
+  /// rate and its regularity would rest on almost nothing.
+  void finishTapping(List<TapEvent> taps) {
+    final result = extractTappingFeatures(taps);
+    final quality = evaluateQuality(TaskMetrics(validTaps: result.validTaps));
+    if (!quality.valid) {
+      _retry(StepRetry.tappingTooFew);
+      return;
     }
+    _tapping = result;
+    _advance();
+  }
+
+  /// Scores the fluency step from [entries], which are dropped once scored.
+  ///
+  /// There is no quality gate: naming no animals is a real result, and blocking it would
+  /// exclude the people the test exists to notice.
+  void finishFluency(List<FluencyEntry> entries) {
+    _fluency = extractFluencyFeatures(
+      entries,
+      languageCode: state.languageCode,
+    );
+    _advance();
+  }
+
+  /// Scores the closing recall, which ends the test.
+  Future<void> finishRecall(List<String> typedWords) async {
+    _delayedRecall = scoreRecall(
+      presented: state.wordList.words,
+      typed: typedWords,
+    );
+    state = state.copyWith(phase: SessionPhase.computing);
+    await _computeAndSave();
   }
 
   /// Abandons the test without storing anything.
   void abandon() {
-    _recalls.clear();
-    _speech.clear();
-    _spirals.clear();
+    _immediateRecall = null;
+    _delayedRecall = null;
+    _reaction = null;
+    _speech = null;
+    _spiral = null;
+    _trail = null;
+    _tapping = null;
+    _fluency = null;
+    _reactionTrials.clear();
+    keystrokes.clear();
   }
 
   void _advance() {
@@ -291,17 +381,55 @@ class SessionController extends Notifier<SessionState> {
 
   // -- computation ----------------------------------------------------------
 
-  /// The test's value for each measurement: the median of its repeats.
+  /// The test's measurements, by feature key.
   ///
-  /// The median rather than the mean, for the same reason the baseline uses one: a single
-  /// unusual step -- a distracted word list, a slipped finger -- should not define the test.
-  Map<String, double> _aggregate() => {
-    'delayed_recall': median([for (final r in _recalls) r.fraction]),
-    'speaking_rate': median([for (final r in _speech) r.speakingRate]),
-    'pause_ratio': median([for (final r in _speech) r.pauseRatio]),
-    'spiral_rmse': median([for (final r in _spirals) r.rmse]),
-    'tremor_index': median([for (final r in _spirals) r.tremorIndex]),
-  };
+  /// A baseline test supplies the five core features. A full test supplies those and the
+  /// thirteen more its extra steps produce. Typing is included only if enough key presses were
+  /// timed for the rhythm to mean anything; otherwise it is left out, and the engine scores the
+  /// test on the rest.
+  Map<String, double> _features() {
+    final recall = _delayedRecall!;
+    final speech = _speech!;
+    final spiral = _spiral!;
+
+    final features = <String, double>{
+      'delayed_recall': recall.fraction,
+      'speaking_rate': speech.speakingRate,
+      'pause_ratio': speech.pauseRatio,
+      'spiral_rmse': spiral.rmse,
+      'tremor_index': spiral.tremorIndex,
+    };
+    if (state.kind == TestKind.baseline) return features;
+
+    final reaction = _reaction!;
+    final trail = _trail!;
+    final tapping = _tapping!;
+    final fluency = _fluency!;
+    final typing = keystrokes.extractFeatures();
+
+    return {
+      'immediate_recall': _immediateRecall!.fraction,
+      'delayed_recall': features['delayed_recall']!,
+      'reaction_median': reaction.medianMs,
+      'reaction_cv': reaction.coefficientOfVariation,
+      'speaking_rate': features['speaking_rate']!,
+      'pause_ratio': features['pause_ratio']!,
+      'spiral_rmse': features['spiral_rmse']!,
+      'tremor_index': features['tremor_index']!,
+      if (typing.hasEnoughData) ...{
+        'inter_key_interval': typing.medianIntervalMs,
+        'inter_key_cv': typing.coefficientOfVariation,
+      },
+      'completion_time': trail.completionTimeS,
+      'error_count': trail.errorCount.toDouble(),
+      'switch_cost': trail.switchCostS,
+      'tap_rate': tapping.tapRate,
+      'tap_interval_cv': tapping.intervalCv,
+      'fatigue_decay': tapping.fatigueDecay,
+      'valid_word_count': fluency.validWordCount.toDouble(),
+      'fluency_half_ratio': fluency.halfRatio,
+    };
+  }
 
   /// Combines the steps, runs the engine and stores the result.
   Future<void> _computeAndSave() async {
@@ -309,8 +437,9 @@ class SessionController extends Notifier<SessionState> {
     final checkIn = state.checkIn;
     if (userId == null ||
         checkIn == null ||
-        _spirals.isEmpty ||
-        _speech.isEmpty) {
+        _delayedRecall == null ||
+        _speech == null ||
+        _spiral == null) {
       state = state.copyWith(
         phase: SessionPhase.finished,
         error: 'The test could not be saved.',
@@ -318,7 +447,7 @@ class SessionController extends Notifier<SessionState> {
       return;
     }
 
-    final features = _aggregate();
+    final features = _features();
     final repository = ref.read(repositoryProvider);
     final engine = await repository.loadEngine(userId);
 
@@ -326,10 +455,7 @@ class SessionController extends Notifier<SessionState> {
       EngineSession(features: features, confounded: checkIn.isConfounded),
     );
 
-    // Every list's words together, so the summary can say "19 of 24".
-    final recalled = [for (final r in _recalls) ...r.matched];
-    final missed = [for (final r in _recalls) ...r.missed];
-
+    final recall = _delayedRecall!;
     final sessionId = _generateId();
     final record = SessionRecord(
       id: sessionId,
@@ -346,15 +472,15 @@ class SessionController extends Notifier<SessionState> {
       domainScores: result.domains,
       contributions: result.contributions,
       recallDetail: RecallDetail(
-        listId: state.wordLists.first.id,
-        recalled: recalled,
-        missed: missed,
+        listId: state.wordList.id,
+        recalled: recall.matched,
+        missed: recall.missed,
       ),
     );
 
     await repository.saveSession(session: record, engine: engine);
 
-    // From here the test exists only as five numbers and the scores derived from them.
+    // From here the test exists only as its measurements and the scores derived from them.
     abandon();
 
     state = state.copyWith(

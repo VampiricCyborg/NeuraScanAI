@@ -113,7 +113,7 @@
     }
   },
   "dashboardNoSessionsYet": "You have not done a session yet.",
-  "dashboardFullTestNote": "Eight short steps, about six minutes. Take one whenever you like.",
+  "dashboardFullTestNote": "Eight different steps, about eight minutes. Take one whenever you like.",
   "dashboardStartFullTest": "Take a full test",
   "dashboardStartPractice": "Start the practice test",
   "dashboardStartBaselineTest": "Start baseline test {number} of {total}",
@@ -248,9 +248,96 @@
   "sessionQuitConfirm": "Leave",
   "sessionQuitStay": "Keep going",
   "sessionFinalPart": "Final part",
-  "sessionStepWords": "Words",
-  "sessionStepSpeech": "Speech",
-  "sessionStepPrecision": "Precision",
+  "sessionStepWords": "Word memory",
+  "sessionStepSpeech": "Speech description",
+  "sessionStepPrecision": "Spiral tracing",
+  "sessionStepReaction": "Reaction time",
+  "sessionStepTyping": "Typing rhythm",
+  "sessionStepTrail": "Trail-making",
+  "sessionStepTapping": "Finger tapping",
+  "sessionStepFluency": "Verbal fluency",
+  "taskReactionTitle": "Tap as soon as the circle turns green",
+  "taskReactionBody": "There will be {count} turns. The wait before each one is different on purpose, so do not try to guess.",
+  "@taskReactionBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskReactionWait": "Wait",
+  "taskReactionTapNow": "Tap",
+  "taskReactionTooEarly": "That was before the circle changed. Wait for green.",
+  "taskReactionTrialProgress": "{done} of {total}",
+  "@taskReactionTrialProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "taskReactionRetry": "That round did not give enough usable reactions. Please try again, and tap only when the circle turns green.",
+  "taskImmediateTitle": "Type the words you just saw",
+  "taskImmediateBody": "Type as many as you remember, in any order. You will be asked for them again at the end of the test.",
+  "taskTypingTitle": "Typing rhythm",
+  "taskTypingBody": "Nothing to do here. NeuraScan times how you type in the text boxes in steps 1 and 8 and in the final part. Only the timing is kept, never the letters.",
+  "taskTypingCount": "{count} key presses timed so far",
+  "@taskTypingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskTypingContinue": "Continue",
+  "taskTrailTitle": "Tap the circles in order",
+  "taskTrailPartA": "Part A: tap the numbers in order, 1, 2, 3, 4, 5, as fast as you can.",
+  "taskTrailPartB": "Part B: now switch between numbers and letters, 1, A, 2, B, 3, C, 4, D.",
+  "taskTrailPartLabelA": "Part A",
+  "taskTrailPartLabelB": "Part B",
+  "taskTrailNextPart": "Start part B",
+  "taskTrailMistake": "Not that one. Find the next circle in the order.",
+  "taskTappingTitle": "Tap the two buttons in turn",
+  "taskTappingBody": "Tap left, right, left, right, as fast as you can for {seconds} seconds.",
+  "@taskTappingBody": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "taskTappingLeft": "Left",
+  "taskTappingRight": "Right",
+  "taskTappingRetry": "We counted too few taps that alternated. Please try again, tapping left and right in turn.",
+  "taskFluencyTitle": "Name as many animals as you can",
+  "taskFluencyBody": "You have {seconds} seconds. Type an animal and press Add, then the next one. Any kind of animal counts.",
+  "@taskFluencyBody": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "taskFluencyHint": "An animal",
+  "taskFluencyCount": "{count} entered",
+  "@taskFluencyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskFluencyTimeLeft": "{seconds} s left",
+  "@taskFluencyTimeLeft": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "sessionKindPractice": "Practice test",
   "sessionKindBaseline": "Baseline test {number} of {total}",
   "@sessionKindBaseline": {
@@ -326,8 +413,22 @@
   "domainCognitive": "Thinking",
   "domainSpeech": "Speech",
   "domainMotor": "Movement",
+  "domainInteraction": "Typing",
+  "featureImmediateRecall": "Words remembered straight away",
+  "featureReactionMedian": "Reaction speed",
+  "featureReactionCv": "Reaction steadiness",
+  "featureInterKeyInterval": "Typing pace",
+  "featureInterKeyCv": "Typing rhythm",
+  "featureCompletionTime": "Trail-making time",
+  "featureErrorCount": "Trail-making mistakes",
+  "featureSwitchCost": "Cost of switching",
+  "featureTapRate": "Tapping speed",
+  "featureTapIntervalCv": "Tapping regularity",
+  "featureFatigueDecay": "Slowing while tapping",
+  "featureValidWordCount": "Animals named",
+  "featureFluencyHalfRatio": "Animals, later vs earlier",
 
-  "featureDelayedRecall": "Words remembered",
+  "featureDelayedRecall": "Words remembered later",
   "featureSpeakingRate": "Speaking pace",
   "featurePauseRatio": "Time spent pausing",
   "featureSpiralRmse": "Tracing accuracy",
@@ -386,6 +487,14 @@
     "placeholders": {
       "spread": {
         "type": "String"
+      }
+    }
+  },
+  "baselineRowCalibrating": "Calibrating: set from your first {count} full tests",
+  "@baselineRowCalibrating": {
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   },

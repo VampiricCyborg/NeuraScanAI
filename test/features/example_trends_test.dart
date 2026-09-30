@@ -134,14 +134,27 @@ void main() {
   });
 
   group('your baseline', () {
-    testWidgets('lists all five measurements', (tester) async {
+    testWidgets('lists all eighteen measurements', (tester) async {
       await pump(tester);
       for (final label in [
-        'Words remembered',
+        'Words remembered straight away',
+        'Words remembered later',
+        'Reaction speed',
+        'Reaction steadiness',
         'Speaking pace',
         'Time spent pausing',
         'Tracing accuracy',
         'Hand steadiness',
+        'Typing pace',
+        'Typing rhythm',
+        'Trail-making time',
+        'Trail-making mistakes',
+        'Cost of switching',
+        'Tapping speed',
+        'Tapping regularity',
+        'Slowing while tapping',
+        'Animals named',
+        'Animals, later vs earlier',
       ]) {
         expect(find.text(label), findsOneWidget, reason: label);
       }
@@ -151,9 +164,9 @@ void main() {
       tester,
     ) async {
       await pump(tester);
-      for (final spec in kFeatureSpecs) {
-        final shown = formatFeatureValue(spec.key, baseline.median[spec.key]!);
-        expect(find.text(shown), findsWidgets, reason: spec.key);
+      for (final key in kCoreFeatureKeys) {
+        final shown = formatFeatureValue(key, baseline.median[key]!);
+        expect(find.text(shown), findsWidgets, reason: key);
       }
     });
 
@@ -161,7 +174,18 @@ void main() {
       await pump(tester);
       expect(
         find.textContaining('usually within'),
-        findsNWidgets(kFeatureSpecs.length),
+        findsNWidgets(kCoreFeatureKeys.length),
+      );
+    });
+
+    testWidgets('measurements still calibrating say so instead of a value', (
+      tester,
+    ) async {
+      // The baseline tests are three steps, so the others have no baseline yet.
+      await pump(tester);
+      expect(
+        find.textContaining('Calibrating'),
+        findsNWidgets(kExtendedFeatureKeys.length),
       );
     });
 

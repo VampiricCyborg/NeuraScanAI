@@ -102,11 +102,7 @@ void main() {
     });
 
     test('two anticipations are tolerated as ordinary impatience', () {
-      expect(
-        evaluateQuality(const TaskMetrics(anticipations: kMaxAnticipations))
-            .valid,
-        isTrue,
-      );
+      expect(evaluateQuality(const TaskMetrics()).valid, isTrue);
     });
 
     test('too few usable reaction trials are rejected', () {

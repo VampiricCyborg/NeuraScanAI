@@ -22,15 +22,29 @@ String domainLabel(AppText text, Domain domain) => switch (domain) {
   Domain.cognitive => text.domainCognitive,
   Domain.speech => text.domainSpeech,
   Domain.motor => text.domainMotor,
+  Domain.interaction => text.domainInteraction,
 };
 
 /// The localised name of a feature.
 String featureLabel(AppText text, String featureKey) => switch (featureKey) {
+  'immediate_recall' => text.featureImmediateRecall,
   'delayed_recall' => text.featureDelayedRecall,
+  'reaction_median' => text.featureReactionMedian,
+  'reaction_cv' => text.featureReactionCv,
   'speaking_rate' => text.featureSpeakingRate,
   'pause_ratio' => text.featurePauseRatio,
   'spiral_rmse' => text.featureSpiralRmse,
   'tremor_index' => text.featureTremorIndex,
+  'inter_key_interval' => text.featureInterKeyInterval,
+  'inter_key_cv' => text.featureInterKeyCv,
+  'completion_time' => text.featureCompletionTime,
+  'error_count' => text.featureErrorCount,
+  'switch_cost' => text.featureSwitchCost,
+  'tap_rate' => text.featureTapRate,
+  'tap_interval_cv' => text.featureTapIntervalCv,
+  'fatigue_decay' => text.featureFatigueDecay,
+  'valid_word_count' => text.featureValidWordCount,
+  'fluency_half_ratio' => text.featureFluencyHalfRatio,
   _ => featureKey,
 };
 

@@ -160,6 +160,11 @@ void main() {
   });
 
   group('the lists for one test', () {
+    // Each test now has one word-memory step, but the picker still supports a test with
+    // several lists, and the rule that none repeats within a test or straight after the last
+    // test's final one is worth keeping for any count.
+    const kListsPerTest = 3;
+
     // A full test learns and recalls three lists. Two of them being the same would make the
     // second a repeat of what was just learned, and a list returning too soon would be
     // recalled from practice rather than from memory.
@@ -168,13 +173,13 @@ void main() {
         for (var test = 0; test < 60; test++) {
           final lists = pickWordListsForTest(
             testIndex: test,
-            count: kActualWordSteps,
+            count: kListsPerTest,
             languageCode: language,
           );
-          expect(lists, hasLength(kActualWordSteps));
+          expect(lists, hasLength(kListsPerTest));
           expect(
             {for (final list in lists) list.id},
-            hasLength(kActualWordSteps),
+            hasLength(kListsPerTest),
             reason: 'test $test',
           );
         }
@@ -185,13 +190,13 @@ void main() {
         () {
           var previous = pickWordListsForTest(
             testIndex: 0,
-            count: kActualWordSteps,
+            count: kListsPerTest,
             languageCode: language,
           );
           for (var test = 1; test < 60; test++) {
             final next = pickWordListsForTest(
               testIndex: test,
-              count: kActualWordSteps,
+              count: kListsPerTest,
               languageCode: language,
             );
             expect(
@@ -225,7 +230,7 @@ void main() {
         List<int> ids(int test) => [
           for (final list in pickWordListsForTest(
             testIndex: test,
-            count: kActualWordSteps,
+            count: kListsPerTest,
             languageCode: language,
           ))
             list.id,
@@ -239,14 +244,8 @@ void main() {
     test('there are enough lists that a full test does not use most of them', () {
       // Three lists a test out of a small pool would bring each one back within a couple of
       // tests. Twice the number a test needs is the least that spaces them out.
-      expect(
-        kEnglishWordLists.length,
-        greaterThanOrEqualTo(kActualWordSteps * 3),
-      );
-      expect(
-        kTamilWordLists.length,
-        greaterThanOrEqualTo(kActualWordSteps * 2),
-      );
+      expect(kEnglishWordLists.length, greaterThanOrEqualTo(kListsPerTest * 3));
+      expect(kTamilWordLists.length, greaterThanOrEqualTo(kListsPerTest * 2));
     });
   });
 }

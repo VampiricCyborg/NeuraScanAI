@@ -93,9 +93,10 @@ const Map<ScreeningStatus, StatusPresentation> kStatusPresentation = {
 /// Distinguishable in the common forms of colour blindness, and always paired
 /// with a text label rather than standing alone as the only cue.
 const Map<String, Color> kDomainColors = {
-  'cognitive': Color(0xFF146C7A),
-  'speech': Color(0xFF7A5BA6),
-  'motor': Color(0xFFB4530A),
+  'cognitive': Color(0xFF0072B2),
+  'speech': Color(0xFFCC79A7),
+  'motor': Color(0xFFD55E00),
+  'interaction': Color(0xFF009E73),
 };
 
 /// Builds the app theme for [brightness].

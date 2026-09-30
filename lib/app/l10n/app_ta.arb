@@ -85,7 +85,7 @@
 
   "dashboardGreeting": "வணக்கம், {name}",
   "dashboardNoSessionsYet": "நீங்கள் இன்னும் ஒரு அமர்வையும் செய்யவில்லை.",
-  "dashboardFullTestNote": "எட்டு சிறு படிகள், சுமார் ஆறு நிமிடங்கள். நீங்கள் விரும்பும்போது எடுக்கலாம்.",
+  "dashboardFullTestNote": "எட்டு வெவ்வேறு படிகள், சுமார் எட்டு நிமிடங்கள். நீங்கள் விரும்பும்போது எடுக்கலாம்.",
   "dashboardStartFullTest": "முழுச் சோதனை எடு",
   "dashboardStartPractice": "பயிற்சிச் சோதனையைத் தொடங்கு",
   "dashboardStartBaselineTest": "அடித்தளச் சோதனை {number} / {total} தொடங்கு",
@@ -182,9 +182,96 @@
   "sessionQuitConfirm": "வெளியேறு",
   "sessionQuitStay": "தொடரவும்",
   "sessionFinalPart": "இறுதிப் பகுதி",
-  "sessionStepWords": "சொற்கள்",
-  "sessionStepSpeech": "பேச்சு",
-  "sessionStepPrecision": "துல்லியம்",
+  "sessionStepWords": "சொல் நினைவு",
+  "sessionStepSpeech": "பேச்சு விவரிப்பு",
+  "sessionStepPrecision": "சுழல் வரைதல்",
+  "sessionStepReaction": "எதிர்வினை நேரம்",
+  "sessionStepTyping": "தட்டச்சு தாளம்",
+  "sessionStepTrail": "பாதை இணைப்பு",
+  "sessionStepTapping": "விரல் தட்டல்",
+  "sessionStepFluency": "சொல் சரளம்",
+  "taskReactionTitle": "வட்டம் பச்சையாக மாறியதும் தட்டுங்கள்",
+  "taskReactionBody": "{count} முறை வரும். ஒவ்வொன்றுக்கும் முன் காத்திருப்பு நேரம் வேண்டுமென்றே வேறுபடுகிறது, எனவே ஊகிக்க முயற்சிக்க வேண்டாம்.",
+  "@taskReactionBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskReactionWait": "காத்திருங்கள்",
+  "taskReactionTapNow": "தட்டுங்கள்",
+  "taskReactionTooEarly": "வட்டம் மாறுவதற்கு முன்பே அது நடந்தது. பச்சைக்காகக் காத்திருங்கள்.",
+  "taskReactionTrialProgress": "{total}-இல் {done}",
+  "@taskReactionTrialProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "taskReactionRetry": "அந்தச் சுற்று போதுமான பயன்படுத்தக்கூடிய எதிர்வினைகளைத் தரவில்லை. மீண்டும் முயலுங்கள், வட்டம் பச்சையாக மாறும்போது மட்டும் தட்டுங்கள்.",
+  "taskImmediateTitle": "இப்போது பார்த்த சொற்களைத் தட்டச்சு செய்யுங்கள்",
+  "taskImmediateBody": "நினைவில் இருப்பவற்றை எந்த வரிசையிலும் தட்டச்சு செய்யுங்கள். சோதனையின் முடிவில் மீண்டும் கேட்கப்படும்.",
+  "taskTypingTitle": "தட்டச்சு தாளம்",
+  "taskTypingBody": "இங்கே செய்ய எதுவுமில்லை. 1 மற்றும் 8-ஆம் படிகளிலும் இறுதிப் பகுதியிலும் உள்ள உரைப் பெட்டிகளில் நீங்கள் தட்டச்சு செய்யும் விதத்தை NeuraScan நேரம் பார்க்கிறது. நேரம் மட்டுமே சேமிக்கப்படும், எழுத்துகள் அல்ல.",
+  "taskTypingCount": "இதுவரை {count} விசை அழுத்தங்கள் அளவிடப்பட்டன",
+  "@taskTypingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskTypingContinue": "தொடர்க",
+  "taskTrailTitle": "வட்டங்களை வரிசையாகத் தட்டுங்கள்",
+  "taskTrailPartA": "பகுதி A: எண்களை வரிசையாக, 1, 2, 3, 4, 5, முடிந்தவரை வேகமாகத் தட்டுங்கள்.",
+  "taskTrailPartB": "பகுதி B: இப்போது எண்களுக்கும் எழுத்துகளுக்கும் இடையே மாறுங்கள், 1, A, 2, B, 3, C, 4, D.",
+  "taskTrailPartLabelA": "பகுதி A",
+  "taskTrailPartLabelB": "பகுதி B",
+  "taskTrailNextPart": "பகுதி B-ஐத் தொடங்கு",
+  "taskTrailMistake": "அது இல்லை. வரிசையில் அடுத்த வட்டத்தைக் கண்டுபிடியுங்கள்.",
+  "taskTappingTitle": "இரண்டு பொத்தான்களையும் மாறி மாறித் தட்டுங்கள்",
+  "taskTappingBody": "இடது, வலது, இடது, வலது என {seconds} விநாடிகள் முடிந்தவரை வேகமாகத் தட்டுங்கள்.",
+  "@taskTappingBody": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "taskTappingLeft": "இடது",
+  "taskTappingRight": "வலது",
+  "taskTappingRetry": "மாறி மாறி விழுந்த தட்டல்கள் மிகக் குறைவு. மீண்டும் முயலுங்கள், இடதும் வலதும் மாறி மாறித் தட்டுங்கள்.",
+  "taskFluencyTitle": "உங்களால் முடிந்த அளவு விலங்குகளின் பெயர்களைச் சொல்லுங்கள்",
+  "taskFluencyBody": "உங்களுக்கு {seconds} விநாடிகள் உள்ளன. ஒரு விலங்கின் பெயரைத் தட்டச்சு செய்து சேர் என்பதை அழுத்துங்கள், பிறகு அடுத்ததை. எந்த விலங்கும் சரி.",
+  "@taskFluencyBody": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "taskFluencyHint": "ஒரு விலங்கு",
+  "taskFluencyCount": "{count} உள்ளிடப்பட்டன",
+  "@taskFluencyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskFluencyTimeLeft": "{seconds} விநாடி மீதம்",
+  "@taskFluencyTimeLeft": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "sessionKindPractice": "பயிற்சி சோதனை",
   "sessionKindBaseline": "அடிப்படைச் சோதனை {number} / {total}",
   "@sessionKindBaseline": {
@@ -233,8 +320,22 @@
   "domainCognitive": "சிந்தனை",
   "domainSpeech": "பேச்சு",
   "domainMotor": "அசைவு",
+  "domainInteraction": "தட்டச்சு",
+  "featureImmediateRecall": "உடனே நினைவில் இருந்த சொற்கள்",
+  "featureReactionMedian": "எதிர்வினை வேகம்",
+  "featureReactionCv": "எதிர்வினை நிலைத்தன்மை",
+  "featureInterKeyInterval": "தட்டச்சு வேகம்",
+  "featureInterKeyCv": "தட்டச்சு தாளம்",
+  "featureCompletionTime": "பாதை இணைப்பு நேரம்",
+  "featureErrorCount": "பாதை இணைப்புத் தவறுகள்",
+  "featureSwitchCost": "மாறுவதற்கான செலவு",
+  "featureTapRate": "தட்டும் வேகம்",
+  "featureTapIntervalCv": "தட்டலின் சீர்மை",
+  "featureFatigueDecay": "தட்டும்போது மெதுவாதல்",
+  "featureValidWordCount": "சொன்ன விலங்குகள்",
+  "featureFluencyHalfRatio": "விலங்குகள், பின்பாதி vs முன்பாதி",
 
-  "featureDelayedRecall": "நினைவில் இருந்த சொற்கள்",
+  "featureDelayedRecall": "பின்னர் நினைவில் இருந்த சொற்கள்",
   "featureSpeakingRate": "பேசும் வேகம்",
   "featurePauseRatio": "நிறுத்தத்தில் கழிந்த நேரம்",
   "featureSpiralRmse": "வரைதல் துல்லியம்",
@@ -279,6 +380,14 @@
   "baselineCardTitle": "உங்கள் அடித்தளம்",
   "baselineCardBody": "உங்களுக்கு எது இயல்பானது, அது ஒரு நாளிலிருந்து மறுநாளுக்கு பொதுவாக எவ்வளவு மாறுகிறது.",
   "baselineRowSpread": "பொதுவாக {spread}-க்குள்",
+  "baselineRowCalibrating": "அளவீடு செய்யப்படுகிறது: உங்கள் முதல் {count} முழுச் சோதனைகளிலிருந்து நிர்ணயிக்கப்படும்",
+  "@baselineRowCalibrating": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "howTitle": "எண்கள் எவ்வாறு கணக்கிடப்படுகின்றன",
   "howStep1": "ஒவ்வொரு அளவீடும் உங்கள் சொந்த அடித்தளத்துடன் ஒப்பிடப்படுகிறது, உங்களுக்கு அது பொதுவாக எவ்வளவு மாறுகிறது என்ற அலகில்.",
   "howStep2": "ஐந்து அளவீடுகளும் மூன்று பகுதிகளாகக் குழுவாக்கப்படுகின்றன: சிந்தனை, பேச்சு மற்றும் அசைவு.",

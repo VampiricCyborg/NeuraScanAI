@@ -733,7 +733,7 @@ void main() {
         final result = engine.update(
           makeSession(
             sessionId: '$prefix-$i',
-            jitter: {for (final key in kWithinSd.keys) key: (i % 3) - 1.0},
+            jitter: {for (final key in kCoreFeatureKeys) key: (i % 3) - 1.0},
           ),
         );
         await repository.saveSession(
@@ -742,7 +742,7 @@ void main() {
             result: result,
             at: DateTime.utc(2026, 4, 2 + i, 10),
             features: makeSession(
-              jitter: {for (final key in kWithinSd.keys) key: (i % 3) - 1.0},
+              jitter: {for (final key in kCoreFeatureKeys) key: (i % 3) - 1.0},
             ).features,
           ),
           engine: engine,
@@ -894,6 +894,241 @@ void main() {
       expect(now.languageCode, 'ta');
       expect(now.baselineEpoch, 1);
     });
+  });
+
+  group('calibrating the extended measurements', () {
+    // The baseline tests fix the five core measurements. The other thirteen are fixed from the
+    // first three full tests, and the engine has to arrive at the same place whether it stayed
+    // running or was rebuilt from the database after a restart.
+
+    /// Stores the practice test and the baseline, so the baseline is frozen.
+    Future<void> saveBaselineTests() async {
+      late ScreeningEngine engine;
+      final sessions = [
+        for (var i = 0; i < kFamiliarisationSessions; i++)
+          makeSession(sessionId: 'practice-$i'),
+        ...variedBaselineSessions(),
+      ];
+      engine = ScreeningEngine();
+      for (var i = 0; i < sessions.length; i++) {
+        final result = engine.update(sessions[i]);
+        await repository.saveSession(
+          session: buildSession(
+            id: 'base-$i',
+            result: result,
+            features: sessions[i].features,
+            at: DateTime.utc(2026, 4, 1 + i, 10),
+          ),
+          engine: engine,
+        );
+      }
+    }
+
+    /// Stores [count] full tests, loading the engine from the repository each time as the app
+    /// does, so a restart is part of what is tested.
+    Future<ScreeningEngine> saveFullTests(
+      int count, {
+      int from = 0,
+      bool confounded = false,
+    }) async {
+      late ScreeningEngine engine;
+      final sessions = variedFullSessions(from + count).skip(from).toList();
+      for (var i = 0; i < sessions.length; i++) {
+        engine = await repository.loadEngine('user-1');
+        final result = engine.update(
+          EngineSession(features: sessions[i].features, confounded: confounded),
+        );
+        await repository.saveSession(
+          session: buildSession(
+            id: 'full-${from + i}',
+            result: result,
+            features: sessions[i].features,
+            at: DateTime.utc(2026, 5, 1 + from + i, 10),
+            checkIn: confounded
+                ? CheckIn(
+                    sleep: SleepQuality.poor,
+                    fatigue: FatigueLevel.none,
+                    illnessOrMedicationChange: false,
+                    answeredAt: DateTime.utc(2026, 5, 1 + from + i, 10),
+                  )
+                : null,
+          ),
+          engine: engine,
+        );
+      }
+      return engine;
+    }
+
+    test(
+      'right after the baseline only the core measurements have one',
+      () async {
+        await signedUpUser();
+        await saveBaselineTests();
+
+        final engine = await repository.loadEngine('user-1');
+        expect(engine.baselineReady, isTrue);
+        expect(engine.baseline!.median.keys.toSet(), kCoreFeatureKeys.toSet());
+      },
+    );
+
+    test('two full tests leave the others calibrating', () async {
+      await signedUpUser();
+      await saveBaselineTests();
+      await saveFullTests(kExtensionTests - 1);
+
+      final engine = await repository.loadEngine('user-1');
+      expect(engine.baseline!.isComplete, isFalse);
+      // Rebuilt from the stored tests, not remembered.
+      expect(engine.calibrationCollected, kExtensionTests - 1);
+    });
+
+    test(
+      'the third full test completes the baseline, and it is stored',
+      () async {
+        await signedUpUser();
+        await saveBaselineTests();
+        await saveFullTests(kExtensionTests);
+
+        final stored = await db.select(db.baselines).getSingle();
+        final median = jsonDecode(stored.medianJson) as Map<String, dynamic>;
+        expect(median.keys.toSet(), kFeatureKeys.toSet());
+
+        final engine = await repository.loadEngine('user-1');
+        expect(engine.baseline!.isComplete, isTrue);
+      },
+    );
+
+    test(
+      'growing the baseline leaves the core entries and the date alone',
+      () async {
+        await signedUpUser();
+        await saveBaselineTests();
+        final before = await db.select(db.baselines).getSingle();
+        final coreBefore =
+            jsonDecode(before.medianJson) as Map<String, dynamic>;
+
+        await saveFullTests(kExtensionTests);
+
+        final after = await db.select(db.baselines).getSingle();
+        final coreAfter = jsonDecode(after.medianJson) as Map<String, dynamic>;
+        for (final key in kCoreFeatureKeys) {
+          expect(coreAfter[key], coreBefore[key], reason: key);
+        }
+        expect(after.frozenAt, before.frozenAt);
+        expect(after.sessionCount, before.sessionCount);
+      },
+    );
+
+    test(
+      'a restart in the middle reaches the same baseline as not restarting',
+      () async {
+        await signedUpUser();
+        await saveBaselineTests();
+        await saveFullTests(kExtensionTests);
+        final restarted = await repository.loadEngine('user-1');
+
+        final live = ScreeningEngine();
+        feedBaseline(live);
+        variedFullSessions(kExtensionTests).forEach(live.update);
+
+        for (final key in kFeatureKeys) {
+          expect(
+            restarted.baseline!.median[key],
+            closeTo(live.baseline!.median[key]!, 1e-9),
+            reason: key,
+          );
+          expect(
+            restarted.baseline!.scale[key],
+            closeTo(live.baseline!.scale[key]!, 1e-9),
+            reason: key,
+          );
+        }
+      },
+    );
+
+    test('a tired full test does not count towards calibration', () async {
+      await signedUpUser();
+      await saveBaselineTests();
+      await saveFullTests(2, confounded: true);
+
+      final engine = await repository.loadEngine('user-1');
+      expect(engine.calibrationCollected, 0);
+      expect(engine.baseline!.isComplete, isFalse);
+    });
+
+    test(
+      'tired tests among good ones delay the calibration by exactly that many',
+      () async {
+        await signedUpUser();
+        await saveBaselineTests();
+        await saveFullTests(2);
+        await saveFullTests(1, from: 2, confounded: true);
+
+        var engine = await repository.loadEngine('user-1');
+        expect(engine.baseline!.isComplete, isFalse);
+
+        await saveFullTests(1, from: 3);
+        engine = await repository.loadEngine('user-1');
+        expect(engine.baseline!.isComplete, isTrue);
+      },
+    );
+
+    test('a grown baseline is queued for backup when sync is on', () async {
+      await signedUpUser(syncEnabled: true);
+      await saveBaselineTests();
+      await repository.inFlightSync;
+      final uploadedFirst = backend.baselines['user-1']!;
+      expect(uploadedFirst.isComplete, isFalse);
+
+      await saveFullTests(kExtensionTests);
+      await repository.inFlightSync;
+      expect(backend.baselines['user-1']!.isComplete, isTrue);
+    });
+
+    test('redoing the baseline starts calibration again', () async {
+      await signedUpUser();
+      await saveBaselineTests();
+      await saveFullTests(kExtensionTests);
+      expect(
+        (await repository.loadEngine('user-1')).baseline!.isComplete,
+        isTrue,
+      );
+
+      await repository.redoBaseline('user-1');
+
+      final engine = await repository.loadEngine('user-1');
+      expect(engine.baselineReady, isFalse);
+      expect(engine.calibrationCollected, 0);
+    });
+
+    test(
+      'full tests are scored with the new measurements once calibrated',
+      () async {
+        await signedUpUser();
+        await saveBaselineTests();
+        await saveFullTests(kExtensionTests);
+        final engine = await saveFullTests(1, from: kExtensionTests);
+
+        // The fourth full test had all four areas, typing included.
+        final last = (await repository.loadSessions('user-1')).last;
+        expect(last.domainScores!.keys.toSet(), Domain.values.toSet());
+        expect(engine.baseline!.isComplete, isTrue);
+      },
+    );
+
+    test(
+      'the earlier full tests were scored without the areas still calibrating',
+      () async {
+        await signedUpUser();
+        await saveBaselineTests();
+        await saveFullTests(1);
+
+        final first = (await repository.loadSessions('user-1')).last;
+        expect(first.domainScores!.containsKey(Domain.interaction), isFalse);
+        expect(first.contributions!.keys.toSet(), Domain.values.toSet());
+        expect(first.contributions![Domain.interaction], 0.0);
+      },
+    );
   });
 
   group('export', () {

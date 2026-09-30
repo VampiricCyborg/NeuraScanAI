@@ -340,8 +340,8 @@ void main() {
               '\'{"sleep":"good","fatigue":"none","illnessOrMedicationChange":false,'
               '"answeredAt":"2023-11-14T22:13:20.000Z"}\', '
               '\'{"delayed_recall":0.7,"reaction_median":320.0}\', 1, \'STABLE\', '
-              '\'{"cognitive":0.1,"speech":0.2,"motor":0.0,"interaction":0.4}\', '
-              '\'{"cognitive":0.2,"speech":0.2,"motor":0.1,"interaction":0.5}\')',
+              '\'{"cognitive":0.1,"speech":0.2,"motor":0.0,"vision":0.4}\', '
+              '\'{"cognitive":0.2,"speech":0.2,"motor":0.1,"vision":0.5}\')',
             )
             ..execute(
               'INSERT INTO baselines VALUES '

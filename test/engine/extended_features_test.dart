@@ -527,7 +527,7 @@ void main() {
   });
 
   test('a session reports only missing core features', () {
-    final incomplete = EngineSession(features: const {'delayed_recall': 0.7});
+    const incomplete = EngineSession(features: {'delayed_recall': 0.7});
     expect(
       incomplete.missingFeatures().toSet(),
       kCoreFeatureKeys.toSet()..remove('delayed_recall'),

@@ -2,8 +2,9 @@
 ///
 /// A test is a list of screens and the numbers a user sees ("Step 4 of 8") are worked out from
 /// it, so these tests pin the parts a user would notice going wrong: three steps for a baseline
-/// test and eight for a full one, a word list never recalled straight after it was learned,
-/// and the last recall shown as a closing part rather than a ninth step.
+/// test and eight different ones for a full test, the word list recalled twice with the delayed
+/// recall at the very end, and that last recall shown as a closing part rather than a ninth
+/// step.
 library;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -26,7 +27,6 @@ void main() {
     });
 
     test('closes with the recall of its one list', () {
-      expect(baseline.wordLists, 1);
       expect(baseline.screens.last.kind, ScreenKind.recallWords);
       expect(baseline.screens.last.isFinalPart, isTrue);
     });
@@ -37,6 +37,20 @@ void main() {
         [1, 2, 3, null],
       );
     });
+
+    test('has none of the steps only a full test has', () {
+      final kinds = {for (final s in baseline.screens) s.kind};
+      for (final kind in [
+        ScreenKind.immediateRecall,
+        ScreenKind.reaction,
+        ScreenKind.typingNote,
+        ScreenKind.trail,
+        ScreenKind.tapping,
+        ScreenKind.fluency,
+      ]) {
+        expect(kinds, isNot(contains(kind)));
+      }
+    });
   });
 
   group('a full test', () {
@@ -45,17 +59,26 @@ void main() {
       expect(actual.totalSteps, 8);
     });
 
-    test('has three word lists, three speech steps and two tracings', () {
-      expect(actual.wordLists, 3);
-      expect(actual.speechSteps, 3);
-      expect(actual.precisionSteps, 2);
-      expect(actual.count(ScreenKind.learnWords), 3);
-      expect(actual.count(ScreenKind.recallWords), 3);
-      expect(actual.count(ScreenKind.speech), 3);
-      expect(actual.count(ScreenKind.precision), 2);
+    test('has eight different steps, each a different kind', () {
+      final steps = <StepKind>[];
+      for (final screen in actual.screens) {
+        if (screen.isFinalPart) continue;
+        if (steps.isEmpty || steps.last != screen.step) steps.add(screen.step);
+      }
+      expect(steps, [
+        StepKind.words,
+        StepKind.reaction,
+        StepKind.speech,
+        StepKind.precision,
+        StepKind.typing,
+        StepKind.trail,
+        StepKind.tapping,
+        StepKind.fluency,
+      ]);
+      expect(steps.toSet(), hasLength(8));
     });
 
-    test('numbers its steps in order, up to eight', () {
+    test('numbers its steps one to eight, in order', () {
       final numbers = [
         for (final screen in actual.screens)
           if (screen.stepNumber != null) screen.stepNumber!,
@@ -63,71 +86,117 @@ void main() {
       expect(numbers.first, 1);
       expect(numbers.last, 8);
       for (var i = 1; i < numbers.length; i++) {
-        // A step may cover two screens (recalling one list, learning the next), but it
-        // never goes backwards or skips.
+        // Step 1 covers two screens (the words, then the immediate recall), but the numbers
+        // never go backwards or skip.
         expect(numbers[i] - numbers[i - 1], inInclusiveRange(0, 1));
       }
       expect(numbers.toSet(), {1, 2, 3, 4, 5, 6, 7, 8});
     });
 
-    test('shows the last recall as a closing part, not a ninth step', () {
-      final last = actual.screens.last;
-      expect(last.kind, ScreenKind.recallWords);
-      expect(last.isFinalPart, isTrue);
-      expect(last.stepNumber, isNull);
-      expect(
-        actual.screens.where((s) => s.isFinalPart),
-        hasLength(1),
-        reason: 'only the last screen is the closing part',
+    test(
+      'the first step shows the words, then asks for them straight away',
+      () {
+        expect(actual.screens[0].kind, ScreenKind.learnWords);
+        expect(actual.screens[1].kind, ScreenKind.immediateRecall);
+        expect(actual.screens[0].stepNumber, 1);
+        expect(actual.screens[1].stepNumber, 1);
+      },
+    );
+
+    test(
+      'the delayed recall is last, as a closing part and not a ninth step',
+      () {
+        final last = actual.screens.last;
+        expect(last.kind, ScreenKind.recallWords);
+        expect(last.isFinalPart, isTrue);
+        expect(last.stepNumber, isNull);
+        expect(
+          actual.screens.where((s) => s.isFinalPart),
+          hasLength(1),
+          reason: 'only the last screen is the closing part',
+        );
+      },
+    );
+
+    test('the delayed recall comes after every other step', () {
+      // Recalled after all the others, or it would measure working memory rather than
+      // delayed recall.
+      final learned = actual.screens.indexWhere(
+        (s) => s.kind == ScreenKind.learnWords,
       );
+      final recalled = actual.screens.indexWhere(
+        (s) => s.kind == ScreenKind.recallWords,
+      );
+      expect(actual.screens.sublist(learned + 1, recalled), hasLength(8));
     });
 
-    test('does not recall a list straight after learning it', () {
-      // Recalled with other steps in between, or it would measure working memory rather
-      // than delayed recall.
-      for (var list = 0; list < actual.wordLists; list++) {
-        final learned = actual.screens.indexWhere(
-          (s) => s.kind == ScreenKind.learnWords && s.index == list,
-        );
-        final recalled = actual.screens.indexWhere(
-          (s) => s.kind == ScreenKind.recallWords && s.index == list,
-        );
-        expect(recalled, greaterThan(learned), reason: 'list $list');
-        final between = actual.screens
-            .sublist(learned + 1, recalled)
-            .where(
-              (s) =>
-                  s.kind == ScreenKind.speech || s.kind == ScreenKind.precision,
-            );
-        expect(between, isNotEmpty, reason: 'list $list recalled too soon');
-      }
-    });
-
-    test('every screen of a kind has its own index', () {
+    test('has one of each kind of screen, apart from the two recalls', () {
       for (final kind in ScreenKind.values) {
-        final indexes = [
-          for (final screen in actual.screens)
-            if (screen.kind == kind) screen.index,
-        ];
-        expect(indexes, [for (var i = 0; i < indexes.length; i++) i]);
+        expect(actual.count(kind), 1, reason: kind.name);
       }
     });
+
+    test('the typing step needs nothing from the user and sits fifth', () {
+      final index = actual.screens.indexWhere(
+        (s) => s.kind == ScreenKind.typingNote,
+      );
+      expect(actual.screens[index].stepNumber, 5);
+      expect(actual.screens[index].step, StepKind.typing);
+    });
+
+    test(
+      'the typing step comes after the first typed step and before the others',
+      () {
+        // Typing rhythm is timed in the word recalls and the fluency step, so the note sits
+        // after the first and before the second.
+        final note = actual.screens.indexWhere(
+          (s) => s.kind == ScreenKind.typingNote,
+        );
+        final immediate = actual.screens.indexWhere(
+          (s) => s.kind == ScreenKind.immediateRecall,
+        );
+        final fluency = actual.screens.indexWhere(
+          (s) => s.kind == ScreenKind.fluency,
+        );
+        expect(immediate, lessThan(note));
+        expect(note, lessThan(fluency));
+      },
+    );
   });
 
   group('the two kinds together', () {
     test('a full test repeats the steps a baseline test measures', () {
-      // A step in a full test has to be something the baseline also measured, or there is
-      // nothing to compare it with.
-      final baselineKinds = {for (final s in baseline.screens) s.kind};
-      final actualKinds = {for (final s in actual.screens) s.kind};
-      expect(actualKinds, baselineKinds);
+      // A baseline test measures words, speech and precision; a full test has all three, so
+      // the core measurements can be compared between them.
+      final baselineSteps = {for (final s in baseline.screens) s.step};
+      final actualSteps = {for (final s in actual.screens) s.step};
+      expect(actualSteps, containsAll(baselineSteps));
+    });
+
+    test('a full test adds five steps the baseline never ran', () {
+      final baselineSteps = {for (final s in baseline.screens) s.step};
+      final added = {for (final s in actual.screens) s.step}
+        ..removeAll(baselineSteps);
+      expect(added, {
+        StepKind.reaction,
+        StepKind.typing,
+        StepKind.trail,
+        StepKind.tapping,
+        StepKind.fluency,
+      });
     });
 
     test('a screen knows which step it belongs to', () {
       expect(StepKind.of(ScreenKind.learnWords), StepKind.words);
+      expect(StepKind.of(ScreenKind.immediateRecall), StepKind.words);
       expect(StepKind.of(ScreenKind.recallWords), StepKind.words);
+      expect(StepKind.of(ScreenKind.reaction), StepKind.reaction);
       expect(StepKind.of(ScreenKind.speech), StepKind.speech);
       expect(StepKind.of(ScreenKind.precision), StepKind.precision);
+      expect(StepKind.of(ScreenKind.typingNote), StepKind.typing);
+      expect(StepKind.of(ScreenKind.trail), StepKind.trail);
+      expect(StepKind.of(ScreenKind.tapping), StepKind.tapping);
+      expect(StepKind.of(ScreenKind.fluency), StepKind.fluency);
     });
   });
 }

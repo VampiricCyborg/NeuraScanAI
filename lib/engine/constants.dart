@@ -128,11 +128,6 @@ const int kMinValidReactionTrials = 6;
 /// asked for again.
 const int kMinValidTaps = 10;
 
-/// Key presses needed before typing rhythm is reported. Fewer intervals than this give a
-/// median and a CV that are mostly noise, so the typing features are left out of that test
-/// rather than estimated badly.
-const int kMinTypingIntervals = 20;
-
 // --- Test structure ----------------------------------------------------------
 //
 // There are two kinds of test. A baseline test has three steps -- words, speech and a

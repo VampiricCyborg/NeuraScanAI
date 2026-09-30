@@ -1,13 +1,18 @@
-/// The delayed-recall step.
+/// The word-recall screens: immediate, straight after the words are shown, and delayed, at the
+/// end of the test.
 ///
-/// The user types back a word list shown earlier in the test, with other steps in between.
-/// That gap is what makes this a delayed recall measurement rather than a test of how many
-/// words can be held in mind for a few seconds.
+/// The user types back a word list. Asked straight away it measures how much was taken in;
+/// asked again at the end, after the other steps, it measures how much was kept. That gap is
+/// what makes the second a delayed recall measurement rather than a test of how many words can
+/// be held in mind for a few seconds.
 ///
 /// Words are added one at a time rather than typed into a single box. A comma-separated
 /// list would be split on punctuation the user may not use consistently, and a wrong split
 /// would score as a missed word -- turning a formatting difference into an apparent memory
 /// failure.
+///
+/// The field is a [MeasuredTextField], so the typing here also feeds the passive typing-rhythm
+/// measurement.
 library;
 
 import 'package:flutter/material.dart';
@@ -15,12 +20,30 @@ import 'package:flutter/material.dart';
 import '../../../app/l10n/generated/app_localizations.dart';
 import '../../../app/theme.dart';
 import '../../../app/widgets.dart';
+import '../keystroke_recorder.dart';
+
+/// Which of the two recalls a [RecallTask] is.
+enum RecallKind {
+  /// Straight after the words were shown.
+  immediate,
+
+  /// At the end of the test, after the other steps.
+  delayed,
+}
 
 /// Collects the words the user remembers.
 class RecallTask extends StatefulWidget {
-  const RecallTask({required this.onFinished, this.listLabel, super.key});
+  const RecallTask({
+    required this.onFinished,
+    this.kind = RecallKind.delayed,
+    this.listLabel,
+    super.key,
+  });
 
-  /// Which list this is, for tests with several ("Word list 2 of 3"). Null for a single one.
+  /// Whether this is the immediate or the delayed recall. Only the wording differs.
+  final RecallKind kind;
+
+  /// A line above the title, if the test needs one. Null for none.
   final String? listLabel;
 
   /// Receives the words in the order they were entered.
@@ -67,14 +90,18 @@ class _RecallTaskState extends State<RecallTask> {
           const SizedBox(height: 6),
         ],
         Text(
-          text.taskRecallTitle,
+          widget.kind == RecallKind.immediate
+              ? text.taskImmediateTitle
+              : text.taskRecallTitle,
           style: context.texts.headlineSmall?.copyWith(
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 10),
         Text(
-          text.taskRecallBody,
+          widget.kind == RecallKind.immediate
+              ? text.taskImmediateBody
+              : text.taskRecallBody,
           style: context.texts.bodyMedium?.copyWith(
             color: context.colors.onSurfaceVariant,
             height: 1.5,
@@ -86,7 +113,7 @@ class _RecallTaskState extends State<RecallTask> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: TextField(
+              child: MeasuredTextField(
                 controller: _controller,
                 autofocus: true,
                 textInputAction: TextInputAction.done,

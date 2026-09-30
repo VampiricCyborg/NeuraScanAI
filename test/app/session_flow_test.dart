@@ -10,13 +10,19 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:neurascan_ai/engine/constants.dart';
+import 'package:neurascan_ai/engine/features.dart';
 import 'package:neurascan_ai/engine/screening_engine.dart';
 import 'package:neurascan_ai/features/dashboard/dashboard_screen.dart';
 import 'package:neurascan_ai/features/session/session_screen.dart';
 import 'package:neurascan_ai/features/session/summary_screen.dart';
+import 'package:neurascan_ai/features/session/tasks/fluency_task.dart';
+import 'package:neurascan_ai/features/session/tasks/reaction_task.dart';
 import 'package:neurascan_ai/features/session/tasks/recall_task.dart';
 import 'package:neurascan_ai/features/session/tasks/speech_task.dart';
 import 'package:neurascan_ai/features/session/tasks/spiral_task.dart';
+import 'package:neurascan_ai/features/session/tasks/tapping_task.dart';
+import 'package:neurascan_ai/features/session/tasks/trail_task.dart';
+import 'package:neurascan_ai/features/session/tasks/typing_note.dart';
 import 'package:neurascan_ai/features/session/word_lists.dart';
 import 'package:neurascan_ai/services/audio_capture.dart';
 
@@ -83,6 +89,17 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Types [word] into the only text field one character at a time, with a realistic gap.
+  ///
+  /// Entering the whole word at once would record every keystroke at the same instant, and the
+  /// typing-rhythm measurement would see no usable gaps.
+  Future<void> typeWord(WidgetTester tester, String word) async {
+    for (var i = 1; i <= word.length; i++) {
+      await tester.enterText(find.byType(TextField), word.substring(0, i));
+      await tester.pump(const Duration(milliseconds: 230));
+    }
+  }
+
   /// Records the speech step through to the end.
   Future<void> playSpeech(WidgetTester tester) async {
     expect(find.byType(SpeechTask), findsOneWidget);
@@ -126,16 +143,110 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// Types back some words and finishes.
+  /// Types back some words, one at a time, and finishes.
   Future<void> recallWords(WidgetTester tester, List<String> words) async {
     expect(find.byType(RecallTask), findsOneWidget);
     for (final word in words) {
-      await tester.enterText(find.byType(TextField), word);
-      await tester.pump();
+      await typeWord(tester, word);
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
     }
     await tester.tap(find.text('That is all I remember'));
+    await tester.pumpAndSettle();
+  }
+
+  /// Plays the reaction step through, responding on time each trial.
+  Future<void> playReaction(WidgetTester tester, {int anticipate = 0}) async {
+    final target = find.byType(ReactionTask);
+    expect(target, findsOneWidget);
+
+    // The first tap starts the first trial.
+    await tester.tap(target);
+    await tester.pump();
+
+    // Anticipations first. They do not count as completed trials, so the step still needs its
+    // full set of real ones afterwards.
+    for (var i = 0; i < anticipate; i++) {
+      // Tap during the foreperiod, before the stimulus.
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(target, warnIfMissed: false);
+      // The warning pause before the next trial begins.
+      await tester.pump(const Duration(milliseconds: 1500));
+    }
+
+    for (var trial = 0; trial < kReactionTrials; trial++) {
+      // Past the longest possible foreperiod, so the stimulus is showing.
+      await tester.pump(const Duration(milliseconds: kForeperiodMaxMs + 100));
+      // A plausible reaction time.
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(target, warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 800));
+    }
+    await tester.pumpAndSettle();
+  }
+
+  Finder circle(String label) => find.byKey(ValueKey('trail-circle-$label'));
+
+  /// Plays both parts of the trail-making step, optionally with a wrong tap first.
+  Future<void> playTrail(WidgetTester tester, {bool wrongFirst = false}) async {
+    expect(find.byType(TrailTask), findsOneWidget);
+
+    await tester.tap(find.text('Start'));
+    await tester.pumpAndSettle();
+
+    if (wrongFirst) {
+      // The first circle to tap is 1; 3 is wrong.
+      await tester.tap(circle('3'));
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    for (final label in trailLabelsA()) {
+      await tester.tap(circle(label));
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Start part B'));
+    await tester.pumpAndSettle();
+    for (final label in trailLabelsB()) {
+      await tester.tap(circle(label));
+      await tester.pump(const Duration(milliseconds: 700));
+    }
+    await tester.pumpAndSettle();
+  }
+
+  /// Plays the tapping step, alternating buttons, or hammering one if [alternate] is false.
+  Future<void> playTapping(WidgetTester tester, {bool alternate = true}) async {
+    expect(find.byType(TappingTask), findsOneWidget);
+    await tester.tap(find.text('Start'));
+    await tester.pumpAndSettle();
+
+    for (var i = 0; i < 45; i++) {
+      final side = alternate && i.isOdd ? 'tap-right' : 'tap-left';
+      await tester.tap(find.byKey(ValueKey(side)));
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    // Let the ten seconds run out.
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    await tester.pumpAndSettle();
+  }
+
+  /// Plays the fluency step, typing each of [animals] and adding it.
+  Future<void> playFluency(WidgetTester tester, List<String> animals) async {
+    expect(find.byType(FluencyTask), findsOneWidget);
+    await tester.tap(find.text('Start'));
+    await tester.pumpAndSettle();
+
+    for (final animal in animals) {
+      await typeWord(tester, animal);
+      await tester.tap(find.text('Add'));
+      await tester.pump(const Duration(milliseconds: 600));
+    }
+    // Let the thirty seconds run out.
+    for (var second = 0; second <= kFluencySeconds; second++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
     await tester.pumpAndSettle();
   }
 
@@ -184,14 +295,13 @@ void main() {
       expect(session.valid, isTrue, reason: session.invalidReasons.join('; '));
       // The first test is practice, so nothing is scored.
       expect(session.status, ScreeningStatus.buildingBaseline);
-      expect(session.features.keys.length, kFeatureKeyCount);
+      // A baseline test measures the five core features only.
+      expect(session.features.keys.toSet(), kCoreFeatureKeys.toSet());
       expect(session.recallDetail, isNotNull);
       expect(session.epoch, 0);
     });
 
-    testWidgets('the first is labelled as practice, the next as baseline 2', (
-      tester,
-    ) async {
+    testWidgets('the first is labelled as practice', (tester) async {
       await startPractice(tester);
       await answerCheckIn(tester);
       expect(find.textContaining('Practice test'), findsOneWidget);
@@ -210,7 +320,7 @@ void main() {
       );
     });
 
-    testWidgets('extracts all five measurements from real step output', (
+    testWidgets('extracts the five core measurements from real step output', (
       tester,
     ) async {
       final app = await startPractice(tester);
@@ -219,13 +329,7 @@ void main() {
       final session = (await app.repository.loadSessions('user-1')).single;
 
       // Every feature present and finite. A zero would mean an extractor was never fed.
-      for (final key in [
-        'delayed_recall',
-        'speaking_rate',
-        'pause_ratio',
-        'spiral_rmse',
-        'tremor_index',
-      ]) {
+      for (final key in kCoreFeatureKeys) {
         final value = session.features[key];
         expect(value, isNotNull, reason: key);
         expect(value!.isFinite, isTrue, reason: key);
@@ -353,71 +457,66 @@ void main() {
   });
 
   group('a full test', () {
+    /// The list the app will pick for a full test after the four baseline tests.
+    WordList nextList() =>
+        pickWordListsForTest(testIndex: kBaselineTests, count: 1).single;
+
     /// Plays the eight steps in order, checking where the user is at each.
-    ///
-    /// Returns the words of each list, so the caller can say which were remembered.
     Future<void> playFullTest(
       WidgetTester tester, {
-      required List<List<String>> remembered,
+      required List<String> immediate,
+      required List<String> delayed,
+      List<String> animals = const ['cat', 'dog', 'lion'],
+      bool wrongTrailTap = false,
     }) async {
       const total = kActualTestSteps;
 
       await answerCheckIn(tester);
 
-      // Step 1: the first list.
+      // Step 1: word memory. The words, then straight away the first recall.
       expect(step(1, total), findsOneWidget);
       expect(find.textContaining('Full test'), findsOneWidget);
       await readWords(tester);
+      expect(step(1, total), findsOneWidget);
+      await recallWords(tester, immediate);
 
-      // Steps 2 and 3: speech and tracing.
+      // Steps 2 to 4.
       expect(step(2, total), findsOneWidget);
-      await playSpeech(tester);
+      await playReaction(tester);
       expect(step(3, total), findsOneWidget);
+      await playSpeech(tester);
+      expect(step(4, total), findsOneWidget);
       await traceSpiral(tester);
 
-      // Step 4: the first list comes back, and the second is learned.
-      expect(step(4, total), findsOneWidget);
-      expect(find.text('Word list 1 of $kActualWordSteps'), findsOneWidget);
-      await recallWords(tester, remembered[0]);
-      expect(step(4, total), findsOneWidget);
-      await readWords(tester);
-
-      // Steps 5 and 6.
+      // Step 5: typing rhythm, which needs nothing from the user.
       expect(step(5, total), findsOneWidget);
-      await playSpeech(tester);
+      expect(find.byType(TypingNote), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      // Steps 6 to 8.
       expect(step(6, total), findsOneWidget);
-      await traceSpiral(tester);
-
-      // Step 7: the second list comes back, and the third is learned.
+      await playTrail(tester, wrongFirst: wrongTrailTap);
       expect(step(7, total), findsOneWidget);
-      expect(find.text('Word list 2 of $kActualWordSteps'), findsOneWidget);
-      await recallWords(tester, remembered[1]);
-      expect(step(7, total), findsOneWidget);
-      await readWords(tester);
-
-      // Step 8, then the closing recall.
+      await playTapping(tester);
       expect(step(8, total), findsOneWidget);
-      await playSpeech(tester);
+      await playFluency(tester, animals);
+
+      // The delayed recall, last.
       expect(find.text('Final part'), findsOneWidget);
-      expect(find.text('Word list 3 of $kActualWordSteps'), findsOneWidget);
-      await recallWords(tester, remembered[2]);
+      await recallWords(tester, delayed);
     }
 
-    /// The lists the app will pick for the next full test, given four tests already stored.
-    List<WordList> nextLists() => pickWordListsForTest(
-      testIndex: kBaselineTests,
-      count: kActualWordSteps,
-    );
-
-    testWidgets('has eight steps, three word lists and is scored', (
+    testWidgets('has eight different steps and every measurement is stored', (
       tester,
     ) async {
       final app = await startFullTest(tester);
-      final lists = nextLists();
+      final list = nextList();
 
       await playFullTest(
         tester,
-        remembered: [lists[0].words, lists[1].words.take(4).toList(), const []],
+        immediate: list.words,
+        delayed: list.words.take(4).toList(),
       );
 
       expect(find.byType(SummaryScreen), findsOneWidget);
@@ -429,33 +528,103 @@ void main() {
       expect(session.valid, isTrue);
       // Compared with the baseline straight away: a scored status, not "building".
       expect(session.countsTowardsTrend, isTrue);
-      expect(session.features.keys.length, kFeatureKeyCount);
-      expect(session.domainScores, isNotNull);
-
-      // Twenty-four words were shown across the three lists, and each is accounted for.
-      final detail = session.recallDetail!;
-      expect(
-        detail.recalled.length + detail.missed.length,
-        kActualWordSteps * kMemoryWordCount,
-      );
-      // 8 + 4 + 0 remembered.
-      expect(detail.recalled.length, kMemoryWordCount + 4);
+      // All eighteen measurements, the typed steps having supplied enough typing.
+      expect(session.features.keys.toSet(), kFeatureKeys.toSet());
+      for (final entry in session.features.entries) {
+        expect(entry.value.isFinite, isTrue, reason: entry.key);
+      }
     });
 
-    testWidgets('the result and its comparison are shown straight away', (
+    testWidgets('the two recalls are scored separately', (tester) async {
+      final app = await startFullTest(tester);
+      final list = nextList();
+
+      await playFullTest(
+        tester,
+        immediate: list.words,
+        delayed: list.words.take(4).toList(),
+      );
+
+      final session = (await app.repository.loadSessions('user-1')).last;
+      expect(session.features['immediate_recall'], closeTo(1.0, 1e-9));
+      expect(session.features['delayed_recall'], closeTo(0.5, 1e-9));
+    });
+
+    testWidgets('names only real, different animals count in fluency', (
+      tester,
+    ) async {
+      final app = await startFullTest(tester);
+      final list = nextList();
+
+      await playFullTest(
+        tester,
+        immediate: list.words,
+        delayed: list.words,
+        animals: const ['cat', 'dog', 'cat', 'table', 'zebra'],
+      );
+
+      final session = (await app.repository.loadSessions('user-1')).last;
+      // cat, dog and zebra: the repeat and the non-animal do not count.
+      expect(session.features['valid_word_count'], 3.0);
+    });
+
+    testWidgets('a wrong circle in the trail step is counted as an error', (
+      tester,
+    ) async {
+      final app = await startFullTest(tester);
+      final list = nextList();
+
+      await playFullTest(
+        tester,
+        immediate: list.words,
+        delayed: list.words,
+        wrongTrailTap: true,
+      );
+
+      final session = (await app.repository.loadSessions('user-1')).last;
+      expect(session.features['error_count'], 1.0);
+    });
+
+    testWidgets('typing rhythm is timed from the typed steps', (tester) async {
+      final app = await startFullTest(tester);
+      final list = nextList();
+
+      await playFullTest(tester, immediate: list.words, delayed: list.words);
+
+      final session = (await app.repository.loadSessions('user-1')).last;
+      // Typed in character by character at about 230 ms a key.
+      expect(session.features['inter_key_interval'], closeTo(230, 60));
+    });
+
+    testWidgets('the passive typing step says how much has been timed', (
       tester,
     ) async {
       await startFullTest(tester);
-      final lists = nextLists();
-      await playFullTest(
-        tester,
-        remembered: [lists[0].words, lists[1].words, lists[2].words],
-      );
+      final list = nextList();
+
+      await answerCheckIn(tester);
+      await readWords(tester);
+      await recallWords(tester, list.words.take(3).toList());
+      await playReaction(tester);
+      await playSpeech(tester);
+      await traceSpiral(tester);
+
+      expect(step(5, kActualTestSteps), findsOneWidget);
+      expect(find.textContaining('key presses timed so far'), findsOneWidget);
+      // Some typing has been timed by now, from the immediate recall.
+      expect(find.text('0 key presses timed so far'), findsNothing);
+    });
+
+    testWidgets('the result and its summary are shown straight away', (
+      tester,
+    ) async {
+      await startFullTest(tester);
+      final list = nextList();
+
+      await playFullTest(tester, immediate: list.words, delayed: list.words);
 
       expect(find.byType(SummaryScreen), findsOneWidget);
-      expect(find.text('How this test compares'), findsOneWidget);
-      expect(find.text('Against your usual'), findsWidgets);
-      // The summary is a long list now, so the report button is below the fold.
+      // The summary is a long list, so the report button is below the fold.
       await tester.scrollUntilVisible(
         find.text('See the full report'),
         300,
@@ -464,23 +633,79 @@ void main() {
       expect(find.text('See the full report'), findsOneWidget);
     });
 
-    testWidgets('each measurement is the median of its repeats', (
+    testWidgets('too many early taps ask for the reaction step again', (
       tester,
     ) async {
-      // The recall value is the middle of the three lists' scores: 100 %, 50 % and 0 %.
       final app = await startFullTest(tester);
-      final lists = nextLists();
+      final list = nextList();
+
+      await answerCheckIn(tester);
+      await readWords(tester);
+      await recallWords(tester, list.words);
+
+      expect(step(2, kActualTestSteps), findsOneWidget);
+      await playReaction(tester, anticipate: kMaxAnticipations + 1);
+
+      // Still on the reaction step, told why, and nothing stored.
+      expect(step(2, kActualTestSteps), findsOneWidget);
+      expect(find.byType(ReactionTask), findsOneWidget);
+      expect(
+        find.textContaining('did not give enough usable reactions'),
+        findsOneWidget,
+      );
+      expect(
+        await app.repository.loadSessions('user-1'),
+        hasLength(kBaselineTests),
+      );
+
+      // A clean second attempt moves on.
+      await playReaction(tester);
+      expect(step(3, kActualTestSteps), findsOneWidget);
+    });
+
+    testWidgets('hammering one button asks for the tapping step again', (
+      tester,
+    ) async {
+      await startFullTest(tester);
+      final list = nextList();
+
+      await answerCheckIn(tester);
+      await readWords(tester);
+      await recallWords(tester, list.words);
+      await playReaction(tester);
+      await playSpeech(tester);
+      await traceSpiral(tester);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await playTrail(tester);
+
+      expect(step(7, kActualTestSteps), findsOneWidget);
+      await playTapping(tester, alternate: false);
+
+      expect(step(7, kActualTestSteps), findsOneWidget);
+      expect(find.byType(TappingTask), findsOneWidget);
+      expect(
+        find.textContaining('counted too few taps that alternated'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('naming no animals is allowed and scores zero', (tester) async {
+      // Naming none is a real result; blocking it would exclude the people the test exists
+      // to notice.
+      final app = await startFullTest(tester);
+      final list = nextList();
 
       await playFullTest(
         tester,
-        remembered: [lists[0].words, lists[1].words.take(4).toList(), const []],
+        immediate: list.words,
+        delayed: list.words,
+        animals: const [],
       );
 
       final session = (await app.repository.loadSessions('user-1')).last;
-      expect(session.features['delayed_recall'], closeTo(0.5, 1e-9));
+      expect(session.features['valid_word_count'], 0.0);
+      expect(session.features['fluency_half_ratio'], 1.0);
     });
   });
 }
-
-/// The number of measurements a test yields, as the engine defines them.
-const kFeatureKeyCount = 5;
