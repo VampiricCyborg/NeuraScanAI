@@ -10,11 +10,10 @@ import 'package:neurascan_ai/engine/constants.dart';
 import 'package:neurascan_ai/engine/features.dart';
 import 'package:neurascan_ai/engine/screening_engine.dart';
 
-/// Nominal feature values for an average user having an average day.
+/// Nominal core feature values for an average user having an average day.
 ///
-/// Tests perturb individual features away from these to create a targeted
-/// deviation.
-const Map<String, double> kNominal = {
+/// Tests perturb individual features away from these to create a targeted deviation.
+const Map<String, double> kNominalCore = {
   'delayed_recall': 0.75,
   'speaking_rate': 140.0,
   'pause_ratio': 0.22,
@@ -22,14 +21,51 @@ const Map<String, double> kNominal = {
   'tremor_index': 0.10,
 };
 
-/// Within-person day-to-day spread of each feature, from Table A.2 of the
-/// report. Used to express a perturbation in units the engine will recognise.
+/// Nominal values for the features only a full test measures.
+///
+/// Illustrative figures for an unimpaired adult, used to exercise the engine; they are not
+/// population norms and are not used by the app.
+const Map<String, double> kNominalExtended = {
+  'immediate_recall': 0.85,
+  'reaction_median': 320.0,
+  'reaction_cv': 0.15,
+  'inter_key_interval': 260.0,
+  'inter_key_cv': 0.35,
+  'completion_time': 11.0,
+  'error_count': 1.0,
+  'switch_cost': 0.35,
+  'tap_rate': 4.5,
+  'tap_interval_cv': 0.10,
+  'fatigue_decay': 0.08,
+  'valid_word_count': 16.0,
+  'fluency_half_ratio': 0.8,
+};
+
+/// Every feature's nominal value.
+const Map<String, double> kNominal = {...kNominalCore, ...kNominalExtended};
+
+/// Within-person day-to-day spread of each feature. The core ones and the first reaction and
+/// typing figures are from Table A.2 of the report; the rest are the provisional estimates in
+/// `features.dart`. Used to express a perturbation in units the engine will recognise.
 const Map<String, double> kWithinSd = {
   'delayed_recall': 0.06,
   'speaking_rate': 8.0,
   'pause_ratio': 0.025,
   'spiral_rmse': 0.6,
   'tremor_index': 0.012,
+  'immediate_recall': 0.05,
+  'reaction_median': 18.0,
+  'reaction_cv': 0.02,
+  'inter_key_interval': 15.0,
+  'inter_key_cv': 0.035,
+  'completion_time': 1.5,
+  'error_count': 0.8,
+  'switch_cost': 0.15,
+  'tap_rate': 0.25,
+  'tap_interval_cv': 0.04,
+  'fatigue_decay': 0.05,
+  'valid_word_count': 2.0,
+  'fluency_half_ratio': 0.15,
 };
 
 /// A deviation large enough to push the index above the threshold on its own.
@@ -43,6 +79,9 @@ const Map<String, double> kSevere = {
 
 /// Builds a session from the nominal values.
 ///
+/// By default this is a *baseline-style* session with the five core features; pass
+/// `full: true` for a full test with all eighteen.
+///
 /// [overrides] sets a feature to an absolute value; [jitter] nudges a feature by
 /// a number of within-person SDs, which is usually the more readable way to say
 /// "this user is a bit slower today".
@@ -52,8 +91,9 @@ EngineSession makeSession({
   String? sessionId,
   Map<String, double>? jitter,
   Map<String, double>? overrides,
+  bool full = false,
 }) {
-  final features = Map<String, double>.of(kNominal);
+  final features = Map<String, double>.of(full ? kNominal : kNominalCore);
   if (jitter != null) {
     jitter.forEach((key, sds) {
       features[key] = features[key]! + sds * kWithinSd[key]!;
@@ -70,7 +110,40 @@ EngineSession makeSession({
   );
 }
 
-/// Sessions that differ slightly, so every feature has a non-zero spread.
+/// A full test: every feature, at its nominal value unless changed.
+EngineSession makeFullSession({
+  bool valid = true,
+  bool confounded = false,
+  String? sessionId,
+  Map<String, double>? jitter,
+  Map<String, double>? overrides,
+}) => makeSession(
+  valid: valid,
+  confounded: confounded,
+  sessionId: sessionId,
+  jitter: jitter,
+  overrides: overrides,
+  full: true,
+);
+
+/// Full tests that differ slightly, for calibrating the extended features.
+///
+/// Offsets follow [variedBaselineSessions], so the first three are symmetric about zero and
+/// the calibrated centre is the nominal value.
+List<EngineSession> variedFullSessions(int count) {
+  const offsets = [-1.0, 1.0, 0.0, 0.5, -0.5, 0.25, -0.25, 0.75, -0.75, 1.25];
+  return [
+    for (var i = 0; i < count; i++)
+      makeFullSession(
+        sessionId: 'full-${i + 1}',
+        jitter: {
+          for (final key in kWithinSd.keys) key: offsets[i % offsets.length],
+        },
+      ),
+  ];
+}
+
+/// Baseline-style sessions that differ slightly, so every feature has a non-zero spread.
 ///
 /// A baseline fitted from identical sessions would have a MAD of zero on every
 /// feature and rely entirely on the scale floor, which is not what most tests
@@ -90,7 +163,7 @@ List<EngineSession> variedBaselineSessions([int count = kBaselineSessions]) {
       makeSession(
         sessionId: 'baseline-${i + 1}',
         jitter: {
-          for (final key in kWithinSd.keys) key: offsets[i % offsets.length],
+          for (final key in kCoreFeatureKeys) key: offsets[i % offsets.length],
         },
       ),
   ];

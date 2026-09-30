@@ -23,6 +23,8 @@ from .constants import (
     DEFAULT_PERSISTENCE,
     DEFAULT_THRESHOLD,
     EWMA_LAMBDA,
+    EXTENSION_FAMILIARISATION,
+    EXTENSION_TESTS,
     FAMILIARISATION_SESSIONS,
     MILD_FRACTION,
 )
@@ -111,6 +113,13 @@ class ScreeningEngine:
     #: Sessions accepted into the baseline so far.
     _pool: list[Session] = field(default_factory=list)
 
+    #: Full tests collected so far to calibrate the extended features.
+    _extension_pool: list[Session] = field(default_factory=list)
+
+    #: Full tests that carried an extended feature, including any set aside as
+    #: practice, so the practice allowance is counted from the same place.
+    _extension_seen: int = 0
+
     # -- properties ---------------------------------------------------------
 
     @property
@@ -124,6 +133,11 @@ class ScreeningEngine:
         if self.baseline is not None:
             return 1.0
         return min(1.0, len(self._pool) / BASELINE_SESSIONS)
+
+    @property
+    def calibration_collected(self) -> int:
+        """Full tests counted towards calibrating the extended features."""
+        return len(self._extension_pool)
 
     @property
     def sessions_seen(self) -> int:
@@ -151,7 +165,47 @@ class ScreeningEngine:
         if self.use_context and session.confounded:
             return {"status": Status.EXCLUDED_CONTEXT}
 
+        # Before scoring, so that a test which completes a feature's calibration is
+        # scored with it.  That test helped set the baseline it is measured against,
+        # so for that feature it is in-sample, as the baseline tests are.
+        self.calibrate(session)
         return self._score(session)
+
+    # -- calibrating the extended features ---------------------------------
+
+    def calibrate(self, session: Session) -> None:
+        """Count *session* towards the extended features' baselines, if it qualifies.
+
+        Only valid, unconfounded full tests that carry at least one feature still
+        waiting for a baseline count.  Once a feature has enough values its
+        baseline is frozen (see :meth:`Baseline.extended`) and later tests cannot
+        move it.  Does nothing before the baseline tests are done, or after every
+        feature has a baseline.
+        """
+        baseline = self.baseline
+        if baseline is None or baseline.is_complete:
+            return
+        if not session.valid or (self.use_context and session.confounded):
+            return
+        pending = baseline.pending_keys()
+        if not any(key in session.features for key in pending):
+            return
+
+        self._extension_seen += 1
+        if self._extension_seen <= EXTENSION_FAMILIARISATION:
+            return
+        self._extension_pool.append(session)
+        self.baseline = baseline.extended(self._extension_pool, EXTENSION_TESTS)
+
+    def calibrate_from(self, sessions: list[Session]) -> None:
+        """Rebuild the calibration state from stored full tests, oldest first.
+
+        The pool is not part of the serialised state: the tests live in the
+        database and are replayed on startup, as the baseline pool is.  Nothing is
+        scored, so the smoothing state is untouched.
+        """
+        for session in sessions:
+            self.calibrate(session)
 
     # -- internals ----------------------------------------------------------
 
@@ -228,6 +282,7 @@ class ScreeningEngine:
             "run": self.run,
             "seen": self._seen,
             "poolSize": len(self._pool),
+            "calibrationCollected": len(self._extension_pool),
         }
 
 

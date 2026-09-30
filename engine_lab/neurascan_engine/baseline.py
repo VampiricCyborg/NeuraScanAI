@@ -20,7 +20,7 @@ from .constants import (
     SCALE_FLOOR_ABSOLUTE,
     SCALE_FLOOR_FRACTION,
 )
-from .features import FEATURE_KEYS, SPEC_BY_KEY, Session
+from .features import CORE_FEATURE_KEYS, FEATURE_KEYS, SPEC_BY_KEY, Session
 
 
 def median(values: Sequence[float]) -> float:
@@ -70,9 +70,14 @@ def robust_scale(values: Sequence[float], typical_sd: float = 0.0) -> float:
 class Baseline:
     """A frozen per-feature centre and spread for one user on one device.
 
-    Eleven numbers in total -- a median and a scale for each of the five
-    features, plus the test count -- which is what makes the baseline cheap
-    enough to hold in memory, store locally and sync as a single document.
+    A few dozen numbers at most -- a median and a scale for each feature that has
+    one, plus the test count -- which is what makes the baseline cheap enough to
+    hold in memory, store locally and sync as a single document.
+
+    The baseline tests fix the five core features.  The thirteen extended ones
+    are added later by :meth:`extended`, once enough full tests exist, so a
+    baseline can be *partial*: it simply has no entry for a feature that is still
+    calibrating.
     """
 
     #: Feature key to the median of that feature over the baseline sessions.
@@ -89,6 +94,10 @@ class Baseline:
     def fit(cls, sessions: Iterable[Session]) -> Baseline:
         """Summarise *sessions* into a baseline.
 
+        Only the core features are fitted, and every session must supply all of
+        them: they are what the baseline tests measure.  Any extended feature the
+        sessions happen to carry is ignored here; it calibrates separately.
+
         Callers are responsible for having already excluded familiarisation,
         invalid and confounded sessions: this method deliberately does not
         re-filter, so that the selection rule lives in exactly one place --
@@ -100,7 +109,7 @@ class Baseline:
 
         medians: dict[str, float] = {}
         scales: dict[str, float] = {}
-        for key in FEATURE_KEYS:
+        for key in CORE_FEATURE_KEYS:
             values = [s.features[key] for s in pool if key in s.features]
             if len(values) != len(pool):
                 raise ValueError(f"feature {key!r} missing from some sessions")
@@ -108,6 +117,38 @@ class Baseline:
             scales[key] = robust_scale(values, SPEC_BY_KEY[key].typical_day_to_day_sd)
 
         return cls(median=medians, scale=scales, session_count=len(pool))
+
+    @property
+    def is_complete(self) -> bool:
+        """True once every feature, core and extended, has a baseline."""
+        return all(key in self.median for key in FEATURE_KEYS)
+
+    def pending_keys(self) -> tuple[str, ...]:
+        """Features that do not have a baseline yet, in measurement order."""
+        return tuple(key for key in FEATURE_KEYS if key not in self.median)
+
+    def extended(self, sessions: Iterable[Session], required: int) -> Baseline:
+        """A copy with a baseline added for each pending feature that has enough data.
+
+        A pending feature is fixed from the first *required* values it has across
+        *sessions*, oldest first.  Fixing it from those and no more means later
+        tests cannot move it, which is what makes it a baseline rather than a
+        running average.  A feature with fewer values is left pending; one that
+        a test could not measure simply does not contribute that test.
+
+        The existing entries are never touched.
+        """
+        pool = list(sessions)
+        medians = dict(self.median)
+        scales = dict(self.scale)
+        for key in self.pending_keys():
+            values = [s.features[key] for s in pool if key in s.features]
+            if len(values) < required:
+                continue
+            values = values[:required]
+            medians[key] = median(values)
+            scales[key] = robust_scale(values, SPEC_BY_KEY[key].typical_day_to_day_sd)
+        return Baseline(median=medians, scale=scales, session_count=self.session_count)
 
     def z(self, key: str, value: float) -> float:
         """Raw, unoriented robust z-score of *value* for feature *key*."""

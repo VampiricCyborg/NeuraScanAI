@@ -23,6 +23,8 @@ from .constants import (
     DEFAULT_PERSISTENCE,
     DEFAULT_THRESHOLD,
     EWMA_LAMBDA,
+    EXTENSION_FAMILIARISATION,
+    EXTENSION_TESTS,
     FAMILIARISATION_SESSIONS,
     MILD_FRACTION,
     PRIOR_SCALE_FLOOR_FRACTION,
@@ -34,7 +36,9 @@ from .engine import (
     status_of,
 )
 from .features import (
+    CORE_FEATURE_KEYS,
     DOMAIN_WEIGHTS,
+    EXTENDED_FEATURE_KEYS,
     FEATURE_KEYS,
     FEATURE_SPECS,
     SPEC_BY_KEY,
@@ -50,6 +54,8 @@ from .scoring import (
     deviation_index,
     domain_scores,
     domain_scores_from,
+    feature_contributions,
+    normalised_weights,
     top_contributor,
 )
 
@@ -57,10 +63,14 @@ __version__ = "1.0.0"
 
 __all__ = [
     "BASELINE_SESSIONS",
+    "CORE_FEATURE_KEYS",
     "DEFAULT_PERSISTENCE",
     "DEFAULT_THRESHOLD",
     "DOMAIN_WEIGHTS",
     "EWMA_LAMBDA",
+    "EXTENDED_FEATURE_KEYS",
+    "EXTENSION_FAMILIARISATION",
+    "EXTENSION_TESTS",
     "FAMILIARISATION_SESSIONS",
     "FEATURE_KEYS",
     "FEATURE_SPECS",
@@ -82,8 +92,10 @@ __all__ = [
     "domain_scores",
     "domain_scores_from",
     "evaluate_quality",
+    "feature_contributions",
     "median",
     "median_absolute_deviation",
+    "normalised_weights",
     "robust_scale",
     "specs_for",
     "status_of",

@@ -133,9 +133,15 @@ void main() {
       }
     });
 
-    test('every test has all four areas scored', () {
+    test('every test has the areas the baseline covers scored', () {
+      // The baseline here is a partial one (the baseline tests' three steps), so there is
+      // nothing to simulate typing against.
       for (final point in run(SimulationScenario.steady).points) {
-        expect(point.domains.keys.toSet(), Domain.values.toSet());
+        expect(point.domains.keys.toSet(), {
+          Domain.cognitive,
+          Domain.speech,
+          Domain.motor,
+        });
       }
     });
   });

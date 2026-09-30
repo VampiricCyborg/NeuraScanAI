@@ -39,6 +39,10 @@ class Baseline {
 
   /// Summarises [sessions] into a baseline.
   ///
+  /// Only the core features are fitted, and every session must supply all of them: they are
+  /// what the baseline tests measure. Any extended feature the sessions happen to carry is
+  /// ignored here; it calibrates separately (see [extended]).
+  ///
   /// Callers are responsible for having already excluded familiarisation,
   /// invalid and confounded sessions: this constructor deliberately does not
   /// re-filter, so that the selection rule lives in exactly one place --
@@ -50,7 +54,7 @@ class Baseline {
 
     final medians = <String, double>{};
     final scales = <String, double>{};
-    for (final key in kFeatureKeys) {
+    for (final key in kCoreFeatureKeys) {
       final values = <double>[];
       for (final session in sessions) {
         final value = session.features[key];
@@ -71,6 +75,43 @@ class Baseline {
       scale: scales,
       sessionCount: sessions.length,
     );
+  }
+
+  /// True once every feature, core and extended, has a baseline.
+  bool get isComplete => kFeatureKeys.every(median.containsKey);
+
+  /// Features that do not have a baseline yet, in measurement order.
+  List<String> get pendingKeys => [
+    for (final key in kFeatureKeys)
+      if (!median.containsKey(key)) key,
+  ];
+
+  /// A copy with a baseline added for each pending feature that has enough data.
+  ///
+  /// A pending feature is fixed from the first [required] values it has across [sessions],
+  /// oldest first. Fixing it from those and no more means later tests cannot move it, which
+  /// is what makes it a baseline rather than a running average. A feature with fewer values
+  /// is left pending; one that a test could not measure simply does not contribute that
+  /// test.
+  ///
+  /// The existing entries are never touched.
+  Baseline extended(List<EngineSession> sessions, {required int required}) {
+    final medians = Map<String, double>.of(median);
+    final scales = Map<String, double>.of(scale);
+    for (final key in pendingKeys) {
+      final values = <double>[
+        for (final session in sessions)
+          if (session.features[key] != null) session.features[key]!,
+      ];
+      if (values.length < required) continue;
+      final used = values.sublist(0, required);
+      medians[key] = stats.median(used);
+      scales[key] = stats.robustScale(
+        used,
+        typicalSd: kSpecByKey[key]!.typicalDaySd,
+      );
+    }
+    return Baseline(median: medians, scale: scales, sessionCount: sessionCount);
   }
 
   /// Raw, unoriented robust z-score of [value] for feature [key].

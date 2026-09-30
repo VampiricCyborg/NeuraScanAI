@@ -247,13 +247,13 @@ void main() {
         for (var i = 0; i < kBaselineSessions; i++)
           makeSession(sessionId: '$i'),
       ]);
-      for (final spec in kFeatureSpecs) {
+      for (final key in kCoreFeatureKeys) {
         expect(
-          baseline.scale[spec.key],
+          baseline.scale[key],
           greaterThanOrEqualTo(
-            kPriorScaleFloorFraction * spec.typicalDaySd - 1e-12,
+            kPriorScaleFloorFraction * kSpecByKey[key]!.typicalDaySd - 1e-12,
           ),
-          reason: spec.key,
+          reason: key,
         );
       }
     });
@@ -287,7 +287,7 @@ void main() {
     test('round-trips through JSON', () {
       final baseline = Baseline.fit(variedBaselineSessions());
       final restored = Baseline.fromJson(baseline.toJson());
-      for (final key in kFeatureKeys) {
+      for (final key in kCoreFeatureKeys) {
         expect(restored.median[key], closeTo(baseline.median[key]!, 1e-12));
         expect(restored.scale[key], closeTo(baseline.scale[key]!, 1e-12));
       }
@@ -296,8 +296,8 @@ void main() {
 
     test('holds eleven numbers, small enough to sync as one document', () {
       final baseline = Baseline.fit(variedBaselineSessions());
-      expect(baseline.median, hasLength(kFeatureKeys.length));
-      expect(baseline.scale, hasLength(kFeatureKeys.length));
+      expect(baseline.median, hasLength(kCoreFeatureKeys.length));
+      expect(baseline.scale, hasLength(kCoreFeatureKeys.length));
     });
 
     test('a session reports the features it is missing', () {

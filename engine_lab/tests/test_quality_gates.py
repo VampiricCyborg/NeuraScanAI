@@ -1,15 +1,21 @@
 """UT1 and UT2 -- the step-level quality gates.
 
 Covers the report's Table 9.2 rows UT1-2: the gates must reject fewer than eight
-voiced seconds and a spiral traced below 70 %.  The gates now apply to a single
-step -- a failed step is done again rather than costing the user a whole test --
-and there is no reaction-time gate because the reaction task is gone.
+voiced seconds, a spiral traced below 70 %, more than two anticipations and too
+few taps.  The gates apply to a single step -- a failed step is done again
+rather than costing the user a whole test.
 """
 
 from __future__ import annotations
 
 from neurascan_engine import TaskMetrics, evaluate_quality
-from neurascan_engine.constants import MIN_SPIRAL_COVERAGE, MIN_VOICED_SECONDS
+from neurascan_engine.constants import (
+    MAX_ANTICIPATIONS,
+    MIN_SPIRAL_COVERAGE,
+    MIN_VALID_REACTION_TRIALS,
+    MIN_VALID_TAPS,
+    MIN_VOICED_SECONDS,
+)
 
 
 class TestUT1AcceptableSteps:
@@ -71,7 +77,29 @@ class TestUT2RejectedSteps:
     def test_reason_is_reassuring_when_valid(self) -> None:
         assert "met the quality checks" in evaluate_quality(TaskMetrics()).reason()
 
-    def test_there_is_no_reaction_gate_any_more(self) -> None:
-        """The reaction task was dropped; nothing should still gate on it."""
-        assert not hasattr(TaskMetrics(), "anticipations")
-        assert not hasattr(TaskMetrics(), "valid_reaction_trials")
+    def test_too_many_anticipations_are_rejected(self) -> None:
+        """Test case TC4: a user guessing the stimulus is not reacting to it."""
+        report = evaluate_quality(TaskMetrics(anticipations=MAX_ANTICIPATIONS + 1))
+        assert not report.valid
+        assert any("before the stimulus" in f for f in report.failures)
+
+    def test_two_anticipations_are_tolerated_as_ordinary_impatience(self) -> None:
+        assert evaluate_quality(TaskMetrics(anticipations=MAX_ANTICIPATIONS)).valid
+
+    def test_too_few_usable_reaction_trials_are_rejected(self) -> None:
+        report = evaluate_quality(
+            TaskMetrics(valid_reaction_trials=MIN_VALID_REACTION_TRIALS - 1)
+        )
+        assert not report.valid
+        assert any("reaction trials" in f for f in report.failures)
+
+    def test_too_few_taps_are_rejected(self) -> None:
+        report = evaluate_quality(TaskMetrics(valid_taps=MIN_VALID_TAPS - 1))
+        assert not report.valid
+        assert any("taps" in f for f in report.failures)
+
+    def test_the_default_sits_exactly_on_every_limit(self) -> None:
+        boundary = TaskMetrics()
+        assert boundary.anticipations == MAX_ANTICIPATIONS
+        assert boundary.valid_reaction_trials == MIN_VALID_REACTION_TRIALS
+        assert boundary.valid_taps == MIN_VALID_TAPS

@@ -224,6 +224,13 @@ class ScreeningEngine {
 
   final List<EngineSession> _pool = [];
 
+  /// Full tests collected so far to calibrate the extended features.
+  final List<EngineSession> _extensionPool = [];
+
+  /// Full tests that carried an extended feature, including any set aside as practice, so
+  /// the practice allowance is counted from the same place.
+  int _extensionSeen = 0;
+
   /// None until the baseline is frozen.
   Baseline? get baseline => _baseline;
 
@@ -235,6 +242,9 @@ class ScreeningEngine {
 
   /// Sessions passed to [update], valid or not.
   int get sessionsSeen => _seen;
+
+  /// Full tests counted towards calibrating the extended features.
+  int get calibrationCollected => _extensionPool.length;
 
   /// True once a baseline has been frozen.
   bool get baselineReady => _baseline != null;
@@ -273,7 +283,41 @@ class ScreeningEngine {
       return SessionResult.excluded(sessionId: session.sessionId);
     }
 
+    // Before scoring, so that a test which completes a feature's calibration is scored with
+    // it. That test helped set the baseline it is measured against, so for that feature it is
+    // in-sample, as the baseline tests are.
+    calibrate(session);
     return _score(session);
+  }
+
+  /// Counts [session] towards the extended features' baselines, if it qualifies.
+  ///
+  /// Only valid, unconfounded full tests that carry at least one feature still waiting for a
+  /// baseline count. Once a feature has enough values its baseline is frozen (see
+  /// `Baseline.extended`) and later tests cannot move it. Does nothing before the baseline
+  /// tests are done, or after every feature has a baseline.
+  void calibrate(EngineSession session) {
+    final baseline = _baseline;
+    if (baseline == null || baseline.isComplete) return;
+    if (!session.valid || (useContext && session.confounded)) return;
+    final carriesPending = baseline.pendingKeys.any(
+      session.features.containsKey,
+    );
+    if (!carriesPending) return;
+
+    _extensionSeen += 1;
+    if (_extensionSeen <= kExtensionFamiliarisation) return;
+    _extensionPool.add(session);
+    _baseline = baseline.extended(_extensionPool, required: kExtensionTests);
+  }
+
+  /// Rebuilds the calibration state from stored full tests, oldest first.
+  ///
+  /// The pool is not part of the serialised state: the tests live in the database and are
+  /// replayed on startup, as the baseline pool is. Nothing is scored, so the smoothing state
+  /// is untouched.
+  void calibrateFrom(Iterable<EngineSession> sessions) {
+    sessions.forEach(calibrate);
   }
 
   SessionResult _accumulateBaseline(EngineSession session) {
@@ -340,6 +384,7 @@ class ScreeningEngine {
     'ewma': _ewma,
     'run': _run,
     'seen': _seen,
+    'calibrationCollected': _extensionPool.length,
   };
 
   /// Restores an engine from [toJson].

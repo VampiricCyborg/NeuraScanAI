@@ -12,6 +12,7 @@ import pytest
 
 from neurascan_engine import (
     BASELINE_SESSIONS,
+    CORE_FEATURE_KEYS,
     FAMILIARISATION_SESSIONS,
     PRIOR_SCALE_FLOOR_FRACTION,
     Baseline,
@@ -248,7 +249,8 @@ class TestSmallBaselineDoesNotUnderstateVariability:
         baseline = Baseline.fit(
             [make_session(session_id=str(i)) for i in range(BASELINE_SESSIONS)]
         )
-        for key, spec in SPEC_BY_KEY.items():
+        for key in CORE_FEATURE_KEYS:
+            spec = SPEC_BY_KEY[key]
             assert (
                 baseline.scale[key]
                 >= (PRIOR_SCALE_FLOOR_FRACTION * spec.typical_day_to_day_sd) - 1e-12

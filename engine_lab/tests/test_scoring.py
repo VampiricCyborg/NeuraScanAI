@@ -17,6 +17,7 @@ from neurascan_engine import (
     contributions,
     deviation_index,
     domain_scores_from,
+    normalised_weights,
     top_contributor,
 )
 
@@ -53,9 +54,16 @@ class TestUT6OrientationRaisesTheRightScore:
         worse = make_session(jitter={"spiral_rmse": +3.0, "tremor_index": +3.0})
         assert domain_scores_from(worse.features, baseline)[Domain.MOTOR] > 0.0
 
-    def test_there_are_three_areas_and_no_typing_one(self) -> None:
-        """Reaction and typing were dropped, and the typing area went with them."""
-        assert {domain.value for domain in Domain} == {"cognitive", "speech", "motor"}
+    def test_there_are_four_areas(self) -> None:
+        assert {domain.value for domain in Domain} == {
+            "cognitive",
+            "speech",
+            "motor",
+            "interaction",
+        }
+
+    def test_the_configured_weights_sum_to_one(self) -> None:
+        assert sum(DOMAIN_WEIGHTS.values()) == pytest.approx(1.0)
 
     def test_every_area_has_at_least_one_measurement(self) -> None:
         for domain in Domain:
@@ -134,10 +142,15 @@ class TestUT7ImprovementsNeverRaiseTheIndex:
         assert indices[0] < indices[-1]
 
     def test_index_respects_the_configured_weights(self, baseline: Baseline) -> None:
-        """A pure single-domain deviation is that domain's weight times its score."""
+        """A pure single-domain deviation is its normalised weight times its score.
+
+        A baseline-style session has no typing, so the interaction area has no data
+        and the other three weights are re-normalised over what is left.
+        """
         session = make_session(jitter={"spiral_rmse": +4.0, "tremor_index": +4.0})
         scores = domain_scores_from(session.features, baseline)
-        expected = DOMAIN_WEIGHTS[Domain.MOTOR] * scores[Domain.MOTOR]
+        weights = normalised_weights(frozenset(scores))
+        expected = weights[Domain.MOTOR] * scores[Domain.MOTOR]
         assert deviation_index(scores) == pytest.approx(expected)
 
 
@@ -192,9 +205,10 @@ class TestUT8ContributionsSumToOne:
         scores = domain_scores_from(session.features, baseline)
         index = deviation_index(scores)
         shares = contributions(scores)
-        for domain, share in shares.items():
-            expected = DOMAIN_WEIGHTS[domain] * max(0.0, scores[domain]) / index
-            assert share == pytest.approx(expected)
+        weights = normalised_weights(frozenset(scores))
+        for domain in scores:
+            expected = weights[domain] * max(0.0, scores[domain]) / index
+            assert shares[domain] == pytest.approx(expected)
 
     def test_top_contributor_names_the_declining_domain(
         self, baseline: Baseline

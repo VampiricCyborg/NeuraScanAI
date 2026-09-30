@@ -91,4 +91,46 @@ void main() {
       expect(report.reason(), contains('spiral'));
     });
   });
+
+  group('the reaction and tapping gates', () {
+    test('three anticipations are rejected (TC4)', () {
+      final report = evaluateQuality(
+        const TaskMetrics(anticipations: kMaxAnticipations + 1),
+      );
+      expect(report.valid, isFalse);
+      expect(report.failures.join(), contains('before the stimulus'));
+    });
+
+    test('two anticipations are tolerated as ordinary impatience', () {
+      expect(
+        evaluateQuality(const TaskMetrics(anticipations: kMaxAnticipations))
+            .valid,
+        isTrue,
+      );
+    });
+
+    test('too few usable reaction trials are rejected', () {
+      final report = evaluateQuality(
+        const TaskMetrics(validReactionTrials: kMinValidReactionTrials - 1),
+      );
+      expect(report.valid, isFalse);
+      expect(report.failures.join(), contains('reaction trials'));
+    });
+
+    test('too few taps are rejected', () {
+      final report = evaluateQuality(
+        const TaskMetrics(validTaps: kMinValidTaps - 1),
+      );
+      expect(report.valid, isFalse);
+      expect(report.failures.join(), contains('taps'));
+    });
+
+    test('the default sits exactly on every limit', () {
+      const boundary = TaskMetrics();
+      expect(boundary.anticipations, kMaxAnticipations);
+      expect(boundary.validReactionTrials, kMinValidReactionTrials);
+      expect(boundary.validTaps, kMinValidTaps);
+      expect(evaluateQuality(boundary).valid, isTrue);
+    });
+  });
 }

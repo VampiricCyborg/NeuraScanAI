@@ -9,6 +9,7 @@ library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:neurascan_ai/engine/baseline.dart';
 import 'package:neurascan_ai/engine/comparison.dart';
+import 'package:neurascan_ai/engine/constants.dart';
 import 'package:neurascan_ai/engine/features.dart';
 import 'package:neurascan_ai/engine/scoring.dart';
 
@@ -18,13 +19,24 @@ void main() {
   late Baseline baseline;
 
   setUp(() {
-    baseline = Baseline.fit(variedBaselineSessions());
+    // A complete baseline: the core features from baseline tests, the rest calibrated from
+    // the first full tests.
+    baseline = Baseline.fit(
+      variedBaselineSessions(),
+    ).extended(variedFullSessions(kExtensionTests), required: kExtensionTests);
   });
 
-  /// The baseline's centre, with [sds] of the user's own spread added to one feature.
+  /// The baseline's centre, with [sds] of the user's own spread added to some features.
   Map<String, double> features({Map<String, double> sds = const {}}) => {
     for (final key in kFeatureKeys)
       key: baseline.median[key]! + (sds[key] ?? 0.0) * baseline.scale[key]!,
+  };
+
+  /// Every feature of [domain] moved [worse] of its own spread in the bad direction (a
+  /// negative number is a move in the good direction), whichever way each one points.
+  Map<String, double> whole(Domain domain, double worse) => {
+    for (final spec in specsFor(domain))
+      spec.key: spec.direction == Direction.higherIsWorse ? worse : -worse,
   };
 
   MeasurementComparison measurement(TestComparison comparison, String key) =>
@@ -64,24 +76,19 @@ void main() {
     });
 
     test('each measurement is oriented the right way round', () {
-      // Speaking faster is better; pausing more, tracing less accurately and shaking more
-      // are worse. A wrong sign for any of these would reverse what the user is told.
-      final cases = <String, ({double up, Change expected})>{
-        'delayed_recall': (up: 3.0, expected: Change.better),
-        'speaking_rate': (up: 3.0, expected: Change.better),
-        'pause_ratio': (up: 3.0, expected: Change.worse),
-        'spiral_rmse': (up: 3.0, expected: Change.worse),
-        'tremor_index': (up: 3.0, expected: Change.worse),
-      };
-      for (final entry in cases.entries) {
+      // A wrong sign for any of these would reverse what the user is told.
+      for (final spec in kFeatureSpecs) {
+        final expectedForRise = spec.direction == Direction.lowerIsWorse
+            ? Change.better
+            : Change.worse;
         final comparison = compareTests(
-          latest: features(sds: {entry.key: entry.value.up}),
+          latest: features(sds: {spec.key: 3.0}),
           baseline: baseline,
         );
         expect(
-          measurement(comparison, entry.key).vsBaseline,
-          entry.value.expected,
-          reason: 'a rise in ${entry.key}',
+          measurement(comparison, spec.key).vsBaseline,
+          expectedForRise,
+          reason: 'a rise in ${spec.key}',
         );
       }
     });
@@ -209,7 +216,7 @@ void main() {
 
     test('an area\'s score is the same one the engine uses', () {
       final latest = features(
-        sds: {'delayed_recall': -2.0, 'pause_ratio': 1.0},
+        sds: {'delayed_recall': -2.0, 'pause_ratio': 1.0, 'tap_rate': -1.5},
       );
       final comparison = compareTests(latest: latest, baseline: baseline);
       final engineScores = domainScores(
@@ -222,9 +229,9 @@ void main() {
       }
     });
 
-    test('a decline in one area does not colour the others', () {
+    test('a decline across one area does not colour the others', () {
       final comparison = compareTests(
-        latest: features(sds: {'delayed_recall': -4.0}),
+        latest: features(sds: whole(Domain.cognitive, 4.0)),
         baseline: baseline,
       );
       Change of(Domain d) =>
@@ -232,6 +239,25 @@ void main() {
       expect(of(Domain.cognitive), Change.worse);
       expect(of(Domain.speech), Change.similar);
       expect(of(Domain.motor), Change.similar);
+      expect(of(Domain.interaction), Change.similar);
+    });
+
+    test('one measurement is averaged with the rest of its area', () {
+      // Delayed recall is one of nine cognitive measurements, so a drop in it alone moves the
+      // area by a ninth of that much: visible in the measurement, muted in the area.
+      final comparison = compareTests(
+        latest: features(sds: {'delayed_recall': -4.0}),
+        baseline: baseline,
+      );
+      expect(
+        measurement(comparison, 'delayed_recall').vsBaseline,
+        Change.worse,
+      );
+      final cognitive = comparison.areas.firstWhere(
+        (a) => a.domain == Domain.cognitive,
+      );
+      expect(cognitive.score, closeTo(4.0 / 9.0, 1e-9));
+      expect(cognitive.vsBaseline, Change.similar);
     });
 
     test('an area with mixed measurements averages them', () {
@@ -250,8 +276,8 @@ void main() {
 
     test('the change since last time is measured on the area score', () {
       final comparison = compareTests(
-        latest: features(sds: {'delayed_recall': -1.0}),
-        previous: features(sds: {'delayed_recall': -4.0}),
+        latest: features(sds: whole(Domain.cognitive, 1.0)),
+        previous: features(sds: whole(Domain.cognitive, 4.0)),
         baseline: baseline,
       );
       final cognitive = comparison.areas.firstWhere(
@@ -274,11 +300,27 @@ void main() {
     });
 
     test('an area with nothing measured is left out', () {
-      final motorless = features()
-        ..remove('spiral_rmse')
-        ..remove('tremor_index');
-      final comparison = compareTests(latest: motorless, baseline: baseline);
-      expect(comparison.areas.any((a) => a.domain == Domain.motor), isFalse);
+      final typingless = features()
+        ..remove('inter_key_interval')
+        ..remove('inter_key_cv');
+      final comparison = compareTests(latest: typingless, baseline: baseline);
+      expect(
+        comparison.areas.any((a) => a.domain == Domain.interaction),
+        isFalse,
+      );
+    });
+
+    test('a measurement still calibrating has no baseline and is left out', () {
+      // Right after the baseline tests only the core features have one.
+      final partialBaseline = Baseline.fit(variedBaselineSessions());
+      final comparison = compareTests(
+        latest: makeFullSession().features,
+        baseline: partialBaseline,
+      );
+      expect(
+        {for (final m in comparison.measurements) m.spec.key},
+        {...kCoreFeatureKeys},
+      );
     });
   });
 }

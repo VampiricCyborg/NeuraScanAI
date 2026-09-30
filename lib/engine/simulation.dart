@@ -123,7 +123,9 @@ SimulatedTrend simulateTrend({
 
     final features = <String, double>{};
     for (final spec in kFeatureSpecs) {
-      final centre = baseline.median[spec.key]!;
+      // A measurement still calibrating has no baseline to simulate around.
+      final centre = baseline.median[spec.key];
+      if (centre == null) continue;
       final spread = baseline.scale[spec.key]!;
       var value = centre + _gaussian(random) * spread;
 

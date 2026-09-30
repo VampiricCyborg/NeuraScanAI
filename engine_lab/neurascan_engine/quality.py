@@ -4,7 +4,8 @@ A step that was not performed properly is worse than no step at all: it enters a
 baseline as if it were normal behaviour, or it produces a deviation that has
 nothing to do with the user's neurology.  These gates catch the failure modes we
 can detect mechanically -- saying almost nothing during the speech step,
-abandoning the spiral part-way.
+abandoning the spiral part-way, guessing through the reaction trials, tapping too
+few times to measure a rhythm.
 
 The gates apply to a single step, not to a whole test.  A step that fails is
 simply done again, so one quiet room or one slipped finger does not throw away a
@@ -20,7 +21,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .constants import MIN_SPIRAL_COVERAGE, MIN_VOICED_SECONDS
+from .constants import (
+    MAX_ANTICIPATIONS,
+    MIN_SPIRAL_COVERAGE,
+    MIN_VALID_REACTION_TRIALS,
+    MIN_VALID_TAPS,
+    MIN_VOICED_SECONDS,
+)
 
 
 @dataclass(frozen=True)
@@ -37,6 +44,15 @@ class TaskMetrics:
 
     #: Share of the guide spiral covered by the trace, in 0..1.
     spiral_coverage: float = MIN_SPIRAL_COVERAGE
+
+    #: Taps that landed before the reaction stimulus appeared.
+    anticipations: int = MAX_ANTICIPATIONS
+
+    #: Reaction trials that produced a usable time.
+    valid_reaction_trials: int = MIN_VALID_REACTION_TRIALS
+
+    #: Correctly alternated taps in the finger-tapping step.
+    valid_taps: int = MIN_VALID_TAPS
 
 
 @dataclass(frozen=True)
@@ -67,6 +83,24 @@ def evaluate_quality(metrics: TaskMetrics) -> QualityReport:
         failures.append(
             f"spiral only {metrics.spiral_coverage * 100:.0f} % traced "
             f"(at least {MIN_SPIRAL_COVERAGE * 100:.0f} % needed)"
+        )
+
+    if metrics.anticipations > MAX_ANTICIPATIONS:
+        failures.append(
+            f"{metrics.anticipations} taps came before the stimulus "
+            f"(at most {MAX_ANTICIPATIONS} allowed)"
+        )
+
+    if metrics.valid_reaction_trials < MIN_VALID_REACTION_TRIALS:
+        failures.append(
+            f"only {metrics.valid_reaction_trials} usable reaction trials "
+            f"(at least {MIN_VALID_REACTION_TRIALS} needed)"
+        )
+
+    if metrics.valid_taps < MIN_VALID_TAPS:
+        failures.append(
+            f"only {metrics.valid_taps} alternating taps "
+            f"(at least {MIN_VALID_TAPS} needed)"
         )
 
     return QualityReport(valid=not failures, failures=tuple(failures))

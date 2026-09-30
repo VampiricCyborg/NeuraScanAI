@@ -130,9 +130,11 @@ void main() {
       test(
         'a pure single-domain deviation is that domain weight times its score',
         () {
+          // A baseline-style session has no typing, so the interaction area has no data and
+          // the other weights are re-normalised over what is left.
           final scores = scoresFor({'spiral_rmse': 4.0, 'tremor_index': 4.0});
-          final expected =
-              kDomainWeights[Domain.motor]! * scores[Domain.motor]!;
+          final weights = normalisedWeights(scores.keys);
+          final expected = weights[Domain.motor]! * scores[Domain.motor]!;
           expect(deviationIndex(scores), closeTo(expected, 1e-12));
         },
       );
@@ -198,9 +200,10 @@ void main() {
         });
         final index = deviationIndex(scores);
         final shares = contributions(scores);
-        for (final domain in Domain.values) {
+        final weights = normalisedWeights(scores.keys);
+        for (final domain in scores.keys) {
           final expected =
-              kDomainWeights[domain]! *
+              weights[domain]! *
               (scores[domain]! > 0 ? scores[domain]! : 0.0) /
               index;
           expect(shares[domain], closeTo(expected, 1e-12), reason: domain.key);
@@ -224,16 +227,13 @@ void main() {
         expect(percentages.values.reduce((a, b) => a + b), 100);
       });
 
-      test(
-        'percentages of an even three-way split still total one hundred',
-        () {
-          final shares = {for (final domain in Domain.values) domain: 1 / 3};
-          expect(
-            contributionPercentages(shares).values.reduce((a, b) => a + b),
-            100,
-          );
-        },
-      );
+      test('percentages of an even four-way split still total one hundred', () {
+        final shares = {for (final domain in Domain.values) domain: 1 / 4};
+        expect(
+          contributionPercentages(shares).values.reduce((a, b) => a + b),
+          100,
+        );
+      });
 
       test('percentages of an uneven split still total one hundred', () {
         final shares = {

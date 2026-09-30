@@ -311,7 +311,7 @@ void main() {
       expect(restored.index, closeTo(result.index!, 1e-12));
       expect(restored.ewma, closeTo(result.ewma!, 1e-12));
       expect(restored.run, result.run);
-      for (final domain in Domain.values) {
+      for (final domain in result.domains!.keys) {
         expect(
           restored.domains![domain],
           closeTo(result.domains![domain]!, 1e-12),

@@ -111,3 +111,49 @@ MIN_VOICED_SECONDS = 8.0
 #: partial trace biases the radial-error statistics towards whichever part of
 #: the spiral was drawn.
 MIN_SPIRAL_COVERAGE = 0.70
+
+#: Reaction trials in the reaction-time step.
+REACTION_TRIALS = 10
+
+#: Taps before the stimulus allowed in the reaction step.  More than this and
+#: the user was guessing rather than reacting, so the median would measure
+#: luck.
+MAX_ANTICIPATIONS = 2
+
+#: Reaction trials that must produce a usable time.
+MIN_VALID_REACTION_TRIALS = 6
+
+#: Correctly alternated taps required from the ten-second finger-tapping step.
+#: Below this the rate and its regularity rest on too few intervals to mean
+#: anything, and the step is asked for again.
+MIN_VALID_TAPS = 10
+
+#: Finger-tapping duration, in seconds.
+TAPPING_SECONDS = 10
+
+#: Verbal-fluency duration, in seconds.
+FLUENCY_SECONDS = 30
+
+#: Key presses needed before typing rhythm is reported.  Fewer intervals than
+#: this give a median and a CV that are mostly noise, so the typing features
+#: are left out of that test rather than estimated badly.
+MIN_TYPING_INTERVALS = 20
+
+# --- Calibrating the extended features ---------------------------------------
+
+#: Full tests whose values fix the baseline of each extended feature.
+#:
+#: The baseline tests are three steps (words, speech, precision), so the
+#: features that only a full test measures have no baseline when the user
+#: finishes them.  They get one from their first few full tests instead, frozen in the
+#: same way: a median and a floored robust scale.  Until a feature has this many
+#: values it is reported as a raw number and does not feed the deviation index.
+#: Three matches the number of counted baseline tests.
+EXTENSION_TESTS = 3
+
+#: Full tests discarded before calibration starts collecting, to allow for
+#: practice on the new steps.  Zero follows the project's decision to calibrate
+#: from the *first* three full tests.  Raising it to one would treat the first
+#: full test as a practice run for the five new steps, as the first baseline
+#: test is for the three old ones, at the cost of a slower start.
+EXTENSION_FAMILIARISATION = 0

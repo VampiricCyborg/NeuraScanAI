@@ -113,11 +113,33 @@ const double kMinVoicedSeconds = 8.0;
 /// the spiral was drawn.
 const double kMinSpiralCoverage = 0.70;
 
+/// Taps that may land before the reaction stimulus appears. Up to two are treated as
+/// ordinary impatience and the trials are simply discarded; a third suggests the user is
+/// tapping rhythmically rather than reacting, which would make the reaction features
+/// meaningless.
+const int kMaxAnticipations = 2;
+
+/// Reaction trials that must survive discarding to compute a median and a coefficient of
+/// variation.
+const int kMinValidReactionTrials = 6;
+
+/// Correctly alternated taps required from the ten-second finger-tapping step. Below this
+/// the rate and its regularity rest on too few intervals to mean anything, and the step is
+/// asked for again.
+const int kMinValidTaps = 10;
+
+/// Key presses needed before typing rhythm is reported. Fewer intervals than this give a
+/// median and a CV that are mostly noise, so the typing features are left out of that test
+/// rather than estimated badly.
+const int kMinTypingIntervals = 20;
+
 // --- Test structure ----------------------------------------------------------
 //
-// A test is a run of steps, and every step is one of three kinds: words, speech or
-// precision. A step in an actual test has to be something the baseline also measured, or
-// there would be nothing to compare it with, so an actual test is more of the same three.
+// There are two kinds of test. A baseline test has three steps -- words, speech and a
+// precision tracing -- and four of them set the baseline. A full (actual) test has eight
+// different steps: word memory, reaction time, speech description, spiral tracing, typing
+// rhythm (measured passively), trail-making, finger tapping and verbal fluency. The word
+// memory step returns at the end as a closing part, for the delayed recall.
 
 /// Baseline tests in all: the practice run and the ones that count.
 const int kBaselineTests = kFamiliarisationSessions + kBaselineSessions;
@@ -125,20 +147,25 @@ const int kBaselineTests = kFamiliarisationSessions + kBaselineSessions;
 /// Steps in a baseline test: words, speech and precision.
 const int kBaselineTestSteps = 3;
 
-/// Word lists learned and recalled in an actual test.
-const int kActualWordSteps = 3;
+/// Steps in a full test. Eight different ones, so that each measures something the others
+/// do not: a single test then covers thinking, speech, movement and typing.
+const int kActualTestSteps = 8;
 
-/// Speech pictures described in an actual test.
-const int kActualSpeechSteps = 3;
+/// Full tests whose values fix the baseline of each feature that only a full test measures.
+///
+/// The baseline tests are three steps (words, speech, precision), so the thirteen features
+/// that only a full test measures have no baseline when the user finishes them. They get one
+/// from their first few full tests instead, frozen in the same way: a median and a floored
+/// robust scale. Until a feature has this many values it is reported as a raw number and
+/// does not feed the deviation index. Three matches the number of counted baseline tests.
+const int kExtensionTests = 3;
 
-/// Precision tracings in an actual test.
-const int kActualPrecisionSteps = 2;
-
-/// Steps in an actual test. Eight, so that each measurement is taken several times and a
-/// single unusual step cannot define the result: the test's value for a measurement is the
-/// median of its repeats.
-const int kActualTestSteps =
-    kActualWordSteps + kActualSpeechSteps + kActualPrecisionSteps;
+/// Full tests discarded before calibration starts collecting, to allow for practice on the
+/// five new steps. Zero follows the project's decision to calibrate from the *first* three
+/// full tests. Raising it to one would treat the first full test as a practice run for the
+/// five new steps, as the first baseline test is for the three old ones, at the cost of a
+/// slower start.
+const int kExtensionFamiliarisation = 0;
 
 // --- Session design ----------------------------------------------------------
 
@@ -147,8 +174,28 @@ const int kActualTestSteps =
 /// resolution.
 const int kMemoryWordCount = 8;
 
+/// Reaction trials in the reaction-time step.
+const int kReactionTrials = 10;
+
+/// Bounds of the random foreperiod before a reaction stimulus. Randomising it is what stops
+/// the user from learning the rhythm and anticipating.
+const int kForeperiodMinMs = 1000;
+const int kForeperiodMaxMs = 4000;
+
 /// Duration of the spoken picture description.
 const int kSpeechSeconds = 20;
+
+/// Finger-tapping duration, in seconds.
+const int kTappingSeconds = 10;
+
+/// Verbal-fluency duration, in seconds.
+const int kFluencySeconds = 30;
+
+/// Circles in the two parts of the trail-making step: part A is the numbers 1 to 5, part B
+/// alternates numbers and letters (1, A, 2, B, 3, C, 4, D). Part A is the user's own
+/// reference speed, so the cost of switching is the extra time per tap part B takes.
+const int kTrailPartACircles = 5;
+const int kTrailPartBCircles = 8;
 
 /// Turns in the guide spiral.
 const int kSpiralTurns = 3;
