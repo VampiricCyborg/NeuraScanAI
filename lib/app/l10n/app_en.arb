@@ -346,6 +346,51 @@
   "trendsNoData": "Your trends will appear once your baseline is set.",
   "trendsExcludedNote": "Sessions you marked as tired or unwell are not shown here.",
   "trendsHigherIsWorse": "Higher means further from your usual range.",
+  "exampleBadge": "Example, not your data",
+  "exampleTitle": "How your trends will look",
+  "exampleIntro": "These charts are simulated from your own baseline, so you can see how the measurements work before you have results of your own. Nothing on them is a result.",
+  "exampleSteadyTitle": "A steady pattern",
+  "exampleSteadyBody": "Ordinary ups and downs stay under the dashed line, so nothing is reported.",
+  "exampleChangeTitle": "A gradual change",
+  "exampleChangeBody": "The line climbs and stays above the dashed line for {count} tests in a row, so a notable change is reported at test {at}.",
+  "@exampleChangeBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "at": {
+        "type": "int"
+      }
+    }
+  },
+  "exampleChangeNever": "The line climbs, but does not stay above the dashed line for long enough to be reported.",
+  "exampleLegendScore": "Your smoothed score",
+  "exampleLegendThreshold": "Notable-change line",
+  "exampleLegendBaseline": "Your baseline",
+  "exampleAxis": "Test number",
+  "baselineCardTitle": "Your baseline",
+  "baselineCardBody": "What is normal for you, and how much it usually varies from one day to the next.",
+  "baselineRowSpread": "usually within {spread}",
+  "@baselineRowSpread": {
+    "placeholders": {
+      "spread": {
+        "type": "String"
+      }
+    }
+  },
+  "howTitle": "How the numbers are worked out",
+  "howStep1": "Each measurement is compared with your own baseline, in units of how much it usually varies for you.",
+  "howStep2": "The nine measurements are grouped into four areas: thinking, speech, movement and typing.",
+  "howStep3": "Only changes for the worse count. Doing better than usual never hides a decline somewhere else.",
+  "howStep4": "The result is smoothed, so one bad day barely moves it.",
+  "howStep5": "A notable change is reported only when the smoothed score stays above the dashed line for {count} tests in a row.",
+  "@howStep5": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "trendsBaselineNote": "Your first sessions set your baseline, so they sit close to zero by design. Real changes show from here on.",
 
   "profileTitle": "You and your settings",

@@ -19,6 +19,7 @@ import '../../app/theme.dart';
 import '../../app/widgets.dart';
 import '../../engine/constants.dart';
 import '../../engine/features.dart';
+import 'example_trends.dart';
 
 /// Overall and per-domain history.
 class TrendsScreen extends ConsumerStatefulWidget {
@@ -44,8 +45,8 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen>
     final deviation = ref.watch(deviationSeriesProvider);
     final domains = ref.watch(domainSeriesProvider);
     final verdictReady = ref.watch(verdictReadyProvider);
-    final baselineReady =
-        ref.watch(engineProvider).value?.baselineReady ?? false;
+    final baseline = ref.watch(engineProvider).value?.baseline;
+    final baselineReady = baseline != null;
 
     // Charts only once there are enough tests after the baseline for a trend to mean
     // something. Before that, a line through two or three points is mostly noise, and the
@@ -68,6 +69,11 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen>
                       total: kMinMonitoringSessions,
                     ),
                   ),
+                  const SizedBox(height: 22),
+                  // Simulated, and labelled so. The user has no results of their own yet, so
+                  // this shows their real baseline and how the measurements behave against it.
+                  ExampleTrendsSection(baseline: baseline),
+                  const SizedBox(height: 20),
                 ],
               )
             : EmptyState(icon: Icons.show_chart, message: text.trendsNoData),

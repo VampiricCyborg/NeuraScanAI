@@ -175,6 +175,44 @@ void main() {
       expect(find.textContaining('close to zero by design'), findsNothing);
     });
 
+    testWidgets('trends show the user\'s baseline and labelled examples', (
+      tester,
+    ) async {
+      // Right after the baseline the user has no results, so the tab shows how the
+      // measurements work: their real baseline, and simulated runs scored against it.
+      final app = await dashboard(tester);
+      await seed(app, history(monitoring: 0));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Trends'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your baseline'), findsWidgets);
+      expect(find.text('Example, not your data'), findsWidgets);
+      expect(
+        find.textContaining('simulated from your own baseline'),
+        findsOneWidget,
+      );
+      // The real progress is still there above the examples.
+      expect(
+        find.text('0 of $kMinMonitoringSessions tests after your baseline'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the examples are not shown before the baseline exists', (
+      tester,
+    ) async {
+      final app = await dashboard(tester);
+      await seed(app, history(monitoring: 0).take(2).toList());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Trends'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Example, not your data'), findsNothing);
+    });
+
     testWidgets('the dashboard shows progress and no status', (tester) async {
       final app = await dashboard(tester);
       await seed(app, history(monitoring: 3));
