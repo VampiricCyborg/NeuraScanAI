@@ -162,7 +162,7 @@
   "statusMild": "Mild change",
   "statusMildBody": "Your measurements have moved a little from your usual range. This is common and often passes. Keep doing your sessions.",
   "statusNotable": "Notable change that has persisted",
-  "statusNotableBody": "Your measurements have stayed outside your usual range for several sessions. This is worth mentioning to a doctor. It is not a diagnosis, and there are many ordinary explanations.",
+  "statusNotableBody": "Your measurements have stayed outside your usual range for several sessions. This is worth mentioning to a doctor. On its own it does not mean anything is wrong, and there are many ordinary explanations.",
   "statusBuilding": "Building your baseline",
   "statusBaselineSet": "Your baseline is set",
   "statusBaselineSetBody": "From now on, take a full test whenever you like. Each one is compared with your baseline and with your last test, and added to your trends.",

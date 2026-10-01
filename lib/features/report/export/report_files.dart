@@ -11,7 +11,7 @@ import 'dart:convert';
 import '../../../engine/features.dart';
 import '../calculators/analysis.dart';
 import '../calculators/trend_stats.dart';
-import 'pdf/report_pdf.dart' show kAppVersion, kEngineVersion;
+import 'pdf/report_pdf.dart' show kAppVersion, kEngineVersion, pdfDisclaimer;
 import 'report_model.dart';
 
 /// The PDF's file name: `NeuraScan_Report_<yyyy-mm-dd>.pdf`.
@@ -110,8 +110,7 @@ String buildJson(ReportModel model) {
       'to': model.to.toUtc().toIso8601String(),
     },
     'note':
-        'Derived measurements only. No audio, no touch traces. '
-        'A screening and awareness record, not a diagnosis.',
+        'Derived measurements only. No audio, no touch traces. ${pdfDisclaimer()}',
     'baseline': {
       for (final key in kExportedFeatureKeys)
         if (series[key]!.hasBaseline)
