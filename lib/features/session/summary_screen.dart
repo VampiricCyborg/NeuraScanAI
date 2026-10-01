@@ -21,7 +21,7 @@ import '../../app/theme.dart';
 import '../../app/widgets.dart';
 import '../../data/models.dart';
 import '../../engine/screening_engine.dart';
-import '../trends/comparison_section.dart';
+import '../report/screens/results_views.dart';
 
 /// The result of the session just completed.
 class SummaryScreen extends ConsumerWidget {
@@ -53,14 +53,9 @@ class SummaryScreen extends ConsumerWidget {
       );
     }
 
-    final comparison = session.countsTowardsTrend
-        ? ref.watch(comparisonProvider(session.id))
-        : null;
-    // The first full test has a result straight away, but a status from one test is an early
-    // one, and the screen says so.
-    final first =
-        session.countsTowardsTrend &&
-        ref.watch(scoredSessionCountProvider) == 1;
+    // A full test that counted gets the whole result: its status, what it is made of and a
+    // card for each of its eight steps. The first one has only an early status, and says so.
+    final scored = session.countsTowardsTrend;
 
     return Scaffold(
       appBar: AppBar(
@@ -71,28 +66,14 @@ class SummaryScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(kPagePadding),
           children: [
-            _OutcomeCard(session: session, early: first),
+            if (scored)
+              LatestTestView(sessionId: session.id, shrinkWrap: true)
+            else
+              _OutcomeCard(session: session),
             const SizedBox(height: 14),
 
             if (session.recallDetail != null) ...[
               _RecallCard(detail: session.recallDetail!),
-              const SizedBox(height: 14),
-            ],
-
-            if (comparison != null) ...[
-              ComparisonSection(comparison: comparison),
-              const SizedBox(height: 14),
-            ],
-
-            if (session.contributions != null &&
-                session.countsTowardsTrend) ...[
-              SectionCard(
-                title: text.summaryWhatContributed,
-                subtitle: text.reportContributionsBody,
-                child: ContributionBreakdown(
-                  contributions: session.contributions!,
-                ),
-              ),
               const SizedBox(height: 14),
             ],
 
@@ -119,10 +100,12 @@ class SummaryScreen extends ConsumerWidget {
               const SizedBox(height: 14),
             ],
 
-            const NotADiagnosisNote(),
-            const SizedBox(height: 20),
+            if (!scored) ...[
+              const NotADiagnosisNote(),
+              const SizedBox(height: 20),
+            ],
 
-            if (session.countsTowardsTrend)
+            if (scored)
               OutlinedButton.icon(
                 onPressed: () => context.push(Routes.report),
                 icon: const Icon(Icons.description_outlined),
@@ -143,12 +126,9 @@ class SummaryScreen extends ConsumerWidget {
 
 /// The headline outcome.
 class _OutcomeCard extends ConsumerWidget {
-  const _OutcomeCard({required this.session, required this.early});
+  const _OutcomeCard({required this.session});
 
   final SessionRecord session;
-
-  /// True for the first scored full test, whose status is an early one.
-  final bool early;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -164,16 +144,6 @@ class _OutcomeCard extends ConsumerWidget {
             _body(text, ref),
             style: context.texts.bodyMedium?.copyWith(height: 1.5),
           ),
-          if (early) ...[
-            const SizedBox(height: 12),
-            Text(
-              text.summaryEarlyNote,
-              style: context.texts.bodySmall?.copyWith(
-                color: context.colors.onSurfaceVariant,
-                height: 1.4,
-              ),
-            ),
-          ],
           if (session.status == ScreeningStatus.buildingBaseline) ...[
             const SizedBox(height: 18),
             _baselineProgress(ref),

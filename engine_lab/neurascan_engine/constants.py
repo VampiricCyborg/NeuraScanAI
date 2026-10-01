@@ -134,10 +134,6 @@ TAPPING_SECONDS = 10
 #: Verbal-fluency duration, in seconds.
 FLUENCY_SECONDS = 30
 
-#: Key presses needed before typing rhythm is reported.  Fewer intervals than
-#: this give a median and a CV that are mostly noise, so the typing features
-#: are left out of that test rather than estimated badly.
-MIN_TYPING_INTERVALS = 20
 
 # --- Calibrating the extended features ---------------------------------------
 

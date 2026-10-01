@@ -19,9 +19,7 @@ import '../data/local_db.dart';
 import '../data/models.dart';
 import '../data/repository.dart';
 import '../data/sync_service.dart';
-import '../engine/comparison.dart';
 import '../engine/constants.dart';
-import '../engine/features.dart';
 import '../engine/screening_engine.dart';
 import '../services/notifications.dart';
 
@@ -194,30 +192,6 @@ final verdictReadyProvider = Provider<bool>((ref) {
   return baselineReady && ref.watch(scoredSessionCountProvider) >= 1;
 });
 
-/// One full test laid out against the baseline and the full test before it.
-///
-/// Keyed by session id; null gives the latest. Null when there is no baseline yet or no such
-/// test. The first full test has no earlier one, so its comparison has only the baseline.
-final comparisonProvider = Provider.family<TestComparison?, String?>((
-  ref,
-  sessionId,
-) {
-  final baseline = ref.watch(engineProvider).value?.baseline;
-  final tests = ref.watch(actualTestsProvider);
-  if (baseline == null || tests.isEmpty) return null;
-
-  final index = sessionId == null
-      ? tests.length - 1
-      : tests.indexWhere((test) => test.id == sessionId);
-  if (index < 0) return null;
-
-  return compareTests(
-    latest: tests[index].features,
-    previous: index > 0 ? tests[index - 1].features : null,
-    baseline: baseline,
-  );
-});
-
 /// How far the baseline is: tests done, out of how many.
 ///
 /// The first baseline is four tests, the first a practice run; a later one is three, because
@@ -240,26 +214,3 @@ final baselineTestProgressProvider = Provider<BaselineTestProgress>((ref) {
     practicePending: hasPractice && !practiceDone,
   );
 });
-
-/// The smoothed deviation history for the main trend chart.
-final deviationSeriesProvider = Provider<List<({DateTime at, double ewma})>>((
-  ref,
-) {
-  final sessions = ref.watch(sessionsProvider).value ?? const [];
-  final baseline = ref.watch(engineProvider).value?.baseline;
-  // With a baseline, the sessions that built it are included, so trends appear as soon
-  // as the baseline is set rather than after one more session.
-  return ref
-      .watch(repositoryProvider)
-      .deviationSeries(sessions, baseline: baseline);
-});
-
-/// The per-domain history for the trend charts.
-final domainSeriesProvider =
-    Provider<Map<Domain, List<({DateTime at, double score})>>>((ref) {
-      final sessions = ref.watch(sessionsProvider).value ?? const [];
-      final baseline = ref.watch(engineProvider).value?.baseline;
-      return ref
-          .watch(repositoryProvider)
-          .domainSeries(sessions, baseline: baseline);
-    });

@@ -152,9 +152,9 @@ void main() {
       await seed(app, history(actual: 0));
       await tester.pumpAndSettle();
 
-      expect(find.text('Stable'), findsNothing);
-      expect(find.text('Worth watching'), findsNothing);
-      expect(find.text('A notable change'), findsNothing);
+      expect(find.text('Within your usual range'), findsNothing);
+      expect(find.text('Mild change'), findsNothing);
+      expect(find.text('Notable change that has persisted'), findsNothing);
       expect(find.text('See the full report'), findsNothing);
     });
 
@@ -180,7 +180,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Your baseline is set'), findsOneWidget);
-      expect(find.text('Stable'), findsNothing);
+      expect(find.text('Within your usual range'), findsNothing);
     });
   });
 
@@ -191,7 +191,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Your baseline is set'), findsNothing);
-      expect(find.text('Stable'), findsOneWidget);
+      expect(find.text('Within your usual range'), findsOneWidget);
     });
 
     testWidgets('and the report is available', (tester) async {
@@ -213,13 +213,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Take your first full test'), findsNothing);
-      expect(find.text('How this test compares'), findsOneWidget);
-      // Nothing earlier to compare with, and it says so.
-      expect(
-        find.textContaining('your first full test, so there is no earlier'),
-        findsOneWidget,
-      );
-      expect(find.text('Against last test'), findsNothing);
+      // The three views, and the first of them is the latest test with its eight cards.
+      expect(find.text('Latest test'), findsOneWidget);
+      expect(find.text('Every test'), findsOneWidget);
+      expect(find.text('Within your usual range'), findsOneWidget);
+      expect(find.text('Word memory'), findsOneWidget);
+
+      // Nothing earlier to compare with, and the card says so.
+      await tester.tap(find.text('Word memory'));
+      await tester.pumpAndSettle();
+      expect(find.text('No earlier counted test yet.'), findsWidgets);
     });
 
     testWidgets('the summary shows an early status and the comparison', (
@@ -234,9 +237,14 @@ void main() {
           .go('${Routes.summary}?sessionId=seed-$firstFullTest');
       await tester.pumpAndSettle();
 
-      expect(find.text('Stable'), findsOneWidget);
+      expect(find.text('Within your usual range'), findsOneWidget);
       expect(find.textContaining('This is an early result'), findsOneWidget);
-      expect(find.text('How this test compares'), findsOneWidget);
+      expect(find.text('Word memory'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('See the full report'),
+        400,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('See the full report'), findsOneWidget);
     });
 
@@ -272,8 +280,11 @@ void main() {
           .go('${Routes.summary}?sessionId=seed-${firstFullTest + 1}');
       await tester.pumpAndSettle();
 
-      expect(find.text('Against last test'), findsWidgets);
-      expect(find.textContaining('no earlier test'), findsNothing);
+      await tester.tap(find.text('Word memory'));
+      await tester.pumpAndSettle();
+      expect(find.text('Against your earlier tests'), findsWidgets);
+      expect(find.textContaining('Last test'), findsWidgets);
+      expect(find.text('No earlier counted test yet.'), findsNothing);
       // No longer the first, so no early-result note.
       expect(find.textContaining('This is an early result'), findsNothing);
     });
@@ -288,9 +299,17 @@ void main() {
       await tester.tap(find.text('Trends'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Against your usual'), findsWidgets);
-      expect(find.text('Against last test'), findsWidgets);
-      expect(find.text('Overall'), findsOneWidget);
+      await tester.tap(find.text('Word memory'));
+      await tester.pumpAndSettle();
+      expect(find.text('Against your baseline'), findsWidgets);
+      expect(find.text('Against your earlier tests'), findsWidgets);
+
+      // The charts are on their own tab.
+      await tester.tap(
+        find.descendant(of: find.byType(TabBar), matching: find.text('Trends')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Overall deviation index'), findsOneWidget);
     });
 
     testWidgets('a test set aside in the middle is left out of the count', (
@@ -312,7 +331,7 @@ void main() {
       final app = await dashboard(tester);
       await seed(app, history(actual: 2));
       await tester.pumpAndSettle();
-      expect(find.text('Stable'), findsOneWidget);
+      expect(find.text('Within your usual range'), findsOneWidget);
 
       await tester.tap(find.text('You'));
       await tester.pumpAndSettle();
@@ -336,7 +355,7 @@ void main() {
         find.text('Building your baseline: 0 of $kBaselineSessions tests'),
         findsOneWidget,
       );
-      expect(find.text('Stable'), findsNothing);
+      expect(find.text('Within your usual range'), findsNothing);
     });
 
     testWidgets('keeps the earlier tests but stops counting them', (

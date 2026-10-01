@@ -1,0 +1,168 @@
+{
+  "version": 1,
+  "note": "Population reference ranges, shown for context only and never used for any status. EVERY entry below is a placeholder: no range has been sourced, so low and high are null and there is no citation. To add a real range, set low, high, unit, source_citation and evidence_level to \"published\" for that metric and age band; see docs/REPORT_MODULE.md. The app shows \"Reference range not yet validated\" for anything that is not a complete, published entry.",
+  "ranges": [
+    {
+      "metric": "immediate_recall",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "fraction",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "delayed_recall",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "fraction",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "reaction_median",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "ms",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "reaction_cv",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "speaking_rate",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "syllables/min",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "pause_ratio",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "spiral_rmse",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "dp",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "tremor_index",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "inter_key_interval",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "ms",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "inter_key_cv",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "completion_time",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "s",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "error_count",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "taps",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "switch_cost",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "s/tap",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "tap_rate",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "taps/s",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "tap_interval_cv",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "fatigue_decay",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "fraction",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "valid_word_count",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "words",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    },
+    {
+      "metric": "fluency_half_ratio",
+      "age_band": "all",
+      "low": null,
+      "high": null,
+      "unit": "",
+      "source_citation": null,
+      "evidence_level": "placeholder"
+    }
+  ]
+}

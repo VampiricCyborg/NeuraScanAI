@@ -58,17 +58,17 @@ const Map<ScreeningStatus, StatusPresentation> kStatusPresentation = {
   ScreeningStatus.stable: StatusPresentation(
     color: Color(0xFF2E7D57),
     icon: Icons.check_circle_outline,
-    label: 'Stable',
+    label: 'Within your usual range',
   ),
   ScreeningStatus.mildDeviation: StatusPresentation(
     color: Color(0xFF9A6A00),
     icon: Icons.trending_up,
-    label: 'Worth watching',
+    label: 'Mild change',
   ),
   ScreeningStatus.notableDeviation: StatusPresentation(
     color: Color(0xFFB4530A),
     icon: Icons.info_outline,
-    label: 'Notable change',
+    label: 'Notable change that has persisted',
   ),
   ScreeningStatus.buildingBaseline: StatusPresentation(
     color: Color(0xFF146C7A),

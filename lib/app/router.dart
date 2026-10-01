@@ -19,7 +19,9 @@ import '../features/onboarding/onboarding_screen.dart';
 import '../features/onboarding/splash_screen.dart';
 import '../features/profile/privacy_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/report/export/report_model.dart';
 import '../features/report/report_screen.dart';
+import '../features/report/screens/results_views.dart';
 import '../features/session/session_screen.dart';
 import '../features/session/summary_screen.dart';
 import '../features/trends/trends_screen.dart';
@@ -39,6 +41,8 @@ abstract final class Routes {
   static const session = '/session';
   static const summary = '/session/summary';
   static const report = '/report';
+  static const metric = '/metric';
+  static const reportPreview = '/report/preview';
 }
 
 /// Routes reachable without being signed in.
@@ -93,6 +97,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.report,
         builder: (context, state) => const ReportScreen(),
+      ),
+      GoRoute(
+        path: Routes.reportPreview,
+        builder: (context, state) =>
+            ReportPreviewScreen(model: state.extra! as ReportModel),
+      ),
+      GoRoute(
+        path: Routes.metric,
+        builder: (context, state) => MetricDetailScreen(
+          metricKey: state.uri.queryParameters['key'] ?? '',
+        ),
       ),
 
       // The three tabs share a shell so switching between them keeps their state.

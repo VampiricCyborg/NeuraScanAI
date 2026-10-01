@@ -157,11 +157,11 @@
     }
   },
 
-  "statusStable": "Stable",
+  "statusStable": "Within your usual range",
   "statusStableBody": "Your measurements are within your usual range.",
-  "statusMild": "Worth watching",
+  "statusMild": "Mild change",
   "statusMildBody": "Your measurements have moved a little from your usual range. This is common and often passes. Keep doing your sessions.",
-  "statusNotable": "A notable change",
+  "statusNotable": "Notable change that has persisted",
   "statusNotableBody": "Your measurements have stayed outside your usual range for several sessions. This is worth mentioning to a doctor. It is not a diagnosis, and there are many ordinary explanations.",
   "statusBuilding": "Building your baseline",
   "statusBaselineSet": "Your baseline is set",
@@ -438,6 +438,294 @@
   "trendsOverall": "Overall",
   "trendsByDomain": "By area",
   "trendsCompare": "Compare",
+  "resTabLatest": "Latest test",
+  "resTabTrends": "Trends",
+  "resTabLog": "Every test",
+  "resTopFeatures": "What moved the most",
+  "resTopFeaturesNone": "Nothing stood out from your usual pattern.",
+  "resMayExplain": "What may explain this",
+  "resMayExplainNone": "You did not log anything unusual for this test.",
+  "resMayExplainBody": "You logged: {items}. These are things you told the app, not causes.",
+  "@resMayExplainBody": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "resCtxSleepFair": "Sleep was so-so",
+  "resCtxSleepPoor": "Poor sleep",
+  "resCtxFatigueSome": "A little tired",
+  "resCtxFatigueVery": "Very tired",
+  "resCtxIllness": "Illness or a medication change",
+  "resCalibratingNote": "{count, plural, =1{One measurement is still calibrating.} other{{count} measurements are still calibrating.}} They are shown as raw values until you have taken {tests} full tests.",
+  "@resCalibratingNote": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "tests": {
+        "type": "int"
+      }
+    }
+  },
+  "resValid": "Counted",
+  "resNotCounted": "Not counted",
+  "resNotMeasured": "Not measured",
+  "resCalibrating": "Calibrating",
+  "resNotCountedWhy": "Not counted: {reasons}",
+  "@resNotCountedWhy": {
+    "placeholders": {
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "resNotMeasuredTyping": "Too little typing to time the rhythm.",
+  "resNotMeasuredOther": "Not taken in this test.",
+  "resThisTest": "This test",
+  "resVsBaselineTitle": "Against your baseline",
+  "resVsBaselineNote": "The most meaningful comparison, and the only one that decides your status.",
+  "resBaselineLine": "Baseline {median}, usually within {spread}",
+  "@resBaselineLine": {
+    "placeholders": {
+      "median": {
+        "type": "String"
+      },
+      "spread": {
+        "type": "String"
+      }
+    }
+  },
+  "resZScore": "z-score: {z}",
+  "@resZScore": {
+    "placeholders": {
+      "z": {
+        "type": "String"
+      }
+    }
+  },
+  "resVsEarlierTitle": "Against your earlier tests",
+  "resLast": "Last test",
+  "resAvg4": "Average of the last 4",
+  "resBest": "Best so far",
+  "resWorst": "Worst so far",
+  "resNoEarlier": "No earlier counted test yet.",
+  "resImproved": "Improved",
+  "resStable": "Stable",
+  "resWorse": "Worse",
+  "resPopulationTitle": "Population range (context only)",
+  "resPopulationNotValidated": "Reference range not yet validated",
+  "resPopulationRange": "{low} to {high}",
+  "@resPopulationRange": {
+    "placeholders": {
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      }
+    }
+  },
+  "resPopulationSource": "Source: {citation}",
+  "@resPopulationSource": {
+    "placeholders": {
+      "citation": {
+        "type": "String"
+      }
+    }
+  },
+  "resPopulationNote": "Shown for context. It never decides your status.",
+  "resInterpHigher": "{metric} was {amount} higher than your baseline.",
+  "@resInterpHigher": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "resInterpLower": "{metric} was {amount} lower than your baseline.",
+  "@resInterpLower": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "resInterpSame": "{metric} was about the same as your baseline.",
+  "@resInterpSame": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "resInterpCalibrating": "{metric} was {value}. Its baseline is still being set ({done} of {total} tests).",
+  "@resInterpCalibrating": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      },
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "resInterpNotCounted": "{metric} was {value}. This test is not counted.",
+  "@resInterpNotCounted": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resInterpNotMeasured": "{metric} could not be measured in this test.",
+  "@resInterpNotMeasured": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "resAmountWords": "{count, plural, =1{1 word} other{{count} words}}",
+  "@resAmountWords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resRange7": "Last 7 tests",
+  "resRange30": "30 days",
+  "resRange90": "90 days",
+  "resRangeAll": "All",
+  "resRangeLabel": "Show",
+  "resChartOverall": "Overall deviation index",
+  "resChartOverallNote": "Higher is worse. The dashed lines are the mild and notable levels.",
+  "resChartShares": "What the change is made of",
+  "resChartSharesNote": "Each bar is one test and adds up to 100%.",
+  "resChartAreas": "By area",
+  "resChartMetrics": "By measurement",
+  "resChartMetricsNote": "Tap a measurement to see its chart and how it compares.",
+  "resLegendBaseline": "Your baseline",
+  "resLegendBand": "Usual spread",
+  "resLegendSmoothed": "Smoothed",
+  "resLegendCounted": "Counted test",
+  "resLegendExcluded": "Set aside, not counted",
+  "resLegendPopulation": "Population range (context)",
+  "resLegendMild": "Mild level",
+  "resLegendNotable": "Notable level",
+  "resLegendIndex": "Index",
+  "resNoChartData": "Nothing to chart yet. Take a full test first.",
+  "resNoChartInRange": "No tests in this range.",
+  "resNotEnoughData": "Not enough data yet ({n} of {min})",
+  "@resNotEnoughData": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "resTrendDirection": "Direction",
+  "resTrendImproving": "Improving",
+  "resTrendStable": "Stable",
+  "resTrendDeclining": "Declining",
+  "resTrendSlope": "Slope: {slope} per test",
+  "@resTrendSlope": {
+    "placeholders": {
+      "slope": {
+        "type": "String"
+      }
+    }
+  },
+  "resTrendEwma": "Smoothed level: {value} spreads",
+  "@resTrendEwma": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resTrendRunMild": "In a row at or above the mild level: {count}",
+  "@resTrendRunMild": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resTrendRunNotable": "In a row at or above the notable level: {count}",
+  "@resTrendRunNotable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resTrendValidOnly": "Worked out from counted tests only.",
+  "resChartSemantics": "{name}, trend {direction} over {count} tests",
+  "@resChartSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "direction": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resChartSemanticsNone": "{name}, not enough data for a trend yet, {n} of {min} tests",
+  "@resChartSemanticsNone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "resMetricDetail": "Measurement",
+  "resLogTitle": "Every test you have taken",
+  "resLogNote": "Tests that are not counted are listed too, with the reason.",
+  "resLogPractice": "Practice test",
+  "resLogBaseline": "Baseline test",
+  "resLogFull": "Full test",
+  "resLogIndex": "Index {value}",
+  "@resLogIndex": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resLogBuilding": "Builds your baseline",
+  "resLogPracticeWhy": "Practice only, so it is not counted.",
+  "resDisclaimer": "This is a screening and awareness tool, not a diagnosis. Many things such as stress, poor sleep or illness can change results. If you are concerned, please discuss this report with a doctor.",
   "trendsFirstTestTitle": "Take your first full test",
   "trendsFirstTestBody": "Your baseline is set. Once you have taken a full test, this page compares it with your baseline and with your later tests, and draws your trends. Until then, here is an example of how it works.",
   "trendsExampleToggle": "How trends work: an example",
@@ -600,5 +888,51 @@
       }
     }
   },
-  "aboutBody": "Built as a Project-Based Learning submission for Mobile Application Development at Chennai Institute of Technology. The screening method has not been clinically validated, and the app is not a medical device."
+  "aboutBody": "Built as a Project-Based Learning submission for Mobile Application Development at Chennai Institute of Technology. The screening method has not been clinically validated, and the app is not a medical device.",
+  "repPeriodTitle": "Period",
+  "repPeriodNote": "Which tests the report covers.",
+  "repSectionsTitle": "Sections",
+  "repSectionsNote": "The cover, the summary and the closing note are always included.",
+  "repSecDomains": "A page for each area",
+  "repSecTests": "A section for each of the eight tests",
+  "repSecLog": "Every test in the period",
+  "repSecMethods": "Methods and limitations",
+  "repLabelTitle": "Name or label",
+  "repLabelHint": "Optional, shown on the cover",
+  "repPreviewTitle": "What the report will contain",
+  "repPreviewBody": "{valid} counted tests and {aside} set aside, from {from} to {to}.",
+  "@repPreviewBody": {
+    "placeholders": {
+      "valid": {
+        "type": "int"
+      },
+      "aside": {
+        "type": "int"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "repPdfEnglish": "The PDF is written in English.",
+  "repPreviewOpen": "Preview the PDF",
+  "repPreviewScreenTitle": "Report preview",
+  "repExportTitle": "Export",
+  "repShare": "Share",
+  "repSave": "Save to device",
+  "repPrint": "Print",
+  "repCsv": "Save data as CSV",
+  "repJson": "Save data as JSON",
+  "repDataNote": "The CSV and JSON files hold measurements and scores only. They never include audio or touch recordings.",
+  "repConsentTitle": "Before you export",
+  "repConsentBody": "This file contains your measurements and the context you logged. Once you share, save or print it, it leaves this app and its privacy settings. Continue?",
+  "repConsentContinue": "Continue",
+  "repConsentCancel": "Cancel",
+  "repBuilding": "Preparing the report",
+  "repSaved": "Saved.",
+  "repNotSaved": "Nothing was saved.",
+  "repNothingInPeriod": "There are no full tests in this period. Choose a longer period."
 }

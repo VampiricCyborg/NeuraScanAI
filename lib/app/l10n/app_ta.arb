@@ -122,11 +122,11 @@
     }
   },
 
-  "statusStable": "நிலையானது",
+  "statusStable": "உங்கள் வழக்கமான வரம்பிற்குள்",
   "statusStableBody": "உங்கள் அளவீடுகள் உங்கள் வழக்கமான வரம்பிற்குள் உள்ளன.",
-  "statusMild": "கவனிக்க வேண்டியது",
+  "statusMild": "சிறிய மாற்றம்",
   "statusMildBody": "உங்கள் அளவீடுகள் வழக்கமான வரம்பிலிருந்து சற்று நகர்ந்துள்ளன. இது பொதுவானது, பெரும்பாலும் தானே சரியாகிவிடும். உங்கள் அமர்வுகளைத் தொடர்ந்து செய்யுங்கள்.",
-  "statusNotable": "குறிப்பிடத்தக்க மாற்றம்",
+  "statusNotable": "நீடித்த குறிப்பிடத்தக்க மாற்றம்",
   "statusNotableBody": "உங்கள் அளவீடுகள் பல அமர்வுகளாக உங்கள் வழக்கமான வரம்பிற்கு வெளியே இருந்துள்ளன. இதை மருத்துவரிடம் தெரிவிப்பது நல்லது. இது நோய் கண்டறிதல் அல்ல, பல சாதாரண காரணங்கள் இருக்கலாம்.",
   "statusBuilding": "உங்கள் அடித்தளத்தை உருவாக்குகிறது",
   "statusBaselineSet": "உங்கள் அடித்தளம் நிர்ணயிக்கப்பட்டது",
@@ -345,6 +345,294 @@
   "trendsOverall": "ஒட்டுமொத்தம்",
   "trendsByDomain": "பகுதி வாரியாக",
   "trendsCompare": "ஒப்பிடு",
+  "resTabLatest": "சமீபத்திய சோதனை",
+  "resTabTrends": "போக்குகள்",
+  "resTabLog": "அனைத்துச் சோதனைகளும்",
+  "resTopFeatures": "அதிகம் மாறியவை",
+  "resTopFeaturesNone": "உங்கள் வழக்கமான முறையிலிருந்து எதுவும் வேறுபடவில்லை.",
+  "resMayExplain": "இதற்குக் காரணமாக இருக்கலாம்",
+  "resMayExplainNone": "இந்தச் சோதனைக்கு வழக்கத்துக்கு மாறாக எதையும் நீங்கள் பதிவு செய்யவில்லை.",
+  "resMayExplainBody": "நீங்கள் பதிவு செய்தவை: {items}. இவை நீங்கள் செயலியிடம் சொன்னவை, காரணங்கள் அல்ல.",
+  "@resMayExplainBody": {
+    "placeholders": {
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "resCtxSleepFair": "தூக்கம் சுமாராக இருந்தது",
+  "resCtxSleepPoor": "மோசமான தூக்கம்",
+  "resCtxFatigueSome": "சிறிது சோர்வு",
+  "resCtxFatigueVery": "மிகவும் சோர்வு",
+  "resCtxIllness": "நோய் அல்லது மருந்து மாற்றம்",
+  "resCalibratingNote": "{count, plural, =1{ஒரு அளவீடு இன்னும் அளவீடு செய்யப்படுகிறது.} other{{count} அளவீடுகள் இன்னும் அளவீடு செய்யப்படுகின்றன.}} நீங்கள் {tests} முழுச் சோதனைகள் எடுக்கும் வரை அவை மூல மதிப்புகளாகக் காட்டப்படும்.",
+  "@resCalibratingNote": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "tests": {
+        "type": "int"
+      }
+    }
+  },
+  "resValid": "கணக்கிடப்பட்டது",
+  "resNotCounted": "கணக்கிடப்படவில்லை",
+  "resNotMeasured": "அளவிடப்படவில்லை",
+  "resCalibrating": "அளவீடு செய்யப்படுகிறது",
+  "resNotCountedWhy": "கணக்கிடப்படவில்லை: {reasons}",
+  "@resNotCountedWhy": {
+    "placeholders": {
+      "reasons": {
+        "type": "String"
+      }
+    }
+  },
+  "resNotMeasuredTyping": "தாளத்தை அளவிட போதுமான தட்டச்சு இல்லை.",
+  "resNotMeasuredOther": "இந்தச் சோதனையில் எடுக்கப்படவில்லை.",
+  "resThisTest": "இந்தச் சோதனை",
+  "resVsBaselineTitle": "உங்கள் அடித்தளத்துடன் ஒப்பிட",
+  "resVsBaselineNote": "மிக அர்த்தமுள்ள ஒப்பீடு, உங்கள் நிலையைத் தீர்மானிக்கும் ஒரே ஒன்று.",
+  "resBaselineLine": "அடித்தளம் {median}, வழக்கமாக {spread}-க்குள்",
+  "@resBaselineLine": {
+    "placeholders": {
+      "median": {
+        "type": "String"
+      },
+      "spread": {
+        "type": "String"
+      }
+    }
+  },
+  "resZScore": "z-மதிப்பு: {z}",
+  "@resZScore": {
+    "placeholders": {
+      "z": {
+        "type": "String"
+      }
+    }
+  },
+  "resVsEarlierTitle": "உங்கள் முந்தைய சோதனைகளுடன் ஒப்பிட",
+  "resLast": "கடந்த சோதனை",
+  "resAvg4": "கடைசி 4-இன் சராசரி",
+  "resBest": "இதுவரை சிறந்தது",
+  "resWorst": "இதுவரை மோசமானது",
+  "resNoEarlier": "இன்னும் முந்தைய கணக்கிடப்பட்ட சோதனை இல்லை.",
+  "resImproved": "மேம்பட்டது",
+  "resStable": "நிலையானது",
+  "resWorse": "மோசம்",
+  "resPopulationTitle": "மக்கள்தொகை வரம்பு (பின்னணிக்காக மட்டும்)",
+  "resPopulationNotValidated": "குறிப்பு வரம்பு இன்னும் சரிபார்க்கப்படவில்லை",
+  "resPopulationRange": "{low} முதல் {high} வரை",
+  "@resPopulationRange": {
+    "placeholders": {
+      "low": {
+        "type": "String"
+      },
+      "high": {
+        "type": "String"
+      }
+    }
+  },
+  "resPopulationSource": "மூலம்: {citation}",
+  "@resPopulationSource": {
+    "placeholders": {
+      "citation": {
+        "type": "String"
+      }
+    }
+  },
+  "resPopulationNote": "பின்னணிக்காகக் காட்டப்படுகிறது. இது உங்கள் நிலையை ஒருபோதும் தீர்மானிக்காது.",
+  "resInterpHigher": "{metric} உங்கள் அடித்தளத்தை விட {amount} அதிகமாக இருந்தது.",
+  "@resInterpHigher": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "resInterpLower": "{metric} உங்கள் அடித்தளத்தை விட {amount} குறைவாக இருந்தது.",
+  "@resInterpLower": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "resInterpSame": "{metric} உங்கள் அடித்தளத்தைப் போலவே இருந்தது.",
+  "@resInterpSame": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "resInterpCalibrating": "{metric} {value} ஆக இருந்தது. அதன் அடித்தளம் இன்னும் நிர்ணயிக்கப்படுகிறது ({total} சோதனைகளில் {done}).",
+  "@resInterpCalibrating": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      },
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "resInterpNotCounted": "{metric} {value} ஆக இருந்தது. இந்தச் சோதனை கணக்கிடப்படவில்லை.",
+  "@resInterpNotCounted": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resInterpNotMeasured": "இந்தச் சோதனையில் {metric}-ஐ அளவிட முடியவில்லை.",
+  "@resInterpNotMeasured": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "resAmountWords": "{count, plural, =1{1 சொல்} other{{count} சொற்கள்}}",
+  "@resAmountWords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resRange7": "கடைசி 7 சோதனைகள்",
+  "resRange30": "30 நாட்கள்",
+  "resRange90": "90 நாட்கள்",
+  "resRangeAll": "அனைத்தும்",
+  "resRangeLabel": "காட்டு",
+  "resChartOverall": "ஒட்டுமொத்த விலகல் குறியீடு",
+  "resChartOverallNote": "அதிகம் என்றால் மோசம். கோடிட்ட கோடுகள் சிறிய மற்றும் குறிப்பிடத்தக்க நிலைகள்.",
+  "resChartShares": "மாற்றம் எதனால் ஆனது",
+  "resChartSharesNote": "ஒவ்வொரு பட்டையும் ஒரு சோதனை, மொத்தம் 100%.",
+  "resChartAreas": "பகுதி வாரியாக",
+  "resChartMetrics": "அளவீடு வாரியாக",
+  "resChartMetricsNote": "ஒரு அளவீட்டைத் தட்டி அதன் வரைபடத்தையும் ஒப்பீட்டையும் காணுங்கள்.",
+  "resLegendBaseline": "உங்கள் அடித்தளம்",
+  "resLegendBand": "வழக்கமான பரவல்",
+  "resLegendSmoothed": "மென்மையாக்கப்பட்டது",
+  "resLegendCounted": "கணக்கிடப்பட்ட சோதனை",
+  "resLegendExcluded": "ஒதுக்கி வைக்கப்பட்டது, கணக்கிடப்படவில்லை",
+  "resLegendPopulation": "மக்கள்தொகை வரம்பு (பின்னணி)",
+  "resLegendMild": "சிறிய நிலை",
+  "resLegendNotable": "குறிப்பிடத்தக்க நிலை",
+  "resLegendIndex": "குறியீடு",
+  "resNoChartData": "இன்னும் வரைய எதுவும் இல்லை. முதலில் ஒரு முழுச் சோதனை எடுங்கள்.",
+  "resNoChartInRange": "இந்த வரம்பில் சோதனைகள் இல்லை.",
+  "resNotEnoughData": "இன்னும் போதுமான தரவு இல்லை ({min}-இல் {n})",
+  "@resNotEnoughData": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "resTrendDirection": "திசை",
+  "resTrendImproving": "மேம்படுகிறது",
+  "resTrendStable": "நிலையானது",
+  "resTrendDeclining": "குறைகிறது",
+  "resTrendSlope": "சரிவு: ஒரு சோதனைக்கு {slope}",
+  "@resTrendSlope": {
+    "placeholders": {
+      "slope": {
+        "type": "String"
+      }
+    }
+  },
+  "resTrendEwma": "மென்மையாக்கிய நிலை: {value} பரவல்கள்",
+  "@resTrendEwma": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resTrendRunMild": "சிறிய நிலையில் அல்லது அதற்கு மேல் தொடர்ந்து: {count}",
+  "@resTrendRunMild": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resTrendRunNotable": "குறிப்பிடத்தக்க நிலையில் அல்லது அதற்கு மேல் தொடர்ந்து: {count}",
+  "@resTrendRunNotable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resTrendValidOnly": "கணக்கிடப்பட்ட சோதனைகளிலிருந்து மட்டுமே கணக்கிடப்பட்டது.",
+  "resChartSemantics": "{name}, {count} சோதனைகளில் போக்கு {direction}",
+  "@resChartSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "direction": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resChartSemanticsNone": "{name}, போக்குக்கு இன்னும் போதுமான தரவு இல்லை, {min} சோதனைகளில் {n}",
+  "@resChartSemanticsNone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "resMetricDetail": "அளவீடு",
+  "resLogTitle": "நீங்கள் எடுத்த அனைத்துச் சோதனைகளும்",
+  "resLogNote": "கணக்கிடப்படாத சோதனைகளும் காரணத்துடன் பட்டியலிடப்பட்டுள்ளன.",
+  "resLogPractice": "பயிற்சிச் சோதனை",
+  "resLogBaseline": "அடித்தளச் சோதனை",
+  "resLogFull": "முழுச் சோதனை",
+  "resLogIndex": "குறியீடு {value}",
+  "@resLogIndex": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resLogBuilding": "உங்கள் அடித்தளத்தை உருவாக்குகிறது",
+  "resLogPracticeWhy": "பயிற்சி மட்டுமே, எனவே கணக்கிடப்படவில்லை.",
+  "resDisclaimer": "இது ஒரு ஆய்வு மற்றும் விழிப்புணர்வுக் கருவி, நோயறிதல் அல்ல. மன அழுத்தம், மோசமான தூக்கம் அல்லது நோய் போன்ற பல விஷயங்கள் முடிவுகளை மாற்றக்கூடும். உங்களுக்குக் கவலை இருந்தால், இந்த அறிக்கையை மருத்துவருடன் விவாதியுங்கள்.",
   "trendsFirstTestTitle": "உங்கள் முதல் முழுச் சோதனையை எடுங்கள்",
   "trendsFirstTestBody": "உங்கள் அடித்தளம் நிர்ணயிக்கப்பட்டது. முழுச் சோதனை எடுத்தவுடன், இந்தப் பக்கம் அதை உங்கள் அடித்தளத்துடனும் பின்வரும் சோதனைகளுடனும் ஒப்பிட்டு, உங்கள் போக்குகளை வரையும். அதுவரை, இது எவ்வாறு செயல்படும் என்பதற்கான எடுத்துக்காட்டு இதோ.",
   "trendsExampleToggle": "போக்குகள் எவ்வாறு செயல்படுகின்றன: ஓர் எடுத்துக்காட்டு",
@@ -441,5 +729,51 @@
 
   "aboutTitle": "NeuraScan AI பற்றி",
   "aboutVersion": "பதிப்பு {version}",
-  "aboutBody": "சென்னை இன்ஸ்டிடியூட் ஆஃப் டெக்னாலஜியில் கைபேசி செயலி மேம்பாடு பாடத்திற்கான திட்ட அடிப்படையிலான கற்றல் சமர்ப்பிப்பாக உருவாக்கப்பட்டது. திரையிடல் முறை மருத்துவ ரீதியாக சரிபார்க்கப்படவில்லை, இந்த செயலி ஒரு மருத்துவ சாதனம் அல்ல."
+  "aboutBody": "சென்னை இன்ஸ்டிடியூட் ஆஃப் டெக்னாலஜியில் கைபேசி செயலி மேம்பாடு பாடத்திற்கான திட்ட அடிப்படையிலான கற்றல் சமர்ப்பிப்பாக உருவாக்கப்பட்டது. திரையிடல் முறை மருத்துவ ரீதியாக சரிபார்க்கப்படவில்லை, இந்த செயலி ஒரு மருத்துவ சாதனம் அல்ல.",
+  "repPeriodTitle": "காலம்",
+  "repPeriodNote": "அறிக்கையில் எந்தப் பரிசோதனைகள் இடம்பெறும் என்பது.",
+  "repSectionsTitle": "பகுதிகள்",
+  "repSectionsNote": "முகப்பு, சுருக்கம், இறுதிக் குறிப்பு எப்போதும் சேர்க்கப்படும்.",
+  "repSecDomains": "ஒவ்வொரு பகுதிக்கும் ஒரு பக்கம்",
+  "repSecTests": "எட்டு சோதனைகளில் ஒவ்வொன்றுக்கும் ஒரு பகுதி",
+  "repSecLog": "காலத்தில் உள்ள ஒவ்வொரு சோதனையும்",
+  "repSecMethods": "முறைகளும் வரம்புகளும்",
+  "repLabelTitle": "பெயர் அல்லது குறிச்சொல்",
+  "repLabelHint": "விருப்பம், முகப்பில் காட்டப்படும்",
+  "repPreviewTitle": "அறிக்கையில் என்ன இருக்கும்",
+  "repPreviewBody": "{from} முதல் {to} வரை, {valid} கணக்கில் எடுத்த சோதனைகள், {aside} ஒதுக்கப்பட்டவை.",
+  "@repPreviewBody": {
+    "placeholders": {
+      "valid": {
+        "type": "int"
+      },
+      "aside": {
+        "type": "int"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "repPdfEnglish": "PDF ஆங்கிலத்தில் எழுதப்படும்.",
+  "repPreviewOpen": "PDF-ஐ முன்னோட்டம் பார்",
+  "repPreviewScreenTitle": "அறிக்கை முன்னோட்டம்",
+  "repExportTitle": "ஏற்றுமதி",
+  "repShare": "பகிர்",
+  "repSave": "சாதனத்தில் சேமி",
+  "repPrint": "அச்சிடு",
+  "repCsv": "தரவை CSV ஆகச் சேமி",
+  "repJson": "தரவை JSON ஆகச் சேமி",
+  "repDataNote": "CSV, JSON கோப்புகளில் அளவீடுகளும் மதிப்பெண்களும் மட்டுமே இருக்கும். ஒலிப்பதிவோ தொடுதல் பதிவோ இருக்காது.",
+  "repConsentTitle": "ஏற்றுமதிக்கு முன்",
+  "repConsentBody": "இந்தக் கோப்பில் உங்கள் அளவீடுகளும் நீங்கள் பதிவு செய்த சூழலும் உள்ளன. பகிர்ந்தால், சேமித்தால் அல்லது அச்சிட்டால் அது இந்தச் செயலியையும் அதன் தனியுரிமை அமைப்புகளையும் விட்டு வெளியேறும். தொடரவா?",
+  "repConsentContinue": "தொடர்",
+  "repConsentCancel": "ரத்து செய்",
+  "repBuilding": "அறிக்கை தயாராகிறது",
+  "repSaved": "சேமிக்கப்பட்டது.",
+  "repNotSaved": "எதுவும் சேமிக்கப்படவில்லை.",
+  "repNothingInPeriod": "இந்தக் காலத்தில் முழுச் சோதனைகள் இல்லை. நீண்ட காலத்தைத் தேர்ந்தெடுங்கள்."
 }
