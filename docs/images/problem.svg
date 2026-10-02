@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="380" viewBox="0 0 1160 380" role="img" aria-label="Change is gradual and nothing is measured along the way, so the first real data point is the appointment itself, long after the change began.">
+  <rect x="0" y="0" width="1160" height="380" rx="18" fill="#F4F9FB"/>
+  <g font-family="system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+    <text x="32" y="44" font-size="21" font-weight="700" fill="#1A2024">The gap this sits in</text>
+    <text x="32" y="68" font-size="14.5" fill="#5B6770">Gradual change is hard to notice from the inside, and nothing is being measured while it happens.</text>
+
+    <!-- the long slow drift -->
+    <path d="M72 128 C 300 134, 560 160, 760 214 C 860 242, 940 268, 1032 288"
+          fill="none" stroke="#CDD8DD" stroke-width="3"/>
+    <text x="72" y="114" font-size="13" fill="#5B6770">how someone is doing</text>
+
+    <line x1="72" y1="312" x2="1104" y2="312" stroke="#CDD8DD" stroke-width="2"/>
+    <text x="72" y="334" font-size="13" fill="#5B6770">change begins</text>
+    <text x="1104" y="334" text-anchor="end" font-size="13" fill="#5B6770">years later</text>
+
+    <!-- the dark band: nothing measured -->
+    <rect x="96" y="150" width="612" height="116" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5" stroke-dasharray="6 5"/>
+    <text x="120" y="178" font-size="13" font-weight="700" fill="#5B6770">NOTHING IS MEASURED HERE</text>
+    <text x="120" y="204" font-size="14" fill="#1A2024">Days vary for ordinary reasons &#8212; sleep, stress, a cold &#8212; so a slow</text>
+    <text x="120" y="226" font-size="14" fill="#1A2024">drift hides inside the noise. There is no record to compare against,</text>
+    <text x="120" y="248" font-size="14" fill="#1A2024">and the person living it adapts to it as it happens.</text>
+
+    <!-- first notice -->
+    <circle cx="784" cy="224" r="9" fill="#9A6A00"/>
+    <line x1="784" y1="224" x2="784" y2="304" stroke="#9A6A00" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <text x="760" y="160" font-size="14" font-weight="700" fill="#9A6A00">someone notices</text>
+    <text x="760" y="180" font-size="13" fill="#5B6770">usually a family member,</text>
+    <text x="760" y="198" font-size="13" fill="#5B6770">and usually late</text>
+
+    <!-- first appointment -->
+    <circle cx="1032" cy="288" r="9" fill="#B4530A"/>
+    <line x1="1032" y1="288" x2="1032" y2="304" stroke="#B4530A" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <text x="1000" y="226" font-size="14" font-weight="700" fill="#B4530A">first appointment</text>
+    <text x="1000" y="246" font-size="13" fill="#5B6770">the first measurement</text>
+    <text x="1000" y="264" font-size="13" fill="#5B6770">anyone ever takes</text>
+
+    <!-- the honest framing -->
+    <rect x="32" y="344" width="1096" height="0" fill="none"/>
+    <text x="32" y="362" font-size="13.5" fill="#5B6770">A screening app cannot diagnose any of this, and NeuraScan AI does not try to. It tries to make the middle of the picture something that exists.</text>
+  </g>
+</svg>

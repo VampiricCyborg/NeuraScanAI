@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="470" viewBox="0 0 1160 470" role="img" aria-label="A population norm compares you with everyone else and misses a real decline inside the normal range. A personal baseline compares you with yourself and sees it.">
+  <rect x="0" y="0" width="1160" height="470" rx="18" fill="#F4F9FB"/>
+  <g font-family="system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+    <text x="32" y="44" font-size="21" font-weight="700" fill="#1A2024">Why your own baseline, and not a population norm</text>
+    <text x="32" y="68" font-size="14.5" fill="#5B6770">The same person, the same twelve tests, read two ways. Only one of them notices anything.</text>
+
+    <!-- left: the population norm -->
+    <g>
+      <rect x="32" y="92" width="536" height="346" rx="14" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="56" y="124" font-size="13" font-weight="700" fill="#5B6770">THE USUAL APPROACH</text>
+      <text x="56" y="150" font-size="17" font-weight="700" fill="#1A2024">Compared with everybody else</text>
+
+      <!-- bell curve -->
+      <path d="M80 320 C 140 320, 150 200, 220 190 C 290 180, 300 320, 360 320"
+            fill="none" stroke="#CDD8DD" stroke-width="2"/>
+      <path d="M80 320 C 140 320, 150 200, 220 190 C 290 180, 300 320, 360 320 L 360 320 L 80 320 Z"
+            fill="#EDF3F6"/>
+      <line x1="80" y1="320" x2="528" y2="320" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="86" y="344" font-size="12.5" fill="#5B6770">everyone your age</text>
+
+      <!-- the two readings sit inside the normal range -->
+      <circle cx="248" cy="320" r="7" fill="#146C7A"/>
+      <circle cx="196" cy="320" r="7" fill="#FFFFFF" stroke="#B4530A" stroke-width="2.5"/>
+      <line x1="248" y1="320" x2="203" y2="320" stroke="#B4530A" stroke-width="2" stroke-dasharray="4 4"/>
+      <path d="M210 314 L202 320 L210 326 Z" fill="#B4530A"/>
+
+      <text x="388" y="214" font-size="13" fill="#5B6770">a year ago</text>
+      <circle cx="372" cy="210" r="6" fill="#146C7A"/>
+      <text x="388" y="244" font-size="13" fill="#5B6770">today</text>
+      <circle cx="372" cy="240" r="6" fill="#FFFFFF" stroke="#B4530A" stroke-width="2.5"/>
+
+      <rect x="56" y="360" width="488" height="56" rx="10" fill="#F4F9FB"/>
+      <text x="76" y="384" font-size="14" fill="#1A2024">Both readings are inside the normal range, so both are</text>
+      <text x="76" y="404" font-size="14" fill="#1A2024">&#8220;normal&#8221;. <tspan font-weight="700">Nothing is reported.</tspan> The change is invisible.</text>
+    </g>
+
+    <!-- right: the personal baseline -->
+    <g>
+      <rect x="592" y="92" width="536" height="346" rx="14" fill="#FFFFFF" stroke="#146C7A" stroke-width="2.5"/>
+      <text x="616" y="124" font-size="13" font-weight="700" fill="#146C7A">NEURASCAN AI</text>
+      <text x="616" y="150" font-size="17" font-weight="700" fill="#1A2024">Compared with your own usual</text>
+
+      <!-- your own spread band -->
+      <rect x="640" y="212" width="456" height="56" rx="6" fill="#E3EEF1"/>
+      <line x1="640" y1="240" x2="1096" y2="240" stroke="#146C7A" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="648" y="204" font-size="12.5" fill="#146C7A">your baseline, and your usual spread</text>
+
+      <!-- twelve tests, drifting out of the band at the end -->
+      <g fill="#146C7A">
+        <circle cx="668" cy="248" r="5.5"/>
+        <circle cx="706" cy="230" r="5.5"/>
+        <circle cx="744" cy="252" r="5.5"/>
+        <circle cx="782" cy="236" r="5.5"/>
+        <circle cx="820" cy="244" r="5.5"/>
+        <circle cx="858" cy="228" r="5.5"/>
+        <circle cx="896" cy="250" r="5.5"/>
+        <circle cx="934" cy="222" r="5.5"/>
+        <circle cx="972" cy="216" r="5.5"/>
+      </g>
+      <g fill="#B4530A">
+        <circle cx="1010" cy="192" r="5.5"/>
+        <circle cx="1048" cy="178" r="5.5"/>
+        <circle cx="1086" cy="166" r="5.5"/>
+      </g>
+      <polyline points="668,248 706,230 744,252 782,236 820,244 858,228 896,250 934,222 972,216 1010,192 1048,178 1086,166"
+                fill="none" stroke="#146C7A" stroke-width="2" opacity="0.5"/>
+      <line x1="640" y1="300" x2="1096" y2="300" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="640" y="320" font-size="12.5" fill="#5B6770">one test</text>
+      <text x="1096" y="320" text-anchor="end" font-size="12.5" fill="#5B6770">twelve tests later</text>
+
+      <path d="M1000 158 L1070 150" fill="none" stroke="#B4530A" stroke-width="1.5"/>
+      <text x="996" y="152" text-anchor="end" font-size="13" font-weight="600" fill="#B4530A">three in a row above</text>
+
+      <rect x="616" y="360" width="488" height="56" rx="10" fill="#F4F9FB"/>
+      <text x="636" y="384" font-size="14" fill="#1A2024">The drift is small for a population and large for <tspan font-style="italic">this person</tspan>.</text>
+      <text x="636" y="404" font-size="14" fill="#1A2024"><tspan font-weight="700">Reported</tspan> &#8212; but only once it has persisted across three tests.</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="430" viewBox="0 0 1160 430" role="img" aria-label="How a test becomes a status: capture, measure, compare with your own baseline, combine, smooth and decide.">
+  <rect x="0" y="0" width="1160" height="430" rx="18" fill="#F4F9FB"/>
+
+  <g font-family="system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+    <text x="32" y="44" font-size="21" font-weight="700" fill="#1A2024">From a test to a status</text>
+    <text x="32" y="68" font-size="14.5" fill="#5B6770">Every stage is additive, so each area&#8217;s share of the result &#8212; and each measurement&#8217;s &#8212; is its exact contribution.</text>
+
+    <!-- 1. capture -->
+    <g>
+      <rect x="32" y="96" width="196" height="150" rx="14" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <rect x="32" y="96" width="196" height="5" rx="2.5" fill="#146C7A"/>
+      <text x="48" y="130" font-size="13" font-weight="700" fill="#146C7A">1 &#183; CAPTURE</text>
+      <text x="48" y="156" font-size="15.5" font-weight="600" fill="#1A2024">Eight steps</text>
+      <text x="48" y="180" font-size="13.5" fill="#5B6770">Words, reaction, speech,</text>
+      <text x="48" y="198" font-size="13.5" fill="#5B6770">spiral, typing, trails,</text>
+      <text x="48" y="216" font-size="13.5" fill="#5B6770">tapping, fluency.</text>
+      <text x="48" y="236" font-size="13" fill="#146C7A">about 8 minutes</text>
+    </g>
+    <path d="M236 171 L264 171 M258 165 L266 171 L258 177 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+
+    <!-- 2. measure -->
+    <g>
+      <rect x="272" y="96" width="196" height="150" rx="14" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <rect x="272" y="96" width="196" height="5" rx="2.5" fill="#146C7A"/>
+      <text x="288" y="130" font-size="13" font-weight="700" fill="#146C7A">2 &#183; MEASURE</text>
+      <text x="288" y="156" font-size="15.5" font-weight="600" fill="#1A2024">18 measurements</text>
+      <g font-size="13">
+        <circle cx="294" cy="174" r="5" fill="#0072B2"/><text x="306" y="179" fill="#5B6770">Thinking &#215; 9</text>
+        <circle cx="294" cy="194" r="5" fill="#CC79A7"/><text x="306" y="199" fill="#5B6770">Speech &#215; 2</text>
+        <circle cx="294" cy="214" r="5" fill="#D55E00"/><text x="306" y="219" fill="#5B6770">Movement &#215; 5</text>
+        <circle cx="294" cy="234" r="5" fill="#009E73"/><text x="306" y="239" fill="#5B6770">Typing &#215; 2</text>
+      </g>
+    </g>
+    <path d="M476 171 L504 171 M498 165 L506 171 L498 177 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+
+    <!-- 3. compare -->
+    <g>
+      <rect x="512" y="96" width="196" height="150" rx="14" fill="#FFFFFF" stroke="#146C7A" stroke-width="2.5"/>
+      <rect x="512" y="96" width="196" height="5" rx="2.5" fill="#146C7A"/>
+      <text x="528" y="130" font-size="13" font-weight="700" fill="#146C7A">3 &#183; COMPARE</text>
+      <text x="528" y="156" font-size="15.5" font-weight="600" fill="#1A2024">Against you</text>
+      <text x="528" y="180" font-size="13.5" fill="#5B6770">Robust z-score from</text>
+      <text x="528" y="198" font-size="13.5" fill="#5B6770">your own median and</text>
+      <text x="528" y="216" font-size="13.5" fill="#5B6770">spread. Not a norm.</text>
+      <text x="528" y="236" font-size="13" fill="#146C7A">worse direction only</text>
+    </g>
+    <path d="M716 171 L744 171 M738 165 L746 171 L738 177 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+
+    <!-- 4. combine -->
+    <g>
+      <rect x="752" y="96" width="196" height="150" rx="14" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <rect x="752" y="96" width="196" height="5" rx="2.5" fill="#146C7A"/>
+      <text x="768" y="130" font-size="13" font-weight="700" fill="#146C7A">4 &#183; COMBINE</text>
+      <text x="768" y="156" font-size="15.5" font-weight="600" fill="#1A2024">One index</text>
+      <g font-size="13" fill="#5B6770">
+        <text x="768" y="181">Thinking 35%</text>
+        <text x="768" y="201">Speech 25%</text>
+        <text x="768" y="221">Movement 25%</text>
+        <text x="768" y="241">Typing 15%</text>
+      </g>
+      <rect x="902" y="162" width="30" height="76" rx="5" fill="#F4F9FB" stroke="#CDD8DD"/>
+      <rect x="902" y="215" width="30" height="23" fill="#009E73"/>
+      <rect x="902" y="192" width="30" height="23" fill="#D55E00"/>
+      <rect x="902" y="174" width="30" height="18" fill="#CC79A7"/>
+      <rect x="902" y="162" width="30" height="12" rx="5" fill="#0072B2"/>
+    </g>
+    <path d="M956 171 L984 171 M978 165 L986 171 L978 177 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+
+    <!-- 5. decide -->
+    <g>
+      <rect x="992" y="96" width="136" height="150" rx="14" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <rect x="992" y="96" width="136" height="5" rx="2.5" fill="#146C7A"/>
+      <text x="1008" y="130" font-size="13" font-weight="700" fill="#146C7A">5 &#183; DECIDE</text>
+      <g font-size="13">
+        <rect x="1008" y="144" width="104" height="26" rx="13" fill="#E7F1EA" stroke="#2E7D57"/>
+        <text x="1060" y="162" text-anchor="middle" fill="#2E7D57" font-weight="600">Usual range</text>
+        <rect x="1008" y="176" width="104" height="26" rx="13" fill="#F6EEDC" stroke="#9A6A00"/>
+        <text x="1060" y="194" text-anchor="middle" fill="#9A6A00" font-weight="600">Mild change</text>
+        <rect x="1008" y="208" width="104" height="26" rx="13" fill="#F7E6D8" stroke="#B4530A"/>
+        <text x="1060" y="226" text-anchor="middle" fill="#B4530A" font-weight="600">Notable</text>
+      </g>
+    </g>
+
+    <!-- the two things that hold the result back -->
+    <g>
+      <rect x="32" y="282" width="536" height="118" rx="14" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5" stroke-dasharray="6 5"/>
+      <text x="52" y="310" font-size="13" font-weight="700" fill="#5B6770">BEFORE THE TEST &#8212; THE CHECK-IN</text>
+      <text x="52" y="336" font-size="14" fill="#1A2024">Slept badly, very tired, unwell or a medication change?</text>
+      <text x="52" y="358" font-size="14" fill="#1A2024">The test is still taken, still stored and still shown &#8212;</text>
+      <text x="52" y="380" font-size="14" fill="#1A2024">marked <tspan font-weight="700">not counted</tspan>, and left out of every average and trend.</text>
+    </g>
+
+    <g>
+      <rect x="592" y="282" width="536" height="118" rx="14" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5" stroke-dasharray="6 5"/>
+      <text x="612" y="310" font-size="13" font-weight="700" fill="#5B6770">AFTER THE INDEX &#8212; SMOOTHING AND PERSISTENCE</text>
+      <text x="612" y="336" font-size="14" fill="#1A2024">An EWMA (&#955; = 0.3) carries most of the weight from before.</text>
+      <text x="612" y="358" font-size="14" fill="#1A2024">A notable change is only reported after <tspan font-weight="700">three tests in a row</tspan></text>
+      <text x="612" y="380" font-size="14" fill="#1A2024">above the threshold. One bad morning cannot raise it.</text>
+    </g>
+  </g>
+</svg>

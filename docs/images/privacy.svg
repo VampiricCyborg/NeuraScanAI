@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="430" viewBox="0 0 1160 430" role="img" aria-label="What each kind of raw data becomes, and where it stops. Audio, touch and typing are reduced to numbers on the phone and discarded; only derived numbers can ever be backed up, and only if the user turns it on.">
+  <rect x="0" y="0" width="1160" height="430" rx="18" fill="#F4F9FB"/>
+  <g font-family="system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+    <text x="32" y="44" font-size="21" font-weight="700" fill="#1A2024">What is kept, and what never exists in the first place</text>
+    <text x="32" y="68" font-size="14.5" fill="#5B6770">The raw recordings are not deleted later. They are never written down at all.</text>
+
+    <!-- column headings -->
+    <text x="56" y="112" font-size="12.5" font-weight="700" fill="#5B6770">RAW INPUT</text>
+    <text x="356" y="112" font-size="12.5" font-weight="700" fill="#5B6770">ON THE PHONE, IN MEMORY</text>
+    <text x="680" y="112" font-size="12.5" font-weight="700" fill="#5B6770">WHAT IS STORED</text>
+    <text x="952" y="112" font-size="12.5" font-weight="700" fill="#5B6770">WHAT MAY LEAVE</text>
+
+    <!-- row 1: audio -->
+    <g>
+      <rect x="40" y="126" width="252" height="64" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="60" y="152" font-size="15" font-weight="600" fill="#1A2024">Your voice</text>
+      <text x="60" y="174" font-size="13" fill="#5B6770">20 seconds of microphone audio</text>
+      <path d="M300 158 L336 158 M330 152 L338 158 L330 164 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="344" y="126" width="268" height="64" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="364" y="152" font-size="14" fill="#1A2024">Speaking pace, pausing</text>
+      <text x="364" y="174" font-size="13" fill="#B4530A">the audio is then dropped</text>
+      <path d="M620 158 L656 158 M650 152 L658 158 L650 164 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="664" y="126" width="252" height="64" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="684" y="162" font-size="14" fill="#1A2024">Two numbers</text>
+    </g>
+
+    <!-- row 2: touch -->
+    <g>
+      <rect x="40" y="202" width="252" height="64" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="60" y="228" font-size="15" font-weight="600" fill="#1A2024">Your finger</text>
+      <text x="60" y="250" font-size="13" fill="#5B6770">the path you traced and tapped</text>
+      <path d="M300 234 L336 234 M330 228 L338 234 L330 240 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="344" y="202" width="268" height="64" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="364" y="228" font-size="14" fill="#1A2024">Tracing error, tremor, speed</text>
+      <text x="364" y="250" font-size="13" fill="#B4530A">the trace is then dropped</text>
+      <path d="M620 234 L656 234 M650 228 L658 234 L650 240 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="664" y="202" width="252" height="64" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="684" y="238" font-size="14" fill="#1A2024">Ten numbers</text>
+    </g>
+
+    <!-- row 3: words -->
+    <g>
+      <rect x="40" y="278" width="252" height="64" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="60" y="304" font-size="15" font-weight="600" fill="#1A2024">Your words</text>
+      <text x="60" y="326" font-size="13" fill="#5B6770">what you typed, and when</text>
+      <path d="M300 310 L336 310 M330 304 L338 310 L330 316 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="344" y="278" width="268" height="64" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="364" y="304" font-size="14" fill="#1A2024">Recall, fluency, key rhythm</text>
+      <text x="364" y="326" font-size="13" fill="#5B6770">which words stays on the phone</text>
+      <path d="M620 310 L656 310 M650 304 L658 310 L650 316 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="664" y="278" width="252" height="64" rx="12" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+      <text x="684" y="314" font-size="14" fill="#1A2024">Six numbers</text>
+    </g>
+
+    <!-- the store -->
+    <text x="664" y="368" font-size="12.5" fill="#5B6770">all of it in SQLite encrypted with SQLCipher; the key lives in the Keystore / Keychain</text>
+
+    <!-- what may leave -->
+    <path d="M924 234 L956 234 M950 228 L958 234 L950 240 Z" fill="#8FA3AB" stroke="#8FA3AB" stroke-width="1.6" stroke-linejoin="round"/>
+    <rect x="936" y="126" width="192" height="216" rx="12" fill="#FFFFFF" stroke="#146C7A" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="956" y="156" font-size="15" font-weight="600" fill="#1A2024">Cloud backup</text>
+    <rect x="956" y="170" width="92" height="26" rx="13" fill="#F4F9FB" stroke="#CDD8DD"/>
+    <text x="1002" y="188" text-anchor="middle" font-size="13" font-weight="700" fill="#5B6770">OFF</text>
+    <text x="956" y="222" font-size="13" fill="#5B6770">by default.</text>
+    <text x="956" y="248" font-size="13" fill="#5B6770">Turned on, it sends</text>
+    <text x="956" y="268" font-size="13" fill="#5B6770">the derived numbers</text>
+    <text x="956" y="288" font-size="13" fill="#5B6770">and scores only.</text>
+    <text x="956" y="318" font-size="13" font-weight="600" fill="#146C7A">Never audio, traces</text>
+    <text x="956" y="336" font-size="13" font-weight="600" fill="#146C7A">or your words.</text>
+
+    <!-- footer -->
+    <rect x="40" y="366" width="572" height="44" rx="10" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+    <text x="60" y="394" font-size="14" fill="#1A2024">The app works with no account and no connection. Delete removes everything, locally and from the backup.</text>
+  </g>
+</svg>

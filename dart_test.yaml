@@ -1,0 +1,6 @@
+# The screenshot captures carry a tag so that `flutter test` can be told to leave
+# them out by name. They already skip themselves unless --dart-define=capture=true
+# is passed; declaring the tag here only stops the runner warning about it.
+tags:
+  screenshots:
+    description: Writes the README's screenshots instead of asserting anything.

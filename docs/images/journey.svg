@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="300" viewBox="0 0 1160 300" role="img" aria-label="The user's journey: a practice test that is discarded, three baseline tests, then full tests, with thirteen measurements calibrating over the first three full tests.">
+  <rect x="0" y="0" width="1160" height="300" rx="18" fill="#F4F9FB"/>
+  <g font-family="system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+    <text x="32" y="44" font-size="21" font-weight="700" fill="#1A2024">What the first few tests are for</text>
+    <text x="32" y="68" font-size="14.5" fill="#5B6770">Nothing is scored until the app knows what your usual looks like.</text>
+
+    <!-- the rail -->
+    <line x1="52" y1="146" x2="1108" y2="146" stroke="#CDD8DD" stroke-width="3"/>
+
+    <!-- practice -->
+    <circle cx="92" cy="146" r="13" fill="#FFFFFF" stroke="#8FA3AB" stroke-width="3"/>
+    <text x="92" y="122" text-anchor="middle" font-size="13" font-weight="700" fill="#5B6770">PRACTICE</text>
+    <text x="92" y="182" text-anchor="middle" font-size="13.5" fill="#1A2024">Discarded</text>
+    <text x="92" y="200" text-anchor="middle" font-size="12.5" fill="#5B6770">everyone improves</text>
+    <text x="92" y="216" text-anchor="middle" font-size="12.5" fill="#5B6770">just by getting used</text>
+    <text x="92" y="232" text-anchor="middle" font-size="12.5" fill="#5B6770">to the tasks</text>
+
+    <!-- baseline tests -->
+    <rect x="152" y="130" width="236" height="32" rx="16" fill="#146C7A"/>
+    <circle cx="192" cy="146" r="8" fill="#FFFFFF"/>
+    <circle cx="270" cy="146" r="8" fill="#FFFFFF"/>
+    <circle cx="348" cy="146" r="8" fill="#FFFFFF"/>
+    <text x="270" y="112" text-anchor="middle" font-size="13" font-weight="700" fill="#146C7A">BASELINE &#183; 3 SHORT TESTS</text>
+    <text x="270" y="182" text-anchor="middle" font-size="13.5" fill="#1A2024">Words, speech, spiral</text>
+    <text x="270" y="202" text-anchor="middle" font-size="12.5" fill="#5B6770">about 3 minutes each &#183; sets five measurements</text>
+
+    <!-- full tests, calibrating -->
+    <rect x="412" y="130" width="300" height="32" rx="16" fill="#FFFFFF" stroke="#146C7A" stroke-width="2.5" stroke-dasharray="7 5"/>
+    <circle cx="462" cy="146" r="8" fill="#146C7A"/>
+    <circle cx="562" cy="146" r="8" fill="#146C7A"/>
+    <circle cx="662" cy="146" r="8" fill="#146C7A"/>
+    <text x="562" y="112" text-anchor="middle" font-size="13" font-weight="700" fill="#146C7A">FIRST 3 FULL TESTS</text>
+    <text x="562" y="182" text-anchor="middle" font-size="13.5" fill="#1A2024">Scored on those five. The other thirteen calibrate here,</text>
+    <text x="562" y="202" text-anchor="middle" font-size="12.5" fill="#5B6770">shown as raw values, marked &#8220;calibrating&#8221;, until then</text>
+
+    <!-- steady state -->
+    <circle cx="772" cy="146" r="8" fill="#146C7A"/>
+    <circle cx="852" cy="146" r="8" fill="#146C7A"/>
+    <circle cx="932" cy="146" r="8" fill="#146C7A"/>
+    <circle cx="1012" cy="146" r="8" fill="#146C7A"/>
+    <circle cx="1088" cy="146" r="8" fill="#146C7A"/>
+    <text x="930" y="112" text-anchor="middle" font-size="13" font-weight="700" fill="#146C7A">FROM THEN ON</text>
+    <text x="930" y="182" text-anchor="middle" font-size="13.5" fill="#1A2024">All eighteen scored against your own baseline</text>
+    <text x="930" y="202" text-anchor="middle" font-size="12.5" fill="#5B6770">a full test whenever you like &#183; trends need six counted tests</text>
+
+    <rect x="32" y="248" width="1096" height="34" rx="10" fill="#FFFFFF" stroke="#CDD8DD" stroke-width="1.5"/>
+    <text x="52" y="270" font-size="13.5" fill="#1A2024">You can reset the baseline at any time &#8212; after an illness, say. Earlier tests are kept and exported, but stop counting towards the new one.</text>
+  </g>
+</svg>

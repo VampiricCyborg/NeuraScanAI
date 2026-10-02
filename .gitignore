@@ -78,3 +78,9 @@ desktop.ini
 # Zero-byte files a mis-quoted notification hook drops in the project root;
 # the name is a flattened Windows path, so the glob has to be loose.
 C*UsersMadhav*claude-notify-signals*
+
+# ---------- Screenshot capture ----------
+# Full-resolution frames and the sample PDF written by test/screenshots. They are
+# the intermediate stage: `tool/screenshots/compose.py` turns them into the much
+# smaller images under docs/images, and those are what the README links to.
+docs/images/raw/
